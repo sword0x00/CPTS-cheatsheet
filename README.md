@@ -179,6 +179,10 @@ nmap 192.168.1.1 --min-rate 1000
 ```
 #### NSE Scripts
 ```
+# locate nse scripts for specific service like Ex: citrix
+locate scripts/citrix
+nmap --script <script name> -p<port> <host>
+
 # Scan with a single script. Example banner
 nmap 192.168.1.1 --script=banner
 
@@ -209,6 +213,7 @@ nmap 192.168.1.1 -oA scan
 ```
 # Connect to FTP
 ftp <IP>
+ftp -p <IP>
 
 # Interact with a service on the target.
 nc -nv <IP> <PORT>
@@ -218,11 +223,14 @@ wget -m --no-passive ftp://anonymous:anonymous@<IP>
 ```
 ##### SMB
 ```
+#Enum for SMB
+nmap --script smb-os-discovery.nse -p445 10.10.10.40
 
-# Connect to a specific SMB share
+# Connect to a specific SMB share --> -L for list & -N suppresses the password prompt
 smbclient //<FQDN IP>/<share>
+smbclient -N -L \\\\10.129.42.253
 
-# Interaction with the target using RPC
+# Interaction with the target using RPC --> -U for username
 rpcclient -U "" <FQDN IP>
 
 # Enumerating SMB shares using null session authentication.
@@ -264,9 +272,11 @@ openssl s_client -connect <FQDN/IP>:pop3s
 ```
 # Querying OIDs using snmpwalk
 snmpwalk -v2c -c <community string> <FQDN/IP>
+snmpwalk -v 2c -c public 10.129.42.253 1.3.6.1.2.1.1.5.0
 
 # Bruteforcing community strings of the SNMP service.
 onesixtyone -c community-strings.list <FQDN/IP>
+onesixtyone -c dict.txt 10.129.42.254
 
 # Bruteforcing SNMP service OIDs.
 braa <community string>@<FQDN/IP>:.1.*
