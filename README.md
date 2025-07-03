@@ -229,6 +229,7 @@ nmap --script smb-os-discovery.nse -p445 10.10.10.40
 # Connect to a specific SMB share --> -L for list & -N suppresses the password prompt
 smbclient //<FQDN IP>/<share>
 smbclient -N -L \\\\10.129.42.253
+smbclient -U <username> \\\\10.129.42.253\\<shares>
 
 # Interaction with the target using RPC --> -U for username
 rpcclient -U "" <FQDN IP>
