@@ -25,6 +25,8 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [MSSQL](#mssql)
     - [IPMI](#ipmi)
     - [Remote Management](#linux-remote-management-ssh)
+    - [HTTP-S](#http-s)
+- [Public Exploits](#public-exploits)
 - [Password Attacks](#password-attacks)
     - [Password Mutations](#password-mutations)
     - [Remote Password Attacks](#remote-password-attacks)
@@ -298,6 +300,64 @@ msf6 auxiliary(scanner/ipmi/ipmi_dumphashes)
 ```
 # Enforce password-based authentication
 ssh <user>@<FQDN/IP> -o PreferredAuthentications=password
+```
+##### HTTP-S
+```
+# Directory/File Enumeration
+gobuster dir -u http://10.10.10.121/ -w /usr/share/seclists/Discovery/Web-Content/common.txt
+
+# DNS Subdomain Enumeration
+1- git clone https://github.com/danielmiessler/SecLists OR sudo apt install seclists -y
+2- Next, add a DNS Server such as 1.1.1.1 to the /etc/resolv.conf file. 
+3- gobuster dns -d inlanefreight.com -w /usr/share/SecLists/Discovery/DNS/namelist.txt
+
+# Banner Grabbing / Web Server Headers
+curl -IL https://www.inlanefreight.com
+whatweb 10.10.10.121
+whatweb --no-errors 10.10.10.0/24
+Take a look for Certificate
+Read Robot.txt file
+Source Code Ctrl+U  
+```
+## Public Exploits
+```
+## **Intro**
+
+*“Search by CVE-ID and open* https://nvd.nist.gov/ *then see the metric  cvss.0×3. if it is from network and no privilege required && after that go description and see if you can exploit (normally) or you need to access something in local network(hard) .. if all clear? .. then search for your poc.”*
+
+## Check list
+
+- [ ] Google  —> search by "Technology" "Version" vulnerabilities.
+   - Ex: Tomcat 3.4.3 vulnerabilites
+- [ ] Google —> search by "Technology" "Version" exploits.
+   - Ex: Apache 9.1.3 exploits
+   - Ex: windows 7 smb exploit
+- [ ] https://cvexploits.io/ —> search by CVE-ID  or by technology.
+- [ ] Explit-DB
+   - https://exploit-db.com —> search by your Technology or by CVE-ID or anything.
+   - sudo apt install exploitdb -y & then you can searchsploit
+   - Searchsploit tool on Kali Linux by :
+    > searchsploit nginx
+    > searchsploit tomcat
+    > searchsploit openssh 7.2
+    > searchsploit -p 12345
+    > cat path.txt
+    > searchsploit -update
+- [ ] Google —> search by “CVE-ID  GitHub”
+   - Ex: CVE-2024-22245 GitHub
+   - Ex2: CVE-2024-22245 github.com
+- [ ] Twitter —> search by CVE-ID
+- [ ] search on Metasploit tool by:
+    > msfconsole
+    > msf6 > search exploit eternalblue
+    > msf> search nginx  
+    > msf> search tomcat
+    > then you can user keyword "use" to use the exploit you use & show option to complete your search & set RHOSTs & set LHOST & check & run or exploit
+- [ ] look for commits random ids and see the green and red lines of code in GitHub
+
+## References:
+- Exploitation playbook book by Alex Thomas.
+- https://www.youtube.com/watch?v=t4KE-p2eCbY
 ```
 ## Password Attacks
 
