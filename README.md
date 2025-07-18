@@ -198,8 +198,19 @@ nmap -f 192.168.1.1
 # Set your own offset size(8, 16, 32, 64)
 nmap 192.168.1.1 --mtu 32
 
-# Send scans from spoofed IPs
-nmap 192.168.1.1 -D 192.168.1.11, 192.168.1.12, 192.168.1.13, 192.168.1.13 
+# Send scans from spoofed IPs, or you can generate random 5 IPs via this option -D RND:5
+nmap 192.168.1.1 -D 192.168.1.11, 192.168.1.12, 192.168.1.13, 192.168.1.13
+sudo nmap 10.129.2.28 -p 80 -sS -Pn -n --disable-arp-ping --packet-trace -D RND:5
+
+# -S 	Scans the target by using different source IP address | -O for operating system | -e to scan from specific eithernet
+sudo nmap 10.129.2.28 -n -Pn -p 445 -O -S 10.129.2.200 -e tun0
+
+# --source-port 53 	Performs the scans from specified source port | or You Can Connect To The Filtered Port
+sudo nmap 10.129.2.28 -p50000 -sS -Pn -n --disable-arp-ping --packet-trace --source-port 53
+ncat -nv --source-port 53 10.129.2.28 50000 |or| nc -nv -p 53 10.129.2.47 50000
+
+# -sA 	Performs ACK scan on specified ports.
+sudo nmap 10.129.2.28 -p 21,22,25 -sA -Pn -n --disable-arp-ping --packet-trace
 ```
 #### Output
 ```
