@@ -231,6 +231,13 @@ nc -nv <IP> <PORT>
 
 # Download all available files on the target FTP server
 wget -m --no-passive ftp://anonymous:anonymous@<IP>
+
+# Using nmap
+sudo nmap --script-updatedb
+find / -type f -name ftp* 2>/dev/null | grep scripts
+
+# Using openssl, incase ftp use tls/sll
+openssl s_client -connect 10.129.14.136:21 -starttls ftp
 ```
 ##### SMB
 ```
