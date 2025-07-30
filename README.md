@@ -16,6 +16,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   - [Evasion and Spoofing](#firewall-evasion-and-spoofing)
   - [Output](#output)
 - [Footprinting Services](#footprinting-services)
+    - [Infrastructure-Based Enumeration](#Infrastructure-Based-Enumeration) 
     - [FTP](#ftp)
     - [SMB](#smb)
     - [NFS](#nfs)
@@ -221,6 +222,14 @@ nmap 192.168.1.1 -oN scan.txt
 nmap 192.168.1.1 -oA scan
 ```
 ## Footprinting Services
+##### Infrastructure-based Enumeration
+```
+# Certificate transparency | to gather all subdomains for a corprate/company
+curl -s https://crt.sh/\?q\=<target-domain>\&output\=json | jq .
+
+# Scan each IP address in a list using Shodan.
+for i in $(cat ip-addresses.txt);do shodan host $i;done
+```
 ##### FTP
 ```
 # Connect to FTP
