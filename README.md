@@ -251,11 +251,23 @@ openssl s_client -connect 10.129.14.136:21 -starttls ftp
 ##### SMB
 ```
 
-# Connect to a specific SMB share
+# Connect to a specific SMB share | -L for display all files | and - N  for null session (-N), which is anonymous access 
 smbclient //<FQDN IP>/<share>
 
-# Interaction with the target using RPC
+# Interaction with the target using RPC | Query = `srvinfo` or `enumdomains` or `querydominfo` or `netshareenumall` or `netsharegetinfo <share>` or `enumdomusers` or `queryuser <RID>`
 rpcclient -U "" <FQDN IP>
+
+# Brute Forcing User RIDs
+for i in $(seq 500 1100);do rpcclient -N -U "" 10.129.14.128 -c "queryuser 0x$(printf '%x\n' $i)" | grep "User Name\|user_rid\|group_rid" && echo "";done
+
+# we can brute force for user rids also via Impacket - Samrdump.py
+samrdump.py 10.129.14.128
+
+# using smbmap
+smbmap -H 10.129.14.128
+
+# using Enum4Linux-ng
+ ./enum4linux-ng.py 10.129.14.128 -A
 
 # Enumerating SMB shares using null session authentication.
 crackmapexec smb <FQDN/IP> --shares -u '' -p '' --shares
