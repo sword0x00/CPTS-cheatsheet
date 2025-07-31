@@ -274,11 +274,15 @@ crackmapexec smb <FQDN/IP> --shares -u '' -p '' --shares
 ```
 ##### NFS
 ```
+# Via nmap
+ sudo nmap --script nfs* 10.129.14.128 -sV -p111,2049
+
 # Show available NFS shares
 showmount -e <IP>
 
 # Mount the specific NFS share.umount ./target-NFS
-mount -t nfs <FQDN/IP>:/<share> ./target-NFS/ -o nolock
+mkdir target-NFS
+sudo mount -t nfs 10.129.14.128:/ ./target-NFS/ -o nolock
 ```
 ##### DNS
 ```
