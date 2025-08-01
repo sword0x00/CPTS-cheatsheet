@@ -21,6 +21,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [SMB](#smb)
     - [NFS](#nfs)
     - [DNS](#dns)
+    - [SMTP](#smtp)
     - [IMAP POP3](#imap-pop3)
     - [SNMP](#snmp)
     - [MSSQL](#mssql)
@@ -284,6 +285,7 @@ showmount -e <IP>
 mkdir target-NFS
 sudo mount -t nfs 10.129.14.128:/ ./target-NFS/ -o nolock
 ```
+
 ##### DNS
 ```
 # NS request to the specific nameserver.
@@ -299,6 +301,14 @@ dig axfr <domain.tld> @<nameserver>
 > for sub in $(cat /opt/useful/seclists/Discovery/DNS/subdomains-top1million-110000.txt);do dig $sub.inlanefreight.htb @10.129.14.128 | grep -v ';\|SOA' | sed -r '/^\s*$/d' | grep $sub | tee -a subdomains.txt;done
 
 > dnsenum --dnsserver 10.129.14.128 --enum -p 0 -s 0 -o subdomains.txt -f /opt/useful/seclists/Discovery/DNS/subdomains-top1million-110000.txt inlanefreight.htb
+```
+##### SMTP
+```
+# NS request to the specific nameserver. | `AUTH PLAIN` or `HELO` or `CONNECT 10.129.14.128:25 HTTP/1.0` when deling with proxy or `MAIL FROM` or `RCPT TO` or `DATA` or `RSET` or `VRFY` or `EXPN` or `NOOP` or `QUIT`
+telnet <ip> 25
+
+# Using Nmap - for Open Relay
+sudo nmap 10.129.14.128 -p25 --script smtp-open-relay -v
 ```
 
 ##### IMAP POP3
