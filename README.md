@@ -309,6 +309,9 @@ telnet <ip> 25
 
 # Using Nmap - for Open Relay
 sudo nmap 10.129.14.128 -p25 --script smtp-open-relay -v
+
+# to enum a list of users
+smtp-user-enum -M VRFY -U /home/kali/Downloads/footprinting-wordlist.txt -t 10.129.152.94 -w 120 -p 25 -v
 ```
 
 ##### IMAP POP3
