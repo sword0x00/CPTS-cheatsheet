@@ -331,8 +331,8 @@ openssl s_client -connect <FQDN/IP>:pop3s
 # Querying OIDs using snmpwalk
 snmpwalk -v2c -c <community string> <FQDN/IP>
 
-# Bruteforcing community strings of the SNMP service.
-onesixtyone -c community-strings.list <FQDN/IP>
+# Bruteforcing community strings of the SNMP service. | you can guess community-string by fuzzing via /opt/useful/seclists/Discovery/SNMP/snmp.txt list
+onesixtyone -c community-strings-fuzzing.list <FQDN/IP>
 
 # Bruteforcing SNMP service OIDs.
 braa <community string>@<FQDN/IP>:.1.*
