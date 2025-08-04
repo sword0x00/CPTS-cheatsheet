@@ -316,13 +316,13 @@ smtp-user-enum -M VRFY -U /home/kali/Downloads/footprinting-wordlist.txt -t 10.1
 
 ##### IMAP POP3
 ```
-# Log in to the IMAPS service using cURL
+# Log in to the IMAPS service using cURL | `-k` or `-v`
 curl -k 'imaps://<FQDN/IP>' --user <user>:<password>
 
-# Connect to the IMAPS service
+# Connect to the IMAPS service | there are multiple IMAP Commands you need to search about it https://www.atmail.com/blog/imap-101-manual-imap-sessions/
 openssl s_client -connect <FQDN/IP>:imaps
 
-# Connect to the POP3s service
+# Connect to the POP3s service | there are multiple IMAP Commands you need to search about it 
 openssl s_client -connect <FQDN/IP>:pop3s
 ```
 
