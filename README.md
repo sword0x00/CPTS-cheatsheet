@@ -24,6 +24,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [SMTP](#smtp)
     - [IMAP POP3](#imap-pop3)
     - [SNMP](#snmp)
+    - [MYSQL](#mysql)
     - [MSSQL](#mssql)
     - [IPMI](#ipmi)
     - [Remote Management](#linux-remote-management-ssh)
@@ -336,6 +337,10 @@ onesixtyone -c community-strings-fuzzing.list <FQDN/IP>
 
 # Bruteforcing SNMP service OIDs.
 braa <community string>@<FQDN/IP>:.1.*
+```
+##### MYSQL
+```
+mysql -u <user> -p<password> -h <FQDN/IP>
 ```
 ##### MSSQL
 ```
