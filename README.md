@@ -1,7 +1,6 @@
 # CPTS-cheatsheet
 HackTheBox Certified Penetration Tester Specialist Cheatsheet
 
-![Alt text](https://academy.hackthebox.com/storage/exam_overview_banners/Fpoo8YaykR3341XtswrcmuyLNcAK6bZ1WF86Ro6v.png)
 
 **Table of Contents**
 - [Tmux](#tmux)
@@ -26,6 +25,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [SNMP](#snmp)
     - [MYSQL](#mysql)
     - [MSSQL](#mssql)
+    - [Oracle-TNS](#oracle-tns)
     - [IPMI](#ipmi)
     - [Remote Management](#linux-remote-management-ssh)
 - [Shells](#shells)
@@ -345,6 +345,22 @@ mysql -u <user> -p<password> -h <FQDN/IP>
 ##### MSSQL
 ```
 impacket-mssqlclient <user>@<FQDN/IP> -windows-auth
+```
+##### Oracle-Tns
+```
+# using nmap
+sudo nmap -p1521 -sV 10.129.204.235 --open --script oracle-sid-brute
+
+# using odat tool to perform a variety of scans to enumerate and gather information about the Oracle database services and its components. 
+./odat.py all -s 10.129.204.235
+
+# using SQLplus - to Access/Log In | if you recieve an error go to https://stackoverflow.com/questions/27717312/sqlplus-error-while-loading-shared-libraries-libsqlplus-so-cannot-open-shared
+sqlplus <username>/<pass>@IP/XE-as-an-instanse
+sqlplus <username>/<pass>@IP/XE-as-an-instanse as sysdba
+
+# Oracle RDBMS - Interaction
+> select table_name from all_tables; | > select * from user_role_privs; | > select name, password from sys.user$;
+
 ```
 ##### IPMI
 ```
