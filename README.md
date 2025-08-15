@@ -368,6 +368,9 @@ curl -X GET http://10.129.204.235/testing.txt
 ```
 ##### IPMI
 ```
+# Using nmap
+sudo nmap -sU --script ipmi-version -p 623 domain.local
+
 # IPMI version detection
 msf6 auxiliary(scanner/ipmi/ipmi_version)
 
