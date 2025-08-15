@@ -27,7 +27,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [MSSQL](#mssql)
     - [Oracle-TNS](#oracle-tns)
     - [IPMI](#ipmi)
-    - [Remote Management](#linux-remote-management-ssh)
+    - [Remote Management](#linux-remote-management)
 - [Shells](#shells)
     - [Reverse Shell](#reverse-shell)
     - [Bind Shell](#bind-shell)
@@ -377,10 +377,19 @@ msf6 use auxiliary/scanner/ipmi/ipmi_version
 # Dump IPMI hashes
 msf6 use auxiliary/scanner/ipmi/ipmi_dumphashes 
 ```
-##### Linux Remote Management SSH
+##### Linux Remote Management
 ```
 # Enforce password-based authentication
+./ssh-audit.py <IP>
 ssh <user>@<FQDN/IP> -o PreferredAuthentications=password
+
+#rsync
+nc -nv 127.0.0.1 873
+rsync -av --list-only rsync://127.0.0.1/dev-folder
+
+# R-Services
+rcp | rexec | rlogin | rsh | rstat | rwho | rusers -al
+
 ```
 ## Shells
 
