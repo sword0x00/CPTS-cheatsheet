@@ -372,10 +372,10 @@ curl -X GET http://10.129.204.235/testing.txt
 sudo nmap -sU --script ipmi-version -p 623 domain.local
 
 # IPMI version detection
-msf6 auxiliary(scanner/ipmi/ipmi_version)
+msf6 use auxiliary/scanner/ipmi/ipmi_version 
 
 # Dump IPMI hashes
-msf6 auxiliary(scanner/ipmi/ipmi_dumphashes)
+msf6 use auxiliary/scanner/ipmi/ipmi_dumphashes 
 ```
 ##### Linux Remote Management SSH
 ```
