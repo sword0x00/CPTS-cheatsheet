@@ -17,7 +17,8 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
 - [Footprinting Services](#footprinting-services)
     - [Infrastructure-Based Enumeration](#Infrastructure-Based-Enumeration) 
     - [FTP](#ftp)
-    - [SMB](#smb)
+    - [MSRPC-p135](#msrpc-p135)
+    - [SMB-p139,445](#smb-p139,445)
     - [Rpcbind-p111](#rpcbind-p111)
     - [NFS-p2049](#nfs-p2049)
     - [DNS](#dns)
@@ -251,9 +252,13 @@ find / -type f -name ftp* 2>/dev/null | grep scripts
 # Using openssl, incase ftp use tls/sll
 openssl s_client -connect 10.129.14.136:21 -starttls ftp
 ```
-##### SMB
+##### MSRPC-p135
 ```
-
+nmap 10.11.1.111 --script=msrpc-enum
+msf > use exploit/windows/dcerpc/ms03_026_dcom
+```
+##### SMB-p139,445
+```
 # Connect to a specific SMB share | -L for display all files | and - N  for null session (-N), which is anonymous access 
 smbclient //<FQDN IP>/<share>
 
