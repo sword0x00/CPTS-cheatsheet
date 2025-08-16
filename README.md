@@ -18,7 +18,8 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Infrastructure-Based Enumeration](#Infrastructure-Based-Enumeration) 
     - [FTP](#ftp)
     - [SMB](#smb)
-    - [NFS](#nfs)
+    - [Rpcbind-p111](#rpcbind-p111)
+    - [NFS-p2049](#nfs-p2049)
     - [DNS](#dns)
     - [SMTP](#smtp)
     - [IMAP POP3](#imap-pop3)
@@ -274,7 +275,22 @@ smbmap -H 10.129.14.128
 # Enumerating SMB shares using null session authentication.
 crackmapexec smb <FQDN/IP> --shares -u '' -p '' --shares
 ```
-##### NFS
+##### Rpcbind-p111
+```
+rpcinfo -p 10.11.1.111  # enum NFS shares
+showmount -e 10.11.1.111
+mount -t nfs 10.11.1.111:/ /mnt -o nolock     # mount remote share to your local machine
+
+rpcclient -U "" 10.11.1.111
+	srvinfo
+	enumdomusers
+	getdompwinfo
+	querydominfo
+	netshareenum
+	netshareenumall
+```
+
+##### NFS-p2049
 ```
 # Via nmap
  sudo nmap --script nfs* 10.129.14.128 -sV -p111,2049
