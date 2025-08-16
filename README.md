@@ -382,6 +382,7 @@ msf6 use auxiliary/scanner/ipmi/ipmi_dumphashes
 # SSH -p22/TCP
 ./ssh-audit.py <IP>
 ssh <user>@<FQDN/IP> -o PreferredAuthentications=password  --> Enforce password-based authentication
+ssh -i ./id_rsa <username>@<IP> --> Enforce Private-key-based authentication "chmod 600 ./id_rsa" 
 
 # Rsync -p873/TCP
 nc -nv 127.0.0.1 873
