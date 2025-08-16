@@ -27,7 +27,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [MSSQL](#mssql)
     - [Oracle-TNS](#oracle-tns)
     - [IPMI](#ipmi)
-    - [Remote Management](#linux-remote-management)
+    - [Remote Management](#remote-management)
 - [Shells](#shells)
     - [Reverse Shell](#reverse-shell)
     - [Bind Shell](#bind-shell)
@@ -377,18 +377,30 @@ msf6 use auxiliary/scanner/ipmi/ipmi_version
 # Dump IPMI hashes
 msf6 use auxiliary/scanner/ipmi/ipmi_dumphashes 
 ```
-##### Linux Remote Management
+##### Remote Management
 ```
-# Enforce password-based authentication
+# SSH -p22/TCP
 ./ssh-audit.py <IP>
-ssh <user>@<FQDN/IP> -o PreferredAuthentications=password
+ssh <user>@<FQDN/IP> -o PreferredAuthentications=password  --> Enforce password-based authentication
 
-#rsync
+# Rsync -p873/TCP
 nc -nv 127.0.0.1 873
 rsync -av --list-only rsync://127.0.0.1/dev-folder
 
-# R-Services
+# R-Services -p512/TCP,513/TCP,514/TCP
 rcp | rexec | rlogin | rsh | rstat | rwho | rusers -al
+
+# RDP -p3389/TCP
+nmap -sV -sC <IP> -p3389 --script rdp*
+./rdp-sec-check.pl <IP>
+xfreerdp /u:<username> /p:"<password>" /v:<IP>
+
+# WinRM -p5985/HTTP/TCP,5986/HTTPS/TCP
+For windows --> The Test-WsMan cmdlet is responsible for this
+For Linux   --> evil-winrm -i 10.129.201.248 -u <username> -p <password>
+
+# WMI -p135/TCP
+/python3-impacket/examples/wmiexec.py username:"Password"@<IP> "hostname"
 
 ```
 ## Shells
