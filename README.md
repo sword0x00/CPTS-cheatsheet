@@ -15,7 +15,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   - [Evasion and Spoofing](#firewall-evasion-and-spoofing)
   - [Output](#output)
 - [Footprinting Services](#footprinting-services)
-    - [Infrastructure-Based Enumeration](#Infrastructure-Based-Enumeration) 
+    - [Infrastructure-Based Enumeration](#infrastructure-based-enumeration) 
     - [FTP](#ftp)
     - [MSRPC-p135](#msrpc-p135)
     - [SMB-p139,445](#smb-p139,445)
@@ -30,6 +30,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Oracle-TNS](#oracle-tns)
     - [IPMI](#ipmi)
     - [Remote Management](#remote-management)
+- [Information Gathering - Web Edition](#Information-Gathering-Web-Edition)
 - [Shells](#shells)
     - [Reverse Shell](#reverse-shell)
     - [Bind Shell](#bind-shell)
@@ -425,6 +426,28 @@ For Linux   --> evil-winrm -i 10.129.201.248 -u <username> -p <password>
 # WMI -p135/TCP
 /python3-impacket/examples/wmiexec.py username:"Password"@<IP> "hostname"
 
+```
+## Infrastructure-Based Enumeration
+##### WhatWeb
+```
+whatweb -a 3 http://dev.inlanefreight.local -v
+```
+##### Virtual Hosts
+```
+gobuster vhost -u http://inlanefreight.htb:81 -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt --append-domain
+```
+##### Banner Grabbing
+```
+curl -I inlanefreight.com
+```
+##### Web Application Firewalls (WAFs)
+```
+pip3 install git+https://github.com/EnableSecurity/wafw00f
+wafw00f inlanefreight.com
+```
+##### nikto
+```
+nikto -h inlanefreight.com -Tuning b
 ```
 ## Shells
 
