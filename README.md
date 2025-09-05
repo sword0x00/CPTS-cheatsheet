@@ -30,7 +30,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Oracle-TNS](#oracle-tns)
     - [IPMI](#ipmi)
     - [Remote Management](#remote-management)
-- [Information Gathering - Web Edition](#Information-Gathering-Web-Edition)
+- [Information Gathering Web Edition](#information-gathering-web-edition)
 - [Shells](#shells)
     - [Reverse Shell](#reverse-shell)
     - [Bind Shell](#bind-shell)
@@ -324,7 +324,7 @@ dig axfr <domain.tld> @<nameserver>
 > for sub in $(cat /opt/useful/seclists/Discovery/DNS/subdomains-top1million-110000.txt);do dig $sub.inlanefreight.htb @10.129.14.128 | grep -v ';\|SOA' | sed -r '/^\s*$/d' | grep $sub | tee -a subdomains.txt;done
 
 > dnsenum --dnsserver 10.129.14.128 --enum -p 0 -s 0 -o subdomains.txt -f /opt/useful/seclists/Discovery/DNS/subdomains-top1million-110000.txt inlanefreight.htb
-> dnsenum --enum inlanefreight.com -f /usr/share/wordlists/seclists/Discovery/DNS/n0kovo_subdomains.txt --threads 20 --noreverse --nodnsserver --noreport --nocolor
+> dnsenum --enum inlanefreight.com -f /usr/share/wordlists/seclists/Discovery/DNS/n0kovo_subdomains.txt --threads 20 --noreverse --nodnsserver --noreport --nocolor -r
 ```
 ##### SMTP
 ```
@@ -427,7 +427,11 @@ For Linux   --> evil-winrm -i 10.129.201.248 -u <username> -p <password>
 /python3-impacket/examples/wmiexec.py username:"Password"@<IP> "hostname"
 
 ```
-## Infrastructure-Based Enumeration
+## Information Gathering Web Edition
+##### WhoIs
+```
+whois inlanefreight.com
+```
 ##### WhatWeb
 ```
 whatweb -a 3 http://dev.inlanefreight.local -v
@@ -436,8 +440,13 @@ whatweb -a 3 http://dev.inlanefreight.local -v
 ```
 gobuster vhost -u http://inlanefreight.htb:81 -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt --append-domain
 ```
-##### Banner Grabbing
+##### crt.sh lookup
 ```
+curl -s "https://crt.sh/?q=facebook.com&output=json" | jq -r '.[] | select(.name_value | contains("dev")) | .name_value' | sort -u
+```
+##### Banner Grabbing 
+```
+you can use Wappalyzer,BuiltWith,WhatWeb,Nmap,Netcraft
 curl -I inlanefreight.com
 ```
 ##### Web Application Firewalls (WAFs)
@@ -448,6 +457,16 @@ wafw00f inlanefreight.com
 ##### nikto
 ```
 nikto -h inlanefreight.com -Tuning b
+```
+###### Reconspider
+```
+wget -O ReconSpider.zip https://academy.hackthebox.com/storage/modules/144/ReconSpider.v1.2.zip
+unzip ReconSpider.zip
+python3 ReconSpider.py http://inlanefreight.com
+```
+###### Automate Reconnaissance
+```
+you can use FinalRecon,Recon-ng,theHarvester,SpiderFoot,OSINT Framework
 ```
 ## Shells
 
