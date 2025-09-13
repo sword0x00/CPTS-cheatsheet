@@ -33,6 +33,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
 - [Information Gathering Web Edition](#information-gathering-web-edition)
 - [File Transfers](#file-transfers)
 	- [Windows File Transfer](#windows-file-transfer)
+   	- [Linux File Transfer](#linux-file-transfer)
 - [Shells](#shells)
     - [Reverse Shell](#reverse-shell)
     - [Bind Shell](#bind-shell)
