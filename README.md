@@ -864,6 +864,19 @@ OR
 ##### Updating TTY 
 ```
 # python -c 'import pty; pty.spawn("/bin/bash")'
+# bash /bin/sh -i
+# perl perl —e 'exec "/bin/sh";'
+# perl perl: exec "/bin/sh";
+# ruby ruby: exec "/bin/sh"
+# lua lua: os.execute('/bin/sh')
+# awk awk 'BEGIN {system("/bin/sh")}'
+# find find / -name nameoffile -exec /bin/awk 'BEGIN {system("/bin/sh")}' \;
+# exec find . -exec /bin/sh \; -quit
+# vim vim -c ':!/bin/sh'
+# vim escap -->
+ vim
+:set shell=/bin/sh
+:shell
 ```
 ## Password Attacks
 ##### Password Mutations
