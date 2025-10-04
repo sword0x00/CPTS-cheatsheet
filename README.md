@@ -1066,6 +1066,15 @@ rpcclient -U "" -N 172.16.5.5
 # Uses rpcclient to enumerate the password policy in a target Windows domain from a Linux-based host.
 rpcclient $> querydominfo
 
+# Using enum4linux
+enum4linux -P 172.16.5.5
+enum4linux-ng -P 172.16.5.5 -oA ilfreight
+
+# Using Enumerating Null Session - from Windows | see the differenct responses for differnet usernames.
+net use \\DC01\ipc$ "" /u:""
+net use \\DC01\ipc$ "password" /u:guest
+net use \\DC01\ipc$ "password" /u:guest
+
 # Uses ldapsearch to enumerate the password policy in a target Windows domain from a Linux-based host.
 ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "*" | grep -m 1 -B 10 pwdHistoryLength
 
@@ -1073,6 +1082,7 @@ ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "*" | grep -m 
 net accounts
 
 # PowerView Command used to enumerate the password policy in a target Windows domain from a Windows-based host.
+import-module .\PowerView.ps1
 Get-DomainPolicy
 
 # Uses rpcclient to discover user accounts in a target Windows domain from a Linux-based host.
