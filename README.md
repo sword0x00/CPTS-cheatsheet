@@ -59,6 +59,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [LLMNR/NTB-NS Poisoning](#llmnr-poisoning)
     - [Password Spraying & Password Policies](#password-spraying-and-password-policies)
     - [Enumerating Disabling/Bypassing Security Controls](#enumerating-and-bypassing-security-controls)
+    - [Credentialed Enumeration - from Linux and Windows](credentialed-enumeration-from-linux-and-windows)
     - [Living Of The Land](#living-of-the-land)
     - [Kerberoasting](#kerberoasting)
     - [ACL Enumeration & Tactics](#acl-enumeration-and-tactics)
@@ -1181,8 +1182,9 @@ ConstrainedLanguage
 Find-LAPSDelegatedGroups
 Find-AdmPwdExtendedRights
 Get-LAPSComputers
-
-----------------------------------------------------------------------------------------------
+```
+##### [Credentialed Enumeration - from Linux and Windows]
+```
 # Credentialed Enumeration - from Linux
 
 ## crackmapexec - Domain User Enumeration
@@ -1218,7 +1220,39 @@ python3 windapsearch.py --dc-ip 172.16.5.5 -u forend@inlanefreight.local -p Klmc
 sudo bloodhound-python -u 'forend' -p 'Klmcargo2' -ns 172.16.5.5 -d inlanefreight.local -c all
 https://academy.hackthebox.com/course/preview/active-directory-bloodhound
 https://wadcoms.github.io/
+
+----------------------------------------------------------------------------------------------
+# Credentialed Enumeration - from Windows
+Import-Module ActiveDirectory
+Get-Module
+Get-ADDomain
+Get-ADUser -Filter {ServicePrincipalName -ne "$null"} -Properties ServicePrincipalName
+Get-ADTrust -Filter *
+Get-ADGroup -Filter * | select name
+Get-ADGroup -Identity "Backup Operators"
+Get-ADGroupMember -Identity "Backup Operators"
+
+## Powerview
+Get-DomainUser -Identity mmorgan -Domain inlanefreight.local | Select-Object -Property name,samaccountname,description,memberof,whencreated,pwdlastset,lastlogontimestamp,accountexpires,admincount,userprincipalname,serviceprincipalname,useraccountcontrol
+
+Get-DomainGroupMember -Identity "Domain Admins" -Recurse
+Get-DomainTrustMapping
+Test-AdminAccess -ComputerName ACADEMY-EA-MS01
+Get-DomainUser -SPN -Properties samaccountname,ServicePrincipalName
+
+## sharpview
+\SharpView.exe Get-DomainUser -Help
+.\SharpView.exe Get-DomainUser -Identity forend
+
+## Snaffler - Snaffler is a tool that can help us acquire credentials or other sensitive data in an Active Directory environment
+Snaffler.exe -s -d inlanefreight.local -o snaffler.log -v data
+.\Snaffler.exe  -d INLANEFREIGHT.LOCAL -s -v data
+
+## SharpHound in Action
+ .\SharpHound.exe --help
+.\SharpHound.exe -c All --zipfilename ILFREIGHT
 ```
+
 ##### Living Of The Land
 ```
 # PowerShell cmd-let used to list all available modules, their version and command options from a Windows-based host
