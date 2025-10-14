@@ -1183,7 +1183,7 @@ Find-LAPSDelegatedGroups
 Find-AdmPwdExtendedRights
 Get-LAPSComputers
 ```
-##### [Credentialed Enumeration - from Linux and Windows]
+##### Credentialed Enumeration - from Linux and Windows
 ```
 # Credentialed Enumeration - from Linux
 
