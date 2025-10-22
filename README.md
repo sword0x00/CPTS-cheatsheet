@@ -1427,6 +1427,7 @@ foreach($line in [System.IO.File]::ReadLines("C:\Users\htb-student\Desktop\ad_us
 #Further Enumeration of Rights Using damundsen
 $sid2 = Convert-NameToSid damundsen
 Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $sid2} -Verbose
+Get-DomainObjectACL -Identity "GPO Management GroupMembers" -ResolveGUIDs | ? {$_.SecurityIdentifier -eq $sid}
 # Investigating the Help Desk Level 1 Group with Get-DomainGroup
 Get-DomainGroup -Identity "Help Desk Level 1" | select memberof
 # Investigating the Information Technology Group
