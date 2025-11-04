@@ -1512,6 +1512,7 @@ kerbrute userenum -d inlanefreight.local --dc 172.16.5.5 /opt/jsmith.txt
 ##### Trust Relationships Child Parent Trusts
 ```
 # PowerShell cmd-let used to enumerate a target Windows domain's trust relationships. Performed from a Windows-based host.
+Import-Module activedirectory
 Get-ADTrust -Filter *
 
 # PowerView tool used to enumerate a target Windows domain's trust relationships. Performed from a Windows-based host.
@@ -1519,6 +1520,14 @@ Get-DomainTrust
 
 # PowerView tool used to perform a domain trust mapping from a Windows-based host.
 Get-DomainTrustMapping
+
+# Checking Users in the Child Domain using Get-DomainUser
+Get-DomainUser -Domain LOGISTICS.INLANEFREIGHT.LOCAL | select SamAccountName
+
+# Using netdom to query domain trust
+netdom query /domain:inlanefreight.local trust
+netdom query /domain:inlanefreight.local dc
+netdom query /domain:inlanefreight.local workstation
 ```
 
 ##### Trust Relationships - Cross-Forest
