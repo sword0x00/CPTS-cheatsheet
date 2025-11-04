@@ -1528,6 +1528,18 @@ Get-DomainUser -Domain LOGISTICS.INLANEFREIGHT.LOCAL | select SamAccountName
 netdom query /domain:inlanefreight.local trust
 netdom query /domain:inlanefreight.local dc
 netdom query /domain:inlanefreight.local workstation
+
+-----------------------------------------------------------------------------------------------------
+## ExtraSids Attack - Mimikatz
+To perform this attack after compromising a child domain, we need the following:
+- The KRBTGT hash for the child domain
+- The SID for the child domain
+- The name of a target user in the child domain (does not need to exist!)
+- The FQDN of the child domain.
+- The SID of the Enterprise Admins group of the root domain.
+- With this data collected, the attack can be performed with Mimikatz.
+
+
 ```
 
 ##### Trust Relationships - Cross-Forest
