@@ -51,6 +51,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Linux Password Attacks](#linux-password-attacks)
     - [Cracking Passwords](#cracking-passwords)
 - [Attacking Common Services](#attacking-common-services)
+  	- [Attacking FTP](#attacking-ftp)
     - [Attacking SMB](#attacking-smb)
     - [Attacking SQL](#attacking-sql)
     - [Attacking Email Services](#attacking-email-services)
