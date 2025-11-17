@@ -249,6 +249,7 @@ for i in $(cat ip-addresses.txt);do shodan host $i;done
 ```
 # Connect to FTP
 ftp <IP>
+ftp 10.129.203.6 -p 2121
 
 # Interact with a service on the target.
 nc -nv <IP> <PORT>
@@ -972,6 +973,7 @@ office2john.py Protected.docx > protected-docx.hash
 ```
 # Brute Forcing
 medusa -u fiona -P /usr/share/wordlists/rockyou.txt -h 10.129.203.7 -M ftp
+hydra -L users.txt -P passwords.txt -s 21 ftp://10.1.1.1
 
 # FTP Bounce Attack
 nmap -Pn -v -n -p80 -b anonymous:password@10.10.110.213 172.17.0.2
