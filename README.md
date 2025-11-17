@@ -379,6 +379,10 @@ mysql -u <user> -p<password> -h <FQDN/IP>
 ##### MSSQL
 ```
 impacket-mssqlclient <user>@<FQDN/IP> -windows-auth
+mssqlclient.py -p 1433 julio@10.129.203.7
+sqlcmd -S SRVMSSQL -U julio -P 'MyPassword!' -y 30 -Y 30 1>
+sqsh -S 10.129.203.7 -U .\\julio -P 'MyPassword!' -h     -----> this from linux
+
 ```
 ##### Oracle-Tns
 ```
