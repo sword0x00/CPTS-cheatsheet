@@ -1126,6 +1126,7 @@ git clone https://github.com/TheRook/subbrute.git >> /dev/null 2>&1
 cd subbrute
 echo "ns1.inlanefreight.com" > ./resolvers.txt
 ./subbrute.py inlanefreight.com -s ./names.txt -r ./resolvers.txt
+python3 subbrute.py inlanefreight.htb -s names.txt -r resolvers.txt
 
 host support.inlanefreight.com
 
