@@ -1002,6 +1002,7 @@ proxychains nmap -v -sn 172.16.5.1-200
 
 # Enumerating the Windows Target through Proxychains
 proxychains nmap -v -Pn -sT 172.16.5.19
+proxychains4 -f /home/kali/recon/proxychains.conf nmap -v -Pn -sT 172.16.5.19
 
 # Using Metasploit with Proxychains
 proxychains msfconsole
