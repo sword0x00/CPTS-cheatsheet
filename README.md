@@ -50,6 +50,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Windows Password Attacks](#windows-password-attacks)
     - [Linux Password Attacks](#linux-password-attacks)
     - [Cracking Passwords](#cracking-passwords)
+- [Pivoting, Tunneling, and Port Forwarding](#pivoting-tunneling-and-port-forwarding)
 - [Attacking Common Services](#attacking-common-services)
   	- [Attacking FTP](#attacking-ftp)
     - [Attacking SMB](#attacking-smb)
@@ -974,6 +975,40 @@ hashcat -m 1800 -a 0 /tmp/unshadowed.hashes rockyou.txt -o /tmp/unshadowed.crack
 
 # Runs Office2john.py against a protected .docx file and converts it to a hash stored in a file called protected-docx.hash.
 office2john.py Protected.docx > protected-docx.hash
+```
+## Pivoting, Tunneling, and Port Forwarding
+##### Dynamic Port Forwarding with SSH and SOCKS Tunneling
+```
+# Executing the Local Port Forward
+ssh -L AnyLocalPort:localhost:DestinationPort username@DestinationIP
+ssh -L localhost:AnyLocalPort:DestinationIP:DestinationPort username@<JUmServerIP/MIddleServerIP>
+ssh -L AnyLocalPort:localhost:DestinationPort -L AnyLocalPort2:localhost:DestinationPort2 username@DestinationIP
+
+# To Verifiy the local port forwarding
+netstat -antp | grep 1234
+nmap -v -sV -pLocalPort localhost
+
+# Enabling Dynamic Port Forwarding with SSH
+ssh -D AnyLocalPort username@DestinationIP
+
+# Checking /etc/proxychains.conf
+tail -4 /etc/proxychains.conf
+# meanwile
+# defaults set to "tor"
+socks4 	127.0.0.1 9050
+
+# Using Nmap with Proxychains
+proxychains nmap -v -sn 172.16.5.1-200
+
+# Enumerating the Windows Target through Proxychains
+proxychains nmap -v -Pn -sT 172.16.5.19
+
+# Using Metasploit with Proxychains
+proxychains msfconsole
+
+# Using xfreerdp with Proxychains
+proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
+
 ```
 ## Attacking Common Services
 ##### Attacking FTP
