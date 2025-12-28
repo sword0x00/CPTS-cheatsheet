@@ -1036,7 +1036,6 @@ PS C:\Windows\system32> Invoke-WebRequest -Uri "http://172.16.5.129:8123/backups
 # Using SSH -R |  Remote/Reverse Port Forwarding with SSH
 ssh -R <InternalIPofPivotHost>:8080:0.0.0.0:8000 ubuntu@<ipAddressofTarget> -vN
 
-
 ```
 ## Attacking Common Services
 ##### Attacking FTP
