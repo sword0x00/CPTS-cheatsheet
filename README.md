@@ -75,6 +75,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
     - [Hydra](#hydra)
 - [SQLMap](#sqlmap)
 - [Attacking Common Applications](#attacking-common-applications)
+  	- [Application Discovery - Enumeration](#application-discovery-enumeration)
   	- [Splunk](#splunk)
   	- [PRTG](#prtg)
   	- [GITLAB](#gitlab)
@@ -1916,6 +1917,13 @@ sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/
 sqlmap -u "http://www.example.com/?id=1" --os-shell
 ```
 ## Attacking Common Applications
+### Application Discovery - Enumeration
+```
+- nmap -p 80,443,8000,8080,8180,8888,10000 --open -oA web_discovery -iL scope_list
+- eyewitness --web -x web_discovery.xml -d inlanefreight_eyewitness
+- cat web_discovery.xml | ./aquatone -nmap
+
+```
 ### Splunk
 ```
 --> The Splunk web server runs by default on port 8000. On older versions of Splunk, the default credentials are admin:changeme
