@@ -76,7 +76,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
 - [SQLMap](#sqlmap)
 - [Attacking Common Applications](#attacking-common-applications)
   	- [Application Enumeration](#application-enumeration)
-  	- [WordPress](#WordPress)
+  	- [WordPress](#wordpress)
   	- [Joomla](#joomla)
   	- [Drupal](#drupal)
   	- [Tomcat](#tomcat)
@@ -85,6 +85,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [GITLAB](#gitlab)
   	- [CGI](#cgi)
   	- [ColdFusion](#coldFusion)
+  	- [IIS Tilde Enumeration](#iis-tilde-enumeration)
 - [Useful Resources](#useful-resources)
 
 
@@ -2143,6 +2144,16 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 				--> cp /usr/share/exploitdb/exploits/cfm/webapps/50057.py .
 				--> python3 50057.py 
 			
+
+```
+### IIS Tilde Enumeration
+```
+--> nmap -p- -sV -sC --open 10.129.224.91 --> _http-server-header: Microsoft-IIS/7.5 which is iis service are working
+--> Install IIS-shortname-scanner from here https://github.com/irsdl/IIS-ShortName-Scanner ,, also you will find how to install oracle java https://ubuntuhandbook.org/index.php/2022/03/install-jdk-18-ubuntu/
+-->  java -jar iis_shortname_scanner.jar 0 5 http://10.129.204.231/
+--> Generate Wordlist that start with transf
+	--> egrep -r ^transf /usr/share/wordlists/* | sed 's/^[^:]*://' > /tmp/list.txt
+	--> gobuster dir -u http://10.129.204.231/ -w /tmp/list.txt -x .aspx,.asp
 
 ```
 ## Useful Resources
