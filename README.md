@@ -993,6 +993,7 @@ office2john.py Protected.docx > protected-docx.hash
 ## Pivoting, Tunneling, and Port Forwarding
 ##### Dynamic Port Forwarding with SSH and SOCKS Tunneling
 ```
+# netstat -r or ip route.
 # Executing the Local Port Forward
 ssh -L AnyLocalPort:localhost:DestinationPort username@DestinationIP
 ssh -L localhost:AnyLocalPort:DestinationIP:DestinationPort username@<JUmServerIP/MIddleServerIP>
