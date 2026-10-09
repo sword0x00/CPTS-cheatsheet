@@ -1270,7 +1270,7 @@ socks5 127.0.0.1 1080
 proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
 
 ```
-##### ICMP Tunneling with SOCKS
+##### ICMP Tunneling with SOCKS ( in case ICMP enabled via firewall) 
 ```
 >> Run these commands on your attacker machine, not on the pivot.
 sudo apt update
