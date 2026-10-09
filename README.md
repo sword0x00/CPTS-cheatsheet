@@ -1270,6 +1270,46 @@ socks5 127.0.0.1 1080
 proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
 
 ```
+##### ICMP Tunneling with SOCKS
+```
+>> Run these commands on your attacker machine, not on the pivot.
+sudo apt update
+sudo apt install -y git build-essential automake autoconf
+git clone https://github.com/utoni/ptunnel-ng.git
+cd ptunnel-ng
+sudo ./autogen.sh
+ls -l src/ptunnel-ng
+
+>> Transfer the files to the pivot
+scp -r ptunnel-ng ubuntu@10.129.202.64:~/
+
+>> Step 4 — Start the ICMP tunnel server on the pivot
+cd ~/ptunnel-ng/src
+sudo ./ptunnel-ng -r10.129.202.64 -R22
+
+>> Step 5 — Start the tunnel client on the attacker
+cd ~/ptunnel-ng/src
+sudo ./ptunnel-ng -p10.129.202.64 -l2222 -r10.129.202.64 -R22
+
+>> Step 6 — Test SSH through the tunnel OR make Enabling Dynamic Port Forwarding over SSH
+ssh -p 2222 -l ubuntu 127.0.0.1
+OR
+ssh -D 9050 -p 2222 -l ubuntu 127.0.0.1
+
+>> Step 8 — Configure ProxyChains
+sudo nano /etc/proxychains4.conf
+socks5 127.0.0.1 9050
+
+>> Step 9 — Test access to the internal RDP port
+proxychains nmap -sV 172.16.5.19 -p3389
+proxychains4 nmap -sT -Pn -n -sV -p 3389 172.16.5.19
+
+>> Connect to RDP
+proxychains xfreerdp /v:172.16.5.19
+proxychains4 xfreerdp /v:172.16.5.19 /u:USERNAME
+
+
+```
 ## Attacking Common Services
 ##### Attacking FTP
 ```
