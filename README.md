@@ -1212,6 +1212,21 @@ attack machine -> proxychains curl --noproxy '*' http://172.16.5.135:80
 Pivot machine -> python client.py --server-ip <IPaddressofTargetWebServer> --server-port 8080 --ntlm-proxy-ip <IPaddressofProxy> --ntlm-proxy-port 8081 --domain <nameofWindowsDomain> --username <username> --password <password>
 
 ```
+##### Port Forwarding with Windows: Netsh
+```
+- 10.10.16.83 #kali ip
+- ( 10.129.42.198 # Windows public IP and 172.16.5.150 # Windows private IP)
+- 172.16.5.19 # DC01/victor machine
+
+>> from windows public IP (after pwn the pivot host)
+netsh.exe interface portproxy add v4tov4 listenport=8080 listenaddress=10.129.42.198 connectport=3389 connectaddress=172.16.5.19
+>> Verifying Port Forward from the pwn the pivot host
+netsh.exe interface portproxy show v4tov4
+
+>> then go to the attacker host 
+xfreerdp /v:10.129.42.198:8080 /u:victor /p:pass@123
+
+```
 ##### DNS Tunneling with Dnscat2
 ```
 >> from attack host (server side):-
