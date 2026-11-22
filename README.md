@@ -380,6 +380,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Service and Web Enumeration](#service-and-web-enumeration)
   - [Initial Access](#initial-access)
   - [Internal Information Gathering](#internal-information-gathering)
+  - [Internal Exploitation & Privilege Escalation](#internal-exploitation--privilege-escalation)
   - [Lateral Movement and AD Compromise](#lateral-movement-and-ad-compromise)
   - [Persistence & Post-Exploitation](#persistence--post-exploitation)
   - [Post-Exploitation and Closeout](#post-exploitation-and-closeout)
@@ -6483,6 +6484,58 @@ proxychains showmount -e <INTERNAL_IP>
 mkdir <MOUNT>
 mount -t nfs <INTERNAL_IP>:/<SHARE> /tmp/<MOUNT>
 ```
+
+### Internal Exploitation & Privilege Escalation
+
+After pivoting, enumerate each reachable host and exploit the exposed services.
+
+```bash
+# Host discovery and service scans through the pivot
+proxychains nmap -sT -Pn -p 21,22,80,139,445,3389,5985 <INTERNAL_SUBNET>
+proxychains enum4linux -U -P <INTERNAL_IP>
+proxychains showmount -e <INTERNAL_IP>
+
+# SMB / WinRM
+proxychains crackmapexec smb <INTERNAL_IP> -u <USER> -p '<PASSWORD>' --shares
+proxychains evil-winrm -i <INTERNAL_IP> -u <USER> -p '<PASSWORD>'
+```
+
+Linux local privilege escalation:
+
+```bash
+id
+sudo -l
+uname -a
+./linpeas.sh
+find / -perm -4000 -type f 2>/dev/null
+```
+
+Windows local privilege escalation:
+
+```cmd
+whoami /priv
+whoami /groups
+systeminfo
+.\winPEAS.exe
+```
+
+```powershell
+Import-Module .\PowerUp.ps1
+Invoke-AllChecks
+```
+
+Credential access after escalation:
+
+```bash
+secretsdump.py <DOMAIN>/<USER>:'<PASSWORD>'@<INTERNAL_IP>
+```
+
+```cmd
+reg save HKLM\SAM SAM.SAV
+reg save HKLM\SYSTEM SYSTEM.SAV
+```
+
+Document each host, the access obtained, and the privilege level. Escalate one host at a time, track the chain, and avoid unnecessary changes.
 
 ### Lateral Movement and AD Compromise
 
