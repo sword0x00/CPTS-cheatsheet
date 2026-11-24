@@ -12421,6 +12421,9 @@ The same idea applies to other tools that accept options from filenames (`rsync`
 Restricted shells (`rbash`, `rksh`, `rzsh`) limit command execution, `cd`, and environment changes. Try:
 
 ```bash
+## may be via echo command
+echo $(<flag.txt)
+
 # Command substitution / injection
 ls -l `pwd`
 $(/bin/bash)
